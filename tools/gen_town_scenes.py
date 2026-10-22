@@ -728,7 +728,7 @@ def crossholm_road() -> str:
         collision_mask="1",
         script=s.ext("Script", "res://scripts/flag_zone.gd"),
         flag='"reached_crossholm"',
-        message='"Crossholm, at last: torches, spears and a gate that does not open. The captain will hear you out. (This is as far as the story goes so far.)"',
+        message='"Crossholm, at last: torches, spears and a gate that does not open. The captain will hear you out."',
     )
     s.node("Shape", "CollisionShape2D", "Zones/GateZone", shape=s.rect(24, 40))
     exit_zone(

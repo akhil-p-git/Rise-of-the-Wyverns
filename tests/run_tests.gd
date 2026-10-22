@@ -12,6 +12,7 @@ var root: Window:
 func _ready() -> void:
 	await get_tree().process_frame
 	test_stats()
+	test_settings_and_theme()
 	test_logic_and_data()
 	await test_town_scenes()
 	await test_room()
@@ -70,6 +71,32 @@ func test_stats() -> void:
 	eq(m.mana, 30.0, "mana after spend")
 	m.tick(1.0)
 	check(m.mana > 30.0, "mana regenerates")
+
+
+func test_settings_and_theme() -> void:
+	var cfg_path := "user://test_settings.cfg"
+	Game.set_fullscreen(true, cfg_path)
+	Game.set_vsync(false, cfg_path)
+	Game.fullscreen = false
+	Game.vsync = true
+	Game.load_settings(cfg_path)
+	eq(Game.fullscreen, true, "fullscreen setting round-trips through ConfigFile")
+	eq(Game.vsync, false, "vsync setting round-trips through ConfigFile")
+	Game.toggle_fullscreen(cfg_path)
+	Game.toggle_vsync(cfg_path)
+	eq(Game.fullscreen, false, "toggle_fullscreen flips fullscreen back to false")
+	eq(Game.vsync, true, "toggle_vsync flips vsync back to true")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(cfg_path))
+
+	var theme := load("res://assets/ui/grim_theme.tres") as Theme
+	check(theme != null, "grim_theme.tres loads as Theme")
+	if theme:
+		check(theme.default_font != null, "grim_theme has default_font")
+		for state_name: String in ["normal", "hover", "focus", "pressed", "disabled"]:
+			check(theme.has_stylebox(state_name, "Button"), "grim_theme Button has %s stylebox" % state_name)
+		for slider_style: String in ["slider", "grabber_area", "grabber_area_highlight"]:
+			check(theme.has_stylebox(slider_style, "HSlider"), "grim_theme HSlider has %s stylebox" % slider_style)
+		check(theme.has_stylebox("panel", "PanelContainer"), "grim_theme PanelContainer has panel stylebox")
 
 
 func physics_frames(n: int) -> void:

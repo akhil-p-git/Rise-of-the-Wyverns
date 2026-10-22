@@ -98,7 +98,6 @@ func _finished_typing() -> void:
 		var button := Button.new()
 		button.text = "%d. %s" % [i + 1, options[i]["text"]]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.flat = true
 		button.pressed.connect(_choose.bind(i))
 		_choices.add_child(button)
 	_choices.show()

@@ -1,18 +1,24 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
+[ext_resource type="Theme" path="res://assets/ui/grim_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="bar_bg"]
-bg_color = Color(0.1, 0.1, 0.12, 0.7)
+bg_color = Color(0.055, 0.05, 0.07, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.24, 0.23, 0.26, 1)
 
 [sub_resource type="StyleBoxFlat" id="fill_health"]
-bg_color = Color(0.78, 0.2, 0.2, 1)
+bg_color = Color(0.62, 0.17, 0.17, 1)
 
 [sub_resource type="StyleBoxFlat" id="fill_stamina"]
-bg_color = Color(0.3, 0.7, 0.25, 1)
+bg_color = Color(0.32, 0.56, 0.28, 1)
 
 [sub_resource type="StyleBoxFlat" id="fill_mana"]
-bg_color = Color(0.25, 0.45, 0.9, 1)
+bg_color = Color(0.26, 0.45, 0.72, 1)
 
 [node name="Hud" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -22,6 +28,7 @@ offset_left = 8.0
 offset_top = 8.0
 offset_right = 108.0
 offset_bottom = 34.0
+theme = ExtResource("2_theme")
 theme_override_constants/separation = 2
 
 [node name="Health" type="ProgressBar" parent="Bars"]
@@ -57,12 +64,7 @@ offset_top = -72.0
 offset_bottom = -46.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.96, 0.94, 0.88, 1)
-theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.07, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
-theme_override_constants/outline_size = 5
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 2
+theme = ExtResource("2_theme")
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
@@ -76,12 +78,7 @@ offset_top = -40.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_colors/font_color = Color(0.96, 0.94, 0.88, 1)
-theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.07, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
-theme_override_constants/outline_size = 5
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 2
+theme = ExtResource("2_theme")
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -97,12 +94,7 @@ offset_top = 8.0
 offset_right = -8.0
 offset_bottom = 60.0
 grow_horizontal = 0
-theme_override_colors/font_color = Color(0.96, 0.94, 0.88, 1)
-theme_override_colors/font_outline_color = Color(0.05, 0.04, 0.07, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
-theme_override_constants/outline_size = 5
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 2
+theme = ExtResource("2_theme")
 theme_override_font_sizes/font_size = 11
 horizontal_alignment = 2
 autowrap_mode = 3

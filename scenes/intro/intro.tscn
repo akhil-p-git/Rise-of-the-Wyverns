@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/intro/ship.png" id="5_ship"]
 [ext_resource type="Texture2D" path="res://assets/intro/ship_broken.png" id="6_broken"]
 [ext_resource type="Texture2D" path="res://assets/intro/raindrop.png" id="8_rain"]
+[ext_resource type="Theme" path="res://assets/ui/grim_theme.tres" id="9_theme"]
 
 [sub_resource type="ShaderMaterial" id="storm_water"]
 shader = ExtResource("4_water")
@@ -96,9 +97,7 @@ offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
 modulate = Color(1, 1, 1, 0)
-theme_override_colors/font_color = Color(0.96, 0.94, 0.88, 1)
-theme_override_colors/font_outline_color = Color(0.02, 0.03, 0.06, 1)
-theme_override_constants/outline_size = 5
+theme = ExtResource("9_theme")
 text = "The ship went down with everyone aboard. Everyone but you."
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -115,7 +114,8 @@ offset_right = -8.0
 offset_bottom = -6.0
 grow_horizontal = 0
 grow_vertical = 0
-theme_override_colors/font_color = Color(1, 1, 1, 0.45)
+theme = ExtResource("9_theme")
+theme_override_colors/font_color = Color(0.58, 0.56, 0.53, 0.7)
 theme_override_font_sizes/font_size = 11
-text = "Space to skip"
+text = "Space: skip"
 horizontal_alignment = 2
