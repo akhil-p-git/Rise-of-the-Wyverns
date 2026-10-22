@@ -13,12 +13,15 @@ func _ready() -> void:
 	await get_tree().process_frame
 	test_stats()
 	test_settings_and_theme()
+	test_audio()
 	await test_character_and_menus()
 	test_logic_and_data()
 	await test_town_scenes()
 	await test_room()
 	await test_beach()
 	await test_intro()
+	Audio.stop_all()
+	await get_tree().process_frame
 	print("Results: %d passed, %d failed" % [passed, failed])
 	get_tree().quit(1 if failed > 0 else 0)
 
@@ -98,6 +101,47 @@ func test_settings_and_theme() -> void:
 		for slider_style: String in ["slider", "grabber_area", "grabber_area_highlight"]:
 			check(theme.has_stylebox(slider_style, "HSlider"), "grim_theme HSlider has %s stylebox" % slider_style)
 		check(theme.has_stylebox("panel", "PanelContainer"), "grim_theme PanelContainer has panel stylebox")
+
+
+func test_audio() -> void:
+	check(Audio != null, "Audio autoload is registered")
+	for bus_name: String in ["Master", "Music", "SFX", "Ambience", "UI"]:
+		check(AudioServer.get_bus_index(bus_name) != -1, "Audio bus '%s' exists" % bus_name)
+
+	var audio_json := StoryData.load_json("res://data/audio.json")
+	var cues: Dictionary = audio_json.get("cues", {})
+	check(not cues.is_empty(), "data/audio.json has cues")
+	for cue_id: String in cues:
+		var p: String = cues[cue_id].get("path", "")
+		check(FileAccess.file_exists(p), "audio cue '%s' file exists at %s" % [cue_id, p])
+
+	var expected_cues := [
+		"mus_menu", "mus_storm", "mus_beach", "mus_wrackmouth", "mus_crossholm_road",
+		"amb_waves", "amb_wind", "amb_rain", "amb_gulls", "amb_fire",
+		"ui_hover", "ui_confirm", "ui_back", "dialogue_blip",
+		"step_sand", "step_wet_sand", "step_gravel", "step_planks", "step_stone",
+		"pickup", "rest_fire", "scene_exit", "thunder",
+	]
+	for req_id: String in expected_cues:
+		check(cues.has(req_id), "cue '%s' used in scenes/code exists in data/audio.json" % req_id)
+
+	# Missing cue warns once and never crashes
+	Audio.play_sfx("nonexistent_test_cue")
+	Audio.play_sfx("nonexistent_test_cue")
+	check(Audio.warned_missing.has("nonexistent_test_cue"), "missing cue recorded once without crashing")
+
+	# Bus volumes round-trip through settings ConfigFile
+	var cfg_path := "user://test_audio_settings.cfg"
+	var sample_vols := {"Master": 0.75, "Music": 0.40, "SFX": 0.65, "Ambience": 0.50, "UI": 0.80}
+	for bname: String in sample_vols:
+		Audio.set_bus_volume(bname, sample_vols[bname], cfg_path)
+	for bname: String in sample_vols:
+		Audio.set_bus_volume(bname, 0.10, "user://dummy_ignored.cfg")
+	Audio.load_volumes(cfg_path)
+	for bname: String in sample_vols:
+		check(absf(Audio.get_bus_volume(bname) - sample_vols[bname]) < 0.001, "bus '%s' volume round-trips" % bname)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(cfg_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://dummy_ignored.cfg"))
 
 
 func test_character_and_menus() -> void:

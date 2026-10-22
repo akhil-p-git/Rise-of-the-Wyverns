@@ -22,6 +22,8 @@ var _age := 0.0
 
 func _ready() -> void:
 	_ship.position = SHIP_START
+	Audio.play_music("mus_storm")
+	Audio.play_ambience(["amb_rain", "amb_waves", "amb_wind"])
 	_play()
 
 
@@ -80,6 +82,7 @@ func _impact() -> void:
 	_debris.global_position = _ship.global_position
 	_debris.restart()
 	_shake(5.0, 0.7)
+	Audio.play_sfx("thunder")
 	_flash.color.a = 0.9
 	create_tween().tween_property(_flash, "color:a", 0.0, 0.5)
 

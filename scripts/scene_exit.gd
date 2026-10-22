@@ -12,4 +12,5 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player:
+		Audio.play_sfx("scene_exit")
 		Game.go_to(target_scene, target_spawn)

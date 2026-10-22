@@ -84,6 +84,8 @@ size = Vector2(16, 52)
 y_sort_enabled = false
 script = ExtResource("1_script")
 area_size = Vector2i(640, 420)
+music_cue = "mus_wrackmouth"
+ambience_cues = PackedStringArray("amb_wind", "amb_gulls", "amb_fire")
 
 [node name="Ground" type="Sprite2D" parent="."]
 texture = ExtResource("2_texture2d")

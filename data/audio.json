@@ -1,0 +1,129 @@
+{
+  "cues": {
+    "mus_menu": {
+      "path": "res://assets/audio/music/mus_menu.ogg",
+      "bus": "Music",
+      "volume_db": 0.0,
+      "loop": true
+    },
+    "mus_storm": {
+      "path": "res://assets/audio/music/mus_storm.ogg",
+      "bus": "Music",
+      "volume_db": 0.0,
+      "loop": true
+    },
+    "mus_beach": {
+      "path": "res://assets/audio/music/mus_beach.ogg",
+      "bus": "Music",
+      "volume_db": -1.0,
+      "loop": true
+    },
+    "mus_wrackmouth": {
+      "path": "res://assets/audio/music/mus_wrackmouth.ogg",
+      "bus": "Music",
+      "volume_db": -1.0,
+      "loop": true
+    },
+    "mus_crossholm_road": {
+      "path": "res://assets/audio/music/mus_crossholm_road.ogg",
+      "bus": "Music",
+      "volume_db": 0.0,
+      "loop": true
+    },
+    "amb_waves": {
+      "path": "res://assets/audio/ambience/amb_waves.ogg",
+      "bus": "Ambience",
+      "volume_db": 0.0,
+      "loop": true
+    },
+    "amb_wind": {
+      "path": "res://assets/audio/ambience/amb_wind.ogg",
+      "bus": "Ambience",
+      "volume_db": -1.5,
+      "loop": true
+    },
+    "amb_rain": {
+      "path": "res://assets/audio/ambience/amb_rain.ogg",
+      "bus": "Ambience",
+      "volume_db": 0.0,
+      "loop": true
+    },
+    "amb_gulls": {
+      "path": "res://assets/audio/ambience/amb_gulls.ogg",
+      "bus": "Ambience",
+      "volume_db": -3.0,
+      "loop": true
+    },
+    "amb_fire": {
+      "path": "res://assets/audio/ambience/amb_fire.ogg",
+      "bus": "Ambience",
+      "volume_db": -1.0,
+      "loop": true
+    },
+    "ui_hover": {
+      "path": "res://assets/audio/sfx/ui_hover.wav",
+      "bus": "UI",
+      "volume_db": -6.0
+    },
+    "ui_confirm": {
+      "path": "res://assets/audio/sfx/ui_confirm.wav",
+      "bus": "UI",
+      "volume_db": -3.0
+    },
+    "ui_back": {
+      "path": "res://assets/audio/sfx/ui_back.wav",
+      "bus": "UI",
+      "volume_db": -3.0
+    },
+    "dialogue_blip": {
+      "path": "res://assets/audio/sfx/dialogue_blip.wav",
+      "bus": "UI",
+      "volume_db": -8.0
+    },
+    "step_sand": {
+      "path": "res://assets/audio/sfx/step_sand.wav",
+      "bus": "SFX",
+      "volume_db": -5.0
+    },
+    "step_wet_sand": {
+      "path": "res://assets/audio/sfx/step_wet_sand.wav",
+      "bus": "SFX",
+      "volume_db": -4.0
+    },
+    "step_gravel": {
+      "path": "res://assets/audio/sfx/step_gravel.wav",
+      "bus": "SFX",
+      "volume_db": -5.0
+    },
+    "step_planks": {
+      "path": "res://assets/audio/sfx/step_planks.wav",
+      "bus": "SFX",
+      "volume_db": -4.0
+    },
+    "step_stone": {
+      "path": "res://assets/audio/sfx/step_stone.wav",
+      "bus": "SFX",
+      "volume_db": -4.5
+    },
+    "pickup": {
+      "path": "res://assets/audio/sfx/pickup.wav",
+      "bus": "SFX",
+      "volume_db": -2.0
+    },
+    "rest_fire": {
+      "path": "res://assets/audio/sfx/rest_fire.wav",
+      "bus": "SFX",
+      "volume_db": -2.0
+    },
+    "scene_exit": {
+      "path": "res://assets/audio/sfx/scene_exit.wav",
+      "bus": "SFX",
+      "volume_db": -3.0
+    },
+    "thunder": {
+      "path": "res://assets/audio/sfx/thunder.wav",
+      "bus": "SFX",
+      "volume_db": 0.0
+    }
+  }
+}

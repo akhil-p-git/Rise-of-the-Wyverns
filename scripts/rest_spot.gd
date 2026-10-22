@@ -15,6 +15,7 @@ func interact(_player: Player) -> void:
 		return
 	if not free:
 		state.take("coin", cost)
+	Audio.play_sfx("rest_fire", global_position)
 	Game.blackout(_restore)
 	interacted.emit("You sleep without dreaming, which is a mercy.")
 

@@ -44,6 +44,8 @@ func _ready() -> void:
 	_build_audio_sliders()
 	_refresh_settings_labels()
 	_load_credits_text()
+	Audio.play_music("mus_menu")
+	Audio.play_ambience(["amb_wind", "amb_waves"])
 	_new_game_btn.grab_focus()
 
 
@@ -98,17 +100,12 @@ func _on_toggle_vsync() -> void:
 func _refresh_settings_labels() -> void:
 	_fullscreen_btn.text = "Fullscreen" if Game.fullscreen else "Windowed"
 	_vsync_btn.text = "Enabled" if Game.vsync else "Disabled"
-	var audio := get_node_or_null("/root/Audio")
-	if audio:
-		for bus_name: String in _bus_sliders:
-			var slider: HSlider = _bus_sliders[bus_name]
-			slider.set_value_no_signal(audio.get_bus_volume(bus_name))
+	for bus_name: String in _bus_sliders:
+		var slider: HSlider = _bus_sliders[bus_name]
+		slider.set_value_no_signal(Audio.get_bus_volume(bus_name))
 
 
 func _build_audio_sliders() -> void:
-	var audio := get_node_or_null("/root/Audio")
-	if audio == null:
-		return
 	for child in _audio_box.get_children():
 		child.queue_free()
 	_bus_sliders.clear()
@@ -123,8 +120,8 @@ func _build_audio_sliders() -> void:
 		slider.step = 0.05
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.custom_minimum_size = Vector2(120, 16)
-		slider.value = audio.get_bus_volume(bus_name)
-		slider.value_changed.connect(func(v: float) -> void: audio.set_bus_volume(bus_name, v))
+		slider.value = Audio.get_bus_volume(bus_name)
+		slider.value_changed.connect(func(v: float) -> void: Audio.set_bus_volume(bus_name, v))
 		row.add_child(lbl)
 		row.add_child(slider)
 		_audio_box.add_child(row)

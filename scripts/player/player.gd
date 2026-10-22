@@ -21,8 +21,10 @@ var input_enabled := true
 var facing := Vector2.DOWN
 ## Scales walk and sprint speed; the arrival scene lowers it so the survivor staggers ashore.
 var speed_scale := 1.0
+var surface_resolver: Callable
 
 var _walk_time := 0.0
+var _prev_step_col := 0
 var _prompt := ""
 
 @onready var _sprite: Sprite2D = $Sprite2D
@@ -91,12 +93,17 @@ func _animate(delta: float) -> void:
 	var speed := velocity.length()
 	if speed < MOVING_SPEED:
 		_walk_time = 0.0
+		_prev_step_col = 0
 		_sprite.frame_coords = Vector2i(0, row)
 		_sprite.offset.y = _sprite_rest_y
 		return
 	# Stride cadence follows actual speed, so ramping up and stopping both look natural.
 	_walk_time += delta * speed / WALK_SPEED
 	var column := int(_walk_time / WALK_FRAME_TIME) % 4
+	if column % 2 == 1 and column != _prev_step_col:
+		var cue: String = surface_resolver.call(global_position) if surface_resolver.is_valid() else "step_gravel"
+		Audio.play_sfx(cue, global_position, randf_range(0.92, 1.08))
+	_prev_step_col = column
 	# hero_sheet.png rows: down, up, left, right. Columns: idle, stride, idle, stride.
 	_sprite.frame_coords = Vector2i(column, row)
 	_sprite.offset.y = _sprite_rest_y - (STEP_BOB if column % 2 == 1 else 0.0)

@@ -93,6 +93,8 @@ func _ready() -> void:
 	_back_btn.pressed.connect(_on_back)
 	_next_btn.pressed.connect(_on_next)
 
+	Audio.play_music("mus_menu")
+	Audio.play_ambience(["amb_wind", "amb_waves"])
 	_refresh_ui()
 	set_step(0)
 

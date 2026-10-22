@@ -256,8 +256,11 @@ def frame(
     root_name: str,
     ground: str,
     ground_texture: str = "",
+    music_cue: str = "mus_wrackmouth",
+    ambience_cues: tuple[str, ...] = ("amb_wind", "amb_gulls"),
 ) -> None:
     w, h = size
+    amb_str = "PackedStringArray(" + ", ".join(f'"{c}"' for c in ambience_cues) + ")"
     s.node(
         root_name,
         "Node2D",
@@ -265,6 +268,8 @@ def frame(
         y_sort_enabled="false",
         script=s.ext("Script", "res://scripts/world/area_scene.gd"),
         area_size=f"Vector2i({w}, {h})",
+        music_cue=f'"{music_cue}"',
+        ambience_cues=amb_str,
     )
     if ground_texture:
         s.node(
@@ -339,6 +344,8 @@ def wrackmouth() -> str:
         "Wrackmouth",
         col(0.27, 0.4, 0.25),
         "res://assets/wrackmouth/ground.png",
+        music_cue="mus_wrackmouth",
+        ambience_cues=("amb_wind", "amb_gulls", "amb_fire"),
     )
     # North gate to the beach and the east road are the two ways out.
     borders(s, W, H, {"North": (296, 344), "East": (186, 238)})
@@ -615,6 +622,8 @@ def crossholm_road() -> str:
         "CrossholmRoad",
         col(0.3, 0.39, 0.26),
         "res://assets/crossholm_road/ground.png",
+        music_cue="mus_crossholm_road",
+        ambience_cues=("amb_wind",),
     )
     borders(s, W, H, {"West": (176, 232)})
     s.node("Entities", "Node2D", ".", y_sort_enabled="true")

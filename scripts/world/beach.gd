@@ -11,6 +11,9 @@ var play_arrival := false
 
 func _ready() -> void:
 	var player: Player = $Entities/Player
+	player.surface_resolver = _surface_at
+	Audio.play_music("mus_beach")
+	Audio.play_ambience(["amb_waves", "amb_wind", "amb_gulls"])
 	var camera: Camera2D = player.get_node("Camera2D")
 	camera.limit_left = 0
 	camera.limit_top = 0
@@ -43,3 +46,13 @@ func _arrive() -> void:
 	create_tween().tween_property(fade, "color:a", 0.0, 2.5)
 	create_tween().tween_property(player, "speed_scale", 1.0, 4.0).set_delay(1.0)
 	$Hud.show_message("Cold water. Salt. You are alive, and the rest of the ship is not.")
+
+
+func _surface_at(pos: Vector2) -> String:
+	if pos.x < 92.0 and pos.y < 110.0:
+		return "step_planks"
+	if pos.y < 86.0:
+		return "step_wet_sand"
+	if pos.y > 130.0 and pos.x >= 132.0 and pos.x <= 168.0:
+		return "step_gravel"
+	return "step_sand"

@@ -9,8 +9,10 @@ const CHARS_PER_SECOND := 70.0
 
 var _runner := DialogueRunner.new()
 var _player: Player
+var _active_npc: Npc
 var _opened_frame := -1
 var _typing: Tween
+var _blip_accum := 0.0
 
 @onready var _panel: Control = $Panel
 @onready var _name: Label = $Panel/Margin/Box/Name
@@ -31,11 +33,21 @@ func is_open() -> bool:
 func open(npc: Npc, player: Player) -> void:
 	if is_open() or not _runner.begin(StoryData.load_json(npc.dialogue_path), Game.state):
 		return
+	_active_npc = npc
 	_player = player
 	_player.input_enabled = false
 	_opened_frame = Engine.get_process_frames()
+	Audio.set_music_ducked(true)
 	_panel.show()
 	_show_node()
+
+
+func _process(delta: float) -> void:
+	if is_open() and _typing and _typing.is_running():
+		_blip_accum += delta
+		if _blip_accum >= 0.065:
+			_blip_accum = 0.0
+			Audio.play_sfx("dialogue_blip", null, randf_range(0.95, 1.06))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -107,6 +119,10 @@ func _finished_typing() -> void:
 func _close() -> void:
 	if _typing:
 		_typing.kill()
+	Audio.set_music_ducked(false)
 	_panel.hide()
 	_player.input_enabled = true
+	if is_instance_valid(_active_npc) and _active_npc.has_method("end_interaction"):
+		_active_npc.call("end_interaction")
+	_active_npc = null
 	closed.emit()

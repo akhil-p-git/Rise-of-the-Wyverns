@@ -30,5 +30,6 @@ func interact(_player: Player) -> void:
 	if not sets_flag.is_empty():
 		state.set_flag(sets_flag)
 	state.set_flag(_key)
+	Audio.play_sfx("pickup", global_position)
 	interacted.emit(message)
 	queue_free()

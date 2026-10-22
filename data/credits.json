@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "role": "Display & UI Font (Noto Serif Display Medium)",
+      "author": "The Noto Project Authors",
+      "license": "SIL Open Font License 1.1",
+      "url": "https://github.com/notofonts/latin-greek-cyrillic"
+    },
+    {
+      "role": "Procedural UI, Footstep, Ambience & Drone Synth Cues",
+      "author": "Rise of the Wyverns Project (tools/gen_sfx.py)",
+      "license": "Project-owned code output",
+      "url": "tools/gen_sfx.py"
+    }
+  ]
+}
