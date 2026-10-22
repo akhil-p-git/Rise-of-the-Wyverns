@@ -1,0 +1,50 @@
+{
+  "entries": [
+    {"if": ["stage:overdue_cart=return", "item:carters_tally"], "node": "cart_return"},
+    {"if": ["active:overdue_cart"], "node": "cart_reminder"},
+    {"if": ["done:overdue_cart"], "node": "after_cart"},
+    {"if": [], "node": "hello"}
+  ],
+  "nodes": {
+    "hello": {
+      "speaker": "Bram Quillon",
+      "text": "Welcome to the Salt Gull. Beds are five coin, and the stew is free if you look as hungry as you do. It has been quiet since the wrecks stopped coming.",
+      "choices": [
+        {"text": "Anything on your mind?", "if": ["!started:overdue_cart"], "next": "cart_offer"},
+        {"text": "What's the village like?", "next": "gossip"},
+        {"text": "Just looking."}
+      ]
+    },
+    "gossip": {
+      "speaker": "Bram Quillon",
+      "text": "Tolle is fair and tired. Orsa Kell will sell you a nail and a lecture. Pell Harrow does not like strangers, and likes survivors less. Give him time. Everyone here has pulled someone out of the water once.",
+      "next": "hello"
+    },
+    "cart_offer": {
+      "speaker": "Bram Quillon",
+      "text": "My supply cart is two days late from Crossholm. Dov Carrow is never late; he is afraid of his wife. It is an easy day east on the road. If you are going that way, find him.",
+      "choices": [
+        {"text": "I'll look for him.", "do": ["start:overdue_cart"]},
+        {"text": "Not now."}
+      ]
+    },
+    "cart_reminder": {
+      "speaker": "Bram Quillon",
+      "text": "East road, towards Crossholm. A man, a mule and a cart. Not hard to miss."
+    },
+    "cart_return": {
+      "speaker": "Bram Quillon",
+      "text": "Dov's tally stick. So he is alive, and frightened half out of his boots. Wings in the fog, he said? Well. That is a story for the mayor.",
+      "do": ["take:carters_tally", "give:coin:30", "flag:bram_paid", "flag:inn_free"],
+      "next": "cart_return2"
+    },
+    "cart_return2": {
+      "speaker": "Bram Quillon",
+      "text": "Thirty coin for the trouble, and a bed here is yours for free as long as I have a roof."
+    },
+    "after_cart": {
+      "speaker": "Bram Quillon",
+      "text": "Your bed is made whenever you want it. Dov is still not driving that road, I hear."
+    }
+  }
+}

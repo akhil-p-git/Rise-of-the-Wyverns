@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bft5fibb1327e"]
+
+[ext_resource type="Texture2D" uid="uid://c8jikjnwlgeel" path="res://assets/test_art/demo_map.png" id="1_gnkyj"]
+
+[node name="Node2D" type="Node2D" unique_id=888346319]
+
+[node name="DemoMap" type="Sprite2D" parent="." unique_id=458251618]
+position = Vector2(-18, 29)
+texture = ExtResource("1_gnkyj")
+centered = false

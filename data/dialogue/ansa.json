@@ -1,0 +1,17 @@
+{
+  "entries": [{"if": [], "node": "talk"}],
+  "nodes": {
+    "talk": {
+      "speaker": "Ansa Rook",
+      "text": "I watched the ship's lanterns go under, from the wall behind my house. I sat there until it was light. I am sorry for whoever you lost out there. It does not matter what they were.",
+      "choices": [
+        {"text": "Thank you.", "next": "thanks"},
+        {"text": "I lost everyone."}
+      ]
+    },
+    "thanks": {
+      "speaker": "Ansa Rook",
+      "text": "Eat something. Bram will not charge you for the stew. He never charges anyone for the stew; it is how he keeps his conscience clean."
+    }
+  }
+}

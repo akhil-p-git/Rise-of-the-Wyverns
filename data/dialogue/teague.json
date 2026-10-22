@@ -1,0 +1,32 @@
+{
+  "entries": [
+    {"if": ["stage:work_to_belong=chores", "item:mayor_letter", "!flag:chore_message"], "node": "letter"},
+    {"if": ["flag:saw_grave"], "node": "after_grave"},
+    {"if": [], "node": "lore"}
+  ],
+  "nodes": {
+    "letter": {
+      "speaker": "Teague Marrow",
+      "text": "Tolle's hand. She still writes as if she is angry at the paper.",
+      "do": ["take:mayor_letter", "flag:chore_message"],
+      "next": "log"
+    },
+    "log": {
+      "speaker": "Teague Marrow",
+      "text": "You can tell her this, since you are here. Three nights this month I have seen wing-shapes in the fog off the headland. Big ones. I wrote them in the log, and beside each I wrote: can't be.",
+      "next": "log2"
+    },
+    "log2": {
+      "speaker": "Teague Marrow",
+      "text": "Fog does things. But I have kept this light for thirty years, and fog does not do that."
+    },
+    "lore": {
+      "speaker": "Teague Marrow",
+      "text": "The light burns, the log is kept. That is the whole of the job. Mind the cliff edge in the fog."
+    },
+    "after_grave": {
+      "speaker": "Teague Marrow",
+      "text": "The bones on the shore, gone? I saw something go over the cliff at dawn, low and slow. I wrote 'gull'. It was not a gull."
+    }
+  }
+}

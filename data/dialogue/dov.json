@@ -1,0 +1,32 @@
+{
+  "entries": [
+    {"if": ["started:overdue_cart", "!flag:met_dov"], "node": "found"},
+    {"if": ["flag:met_dov"], "node": "after"},
+    {"if": [], "node": "default"}
+  ],
+  "nodes": {
+    "found": {
+      "speaker": "Dov Carrow",
+      "text": "Don't, I have nothing, I... oh. You are from Wrackmouth. Bram sent you. Of course he did.",
+      "do": ["flag:met_dov", "give:carters_tally"],
+      "next": "found2"
+    },
+    "found2": {
+      "speaker": "Dov Carrow",
+      "text": "The mule bolted at dusk. Over the rise there is smoke, my cousin's farm, and in the fog above it, wings. Wings as wide as a barn. I am not driving this road again. Take him my tally stick so he knows I am alive.",
+      "next": "found3"
+    },
+    "found3": {
+      "speaker": "Dov Carrow",
+      "text": "And tell him I will pay for the cart. Later. When I stop shaking."
+    },
+    "after": {
+      "speaker": "Dov Carrow",
+      "text": "Go. Tell Bram. And do not look up when you pass that ridge."
+    },
+    "default": {
+      "speaker": "Dov Carrow",
+      "text": "Keep walking, friend. Nothing to see here but a man and a ditch."
+    }
+  }
+}

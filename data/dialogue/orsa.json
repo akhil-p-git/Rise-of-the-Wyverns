@@ -1,0 +1,56 @@
+{
+  "entries": [
+    {"if": ["stage:work_to_belong=chores", "item:salvage_crate", "!flag:chore_crate"], "node": "deliver"},
+    {"if": ["stage:irons_for_orsa=return"], "node": "scrap_return"},
+    {"if": ["active:irons_for_orsa"], "node": "scrap_reminder"},
+    {"if": ["done:irons_for_orsa"], "node": "after_scrap"},
+    {"if": ["started:work_to_belong"], "node": "intro"},
+    {"if": [], "node": "cold"}
+  ],
+  "nodes": {
+    "cold": {
+      "speaker": "Orsa Kell",
+      "text": "Stranger. The mayor decides who works for whom around here. Talk to her first."
+    },
+    "intro": {
+      "speaker": "Orsa Kell",
+      "text": "The mayor's new hand. Good. I cannot sell what I cannot reach.",
+      "choices": [
+        {"text": "What do you make here?", "next": "trade"},
+        {"text": "Is there other work?", "if": ["!started:irons_for_orsa"], "next": "scrap_offer"},
+        {"text": "Later."}
+      ]
+    },
+    "trade": {
+      "speaker": "Orsa Kell",
+      "text": "Bone, scale and iron. Folk bring me what the sea and the old graves give up, and I make it into things that last. If anything worth the name comes in, wyvern bone, say, I will teach you to work it.",
+      "next": "intro"
+    },
+    "scrap_offer": {
+      "speaker": "Orsa Kell",
+      "text": "Iron. The tide leaves nails and ship-bands along the shore. Three good pieces and I can finish a blade I owe. I will pay for it.",
+      "choices": [
+        {"text": "I'll look along the shore.", "do": ["start:irons_for_orsa"]},
+        {"text": "Not now."}
+      ]
+    },
+    "deliver": {
+      "speaker": "Orsa Kell",
+      "text": "Ship-stamped, salt-cured, and every piece of it here. Salvagers pay by weight and by honesty. You came back with all of it, and that counts for something. Tell the mayor I said so.",
+      "do": ["take:salvage_crate", "flag:chore_crate"]
+    },
+    "scrap_reminder": {
+      "speaker": "Orsa Kell",
+      "text": "Three pieces of iron scrap, along the shore. Nails, bands, anything that rings."
+    },
+    "scrap_return": {
+      "speaker": "Orsa Kell",
+      "text": "Three. They ring true. Twenty coin, and I will not haggle you down.",
+      "do": ["take:iron_scrap:3", "give:coin:20", "flag:orsa_paid"]
+    },
+    "after_scrap": {
+      "speaker": "Orsa Kell",
+      "text": "The blade is done and paid for. When you come across bone that is older than it should be, bring it here first."
+    }
+  }
+}

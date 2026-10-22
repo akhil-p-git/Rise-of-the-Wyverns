@@ -1,0 +1,24 @@
+{
+  "entries": [
+    {"if": ["flag:saw_grave"], "node": "bones"},
+    {"if": [], "node": "wary"}
+  ],
+  "nodes": {
+    "wary": {
+      "speaker": "Pell Harrow",
+      "text": "You are the one who walked out of the wreck. Funny. Wrecks round here give back bodies, not people.",
+      "choices": [
+        {"text": "I didn't ask to survive.", "next": "wary2"},
+        {"text": "I have nothing to say to you."}
+      ]
+    },
+    "wary2": {
+      "speaker": "Pell Harrow",
+      "text": "No. Nobody does. Keep your hands off what is not yours on that beach, that is all. Salvage rights belong to the village."
+    },
+    "bones": {
+      "speaker": "Pell Harrow",
+      "text": "I walked that shore at dawn, as I have since I was a boy. The old bones, the big ones, the ones every child here has climbed on: gone. No drag marks I could follow, only scorching. Do not look at me like that. I am not drunk."
+    }
+  }
+}

@@ -1,0 +1,33 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/npc.gd" id="1_npc"]
+[ext_resource type="Texture2D" path="res://assets/hero/hero_sheet.png" id="2_hero"]
+
+[sub_resource type="CircleShape2D" id="reach"]
+radius = 13.0
+
+[sub_resource type="CircleShape2D" id="body"]
+radius = 5.0
+
+[node name="Npc" type="Area2D"]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_npc")
+prompt = "Talk"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_hero")
+offset = Vector2(0, -16)
+hframes = 4
+vframes = 4
+
+[node name="Reach" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("reach")
+
+[node name="Body" type="StaticBody2D" parent="."]
+
+[node name="Shape" type="CollisionShape2D" parent="Body"]
+position = Vector2(0, -3)
+shape = SubResource("body")

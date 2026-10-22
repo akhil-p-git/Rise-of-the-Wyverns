@@ -1,0 +1,72 @@
+{
+  "items": {
+    "coin": "Coin",
+    "salvage_crate": "Salvage crate",
+    "iron_scrap": "Iron scrap",
+    "moonherb": "Moonherb",
+    "hex_bone": "Hex-marked bone",
+    "mayor_letter": "Mayor's letter",
+    "carters_tally": "Dov's tally stick"
+  },
+  "derived": {
+    "rats_cleared": ["flag:rathole_1", "flag:rathole_2", "flag:rathole_3"],
+    "cairns_done": ["flag:saw_grave", "item:moonherb>=3"]
+  },
+  "quests": {
+    "work_to_belong": {
+      "title": "Work to Belong",
+      "stages": [
+        {
+          "id": "chores",
+          "text": "Do the mayor's chores: a salvage crate for Orsa, the rat holes behind the Hall, a letter for the Lantern Watch",
+          "done_when": ["flag:chore_crate", "flag:rats_cleared", "flag:chore_message"]
+        },
+        {
+          "id": "cairns",
+          "text": "Gather three moonherb at the old cairns, south-west of the village",
+          "done_when": ["flag:cairns_done"]
+        },
+        {
+          "id": "report",
+          "text": "Take the moonherb back to Mayor Tolle",
+          "done_when": ["flag:reported_mayor"]
+        },
+        {
+          "id": "road",
+          "text": "Carry the hex-marked bone to Crossholm by the east road",
+          "done_when": ["flag:reached_crossholm"]
+        }
+      ]
+    },
+    "irons_for_orsa": {
+      "title": "Iron for the Forge",
+      "stages": [
+        {
+          "id": "scrap",
+          "text": "Collect three pieces of iron scrap along the shore",
+          "done_when": ["item:iron_scrap>=3"]
+        },
+        {
+          "id": "return",
+          "text": "Bring the scrap to Orsa Kell",
+          "done_when": ["flag:orsa_paid"]
+        }
+      ]
+    },
+    "overdue_cart": {
+      "title": "The Overdue Cart",
+      "stages": [
+        {
+          "id": "find",
+          "text": "Find Dov the carter on the Crossholm road",
+          "done_when": ["flag:met_dov"]
+        },
+        {
+          "id": "return",
+          "text": "Tell Bram what became of Dov",
+          "done_when": ["flag:bram_paid"]
+        }
+      ]
+    }
+  }
+}

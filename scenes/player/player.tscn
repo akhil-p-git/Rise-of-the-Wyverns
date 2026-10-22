@@ -1,0 +1,37 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
+[ext_resource type="Texture2D" path="res://assets/hero/hero_sheet.png" id="2_hero"]
+
+[sub_resource type="CircleShape2D" id="body_shape"]
+radius = 5.0
+
+[sub_resource type="CircleShape2D" id="reach_shape"]
+radius = 9.0
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_player")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_hero")
+offset = Vector2(0, -16)
+hframes = 4
+vframes = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -3)
+shape = SubResource("body_shape")
+
+[node name="InteractArea" type="Area2D" parent="."]
+position = Vector2(0, 14)
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("reach_shape")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+process_callback = 0
+position = Vector2(0, -20)
+zoom = Vector2(2, 2)
+position_smoothing_enabled = true

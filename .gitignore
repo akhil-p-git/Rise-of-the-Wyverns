@@ -1,0 +1,10 @@
+.godot/
+export/
+builds/
+*.tmp
+__pycache__/
+*.pyc
+.mcp.json
+godot_mcp_config.json
+# Raw Gemini sources (45 MB of JPEG): reproducible from docs/gemini-sprite-prompts.md and logged in ASSETS.md; back up outside git
+assets/source/

@@ -1,0 +1,109 @@
+[gd_scene format=3 uid="uid://bnfnc2k7mrcdb"]
+
+[ext_resource type="Script" uid="uid://chgut0c6ty1lp" path="res://scripts/world/test_room.gd" id="1_room"]
+[ext_resource type="Texture2D" uid="uid://c8jikjnwlgeel" path="res://assets/test_art/demo_map.png" id="2_map"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" uid="uid://cyxobaxqh15jq" path="res://scripts/interactable.gd" id="5_interactable"]
+
+[sub_resource type="RectangleShape2D" id="wall_h"]
+size = Vector2(704, 16)
+
+[sub_resource type="RectangleShape2D" id="wall_v"]
+size = Vector2(16, 416)
+
+[sub_resource type="CircleShape2D" id="tree_trunk"]
+radius = 6.0
+
+[sub_resource type="CircleShape2D" id="sign_reach"]
+radius = 12.0
+
+[node name="TestRoom" type="Node2D" unique_id=1917106659]
+script = ExtResource("1_room")
+
+[node name="Ground" type="ColorRect" parent="." unique_id=668067211]
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.247, 0.49, 0.227, 1)
+
+[node name="Map" type="Sprite2D" parent="." unique_id=744985750]
+texture = ExtResource("2_map")
+centered = false
+
+[node name="Walls" type="StaticBody2D" parent="." unique_id=433609341]
+
+[node name="Top" type="CollisionShape2D" parent="Walls" unique_id=1168115787]
+position = Vector2(320, -8)
+shape = SubResource("wall_h")
+
+[node name="Bottom" type="CollisionShape2D" parent="Walls" unique_id=858287586]
+position = Vector2(320, 360)
+shape = SubResource("wall_h")
+
+[node name="Left" type="CollisionShape2D" parent="Walls" unique_id=924594764]
+position = Vector2(-8, 176)
+shape = SubResource("wall_v")
+
+[node name="Right" type="CollisionShape2D" parent="Walls" unique_id=96309584]
+position = Vector2(648, 176)
+shape = SubResource("wall_v")
+
+[node name="Trees" type="StaticBody2D" parent="." unique_id=1602938626]
+
+[node name="Tree1" type="CollisionShape2D" parent="Trees" unique_id=661138735]
+position = Vector2(60, 117)
+shape = SubResource("tree_trunk")
+
+[node name="Tree2" type="CollisionShape2D" parent="Trees" unique_id=1068453691]
+position = Vector2(150, 67)
+shape = SubResource("tree_trunk")
+
+[node name="Tree3" type="CollisionShape2D" parent="Trees" unique_id=241206459]
+position = Vector2(240, 147)
+shape = SubResource("tree_trunk")
+
+[node name="Tree4" type="CollisionShape2D" parent="Trees" unique_id=332515934]
+position = Vector2(400, 147)
+shape = SubResource("tree_trunk")
+
+[node name="Tree5" type="CollisionShape2D" parent="Trees" unique_id=497405206]
+position = Vector2(590, 167)
+shape = SubResource("tree_trunk")
+
+[node name="Tree6" type="CollisionShape2D" parent="Trees" unique_id=1581651942]
+position = Vector2(110, 297)
+shape = SubResource("tree_trunk")
+
+[node name="Tree7" type="CollisionShape2D" parent="Trees" unique_id=1425624250]
+position = Vector2(430, 317)
+shape = SubResource("tree_trunk")
+
+[node name="Tree8" type="CollisionShape2D" parent="Trees" unique_id=1204879316]
+position = Vector2(610, 317)
+shape = SubResource("tree_trunk")
+
+[node name="Tree9" type="CollisionShape2D" parent="Trees" unique_id=875805355]
+position = Vector2(345, 67)
+shape = SubResource("tree_trunk")
+
+[node name="Sign" type="Area2D" parent="." unique_id=1044300255]
+position = Vector2(340, 190)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("5_interactable")
+message = "Harbor road. Work finds those who ask for it."
+
+[node name="Post" type="ColorRect" parent="Sign" unique_id=1208200557]
+offset_left = -4.0
+offset_top = -12.0
+offset_right = 4.0
+color = Color(0.45, 0.3, 0.18, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sign" unique_id=1998603853]
+shape = SubResource("sign_reach")
+
+[node name="Player" parent="." unique_id=1993650134 instance=ExtResource("3_player")]
+position = Vector2(300, 200)
+
+[node name="Hud" parent="." unique_id=1367409493 instance=ExtResource("4_hud")]

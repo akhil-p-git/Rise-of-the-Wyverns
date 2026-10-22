@@ -1,0 +1,554 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/area_scene.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/ground.png" id="2_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/building.gd" id="3_script"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/mayor_hall.png" id="4_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/forge.png" id="5_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/salt_gull.png" id="6_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/cottage_harrow.png" id="7_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/cottage_rook.png" id="8_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/cottage_shuttered.png" id="9_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/wrackmouth/lantern_watch.png" id="10_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/props/campfire_lit.png" id="11_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/props/signpost.png" id="12_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/props/dead_tree.png" id="13_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/mayor.png" id="14_texture2d"]
+[ext_resource type="PackedScene" path="res://scenes/npc/npc.tscn" id="15_packedscene"]
+[ext_resource type="Texture2D" path="res://assets/npc/orsa.png" id="16_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/bram.png" id="17_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/teague.png" id="18_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/pell.png" id="19_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/ansa.png" id="20_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/wren.png" id="21_texture2d"]
+[ext_resource type="Script" path="res://scripts/interactable.gd" id="22_script"]
+[ext_resource type="Script" path="res://scripts/rest_spot.gd" id="23_script"]
+[ext_resource type="Script" path="res://scripts/pickup.gd" id="24_script"]
+[ext_resource type="Texture2D" path="res://assets/props/rathole.png" id="25_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/props/moonherb.png" id="26_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/props/open_grave.png" id="27_texture2d"]
+[ext_resource type="Script" path="res://scripts/scene_exit.gd" id="28_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="29_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="30_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="31_packedscene"]
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_0"]
+size = Vector2(312, 16)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_1"]
+size = Vector2(672, 16)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_2"]
+size = Vector2(16, 452)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_3"]
+size = Vector2(16, 202)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_4"]
+size = Vector2(16, 198)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_5"]
+size = Vector2(104, 64)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_6"]
+size = Vector2(88, 52)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_7"]
+size = Vector2(120, 66)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_8"]
+size = Vector2(64, 44)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_9"]
+size = Vector2(60, 42)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_10"]
+size = Vector2(40, 70)
+
+[sub_resource type="CircleShape2D" id="circleshape2d_11"]
+radius = 10
+
+[sub_resource type="CircleShape2D" id="circleshape2d_12"]
+radius = 12
+
+[sub_resource type="CircleShape2D" id="circleshape2d_13"]
+radius = 11
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_14"]
+size = Vector2(48, 16)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_15"]
+size = Vector2(16, 52)
+
+[node name="Wrackmouth" type="Node2D"]
+y_sort_enabled = false
+script = ExtResource("1_script")
+area_size = Vector2i(640, 420)
+
+[node name="Ground" type="Sprite2D" parent="."]
+texture = ExtResource("2_texture2d")
+centered = false
+
+[node name="Bounds" type="StaticBody2D" parent="."]
+
+[node name="North0" type="StaticBody2D" parent="Bounds"]
+
+[node name="Shape" type="CollisionShape2D" parent="Bounds/North0"]
+position = Vector2(140, -8)
+shape = SubResource("rectangleshape2d_0")
+
+[node name="North1" type="StaticBody2D" parent="Bounds"]
+
+[node name="Shape" type="CollisionShape2D" parent="Bounds/North1"]
+position = Vector2(484, -8)
+shape = SubResource("rectangleshape2d_0")
+
+[node name="South0" type="StaticBody2D" parent="Bounds"]
+
+[node name="Shape" type="CollisionShape2D" parent="Bounds/South0"]
+position = Vector2(320, 428)
+shape = SubResource("rectangleshape2d_1")
+
+[node name="West0" type="StaticBody2D" parent="Bounds"]
+
+[node name="Shape" type="CollisionShape2D" parent="Bounds/West0"]
+position = Vector2(-8, 210)
+shape = SubResource("rectangleshape2d_2")
+
+[node name="East0" type="StaticBody2D" parent="Bounds"]
+
+[node name="Shape" type="CollisionShape2D" parent="Bounds/East0"]
+position = Vector2(648, 85)
+shape = SubResource("rectangleshape2d_3")
+
+[node name="East1" type="StaticBody2D" parent="Bounds"]
+
+[node name="Shape" type="CollisionShape2D" parent="Bounds/East1"]
+position = Vector2(648, 321)
+shape = SubResource("rectangleshape2d_4")
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="Zones" type="Node2D" parent="."]
+
+[node name="MayorHall" type="StaticBody2D" parent="Entities"]
+position = Vector2(150, 150)
+script = ExtResource("3_script")
+size = Vector2(104, 64)
+wall_color = Color(0.5, 0.48, 0.44, 1.0)
+roof_color = Color(0.24, 0.27, 0.34, 1.0)
+label = "Mayor's Hall"
+door = true
+texture = ExtResource("4_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/MayorHall"]
+position = Vector2(0, -32)
+shape = SubResource("rectangleshape2d_5")
+
+[node name="Forge" type="StaticBody2D" parent="Entities"]
+position = Vector2(500, 175)
+script = ExtResource("3_script")
+size = Vector2(88, 52)
+wall_color = Color(0.4, 0.34, 0.3, 1.0)
+roof_color = Color(0.3, 0.2, 0.18, 1.0)
+label = "Kell's Forge"
+door = true
+texture = ExtResource("5_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/Forge"]
+position = Vector2(0, -26)
+shape = SubResource("rectangleshape2d_6")
+
+[node name="SaltGull" type="StaticBody2D" parent="Entities"]
+position = Vector2(330, 345)
+script = ExtResource("3_script")
+size = Vector2(120, 66)
+wall_color = Color(0.46, 0.35, 0.26, 1.0)
+roof_color = Color(0.23, 0.2, 0.2, 1.0)
+label = "The Salt Gull"
+door = true
+texture = ExtResource("6_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/SaltGull"]
+position = Vector2(0, -33)
+shape = SubResource("rectangleshape2d_7")
+
+[node name="HarrowHouse" type="StaticBody2D" parent="Entities"]
+position = Vector2(80, 290)
+script = ExtResource("3_script")
+size = Vector2(64, 44)
+wall_color = Color(0.44, 0.38, 0.32, 1.0)
+roof_color = Color(0.26, 0.24, 0.28, 1.0)
+label = ""
+door = true
+texture = ExtResource("7_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/HarrowHouse"]
+position = Vector2(0, -22)
+shape = SubResource("rectangleshape2d_8")
+
+[node name="RookCottage" type="StaticBody2D" parent="Entities"]
+position = Vector2(205, 300)
+script = ExtResource("3_script")
+size = Vector2(60, 42)
+wall_color = Color(0.47, 0.4, 0.33, 1.0)
+roof_color = Color(0.3, 0.26, 0.24, 1.0)
+label = ""
+door = true
+texture = ExtResource("8_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/RookCottage"]
+position = Vector2(0, -21)
+shape = SubResource("rectangleshape2d_9")
+
+[node name="ShutteredHouse" type="StaticBody2D" parent="Entities"]
+position = Vector2(560, 330)
+script = ExtResource("3_script")
+size = Vector2(60, 42)
+wall_color = Color(0.34, 0.31, 0.3, 1.0)
+roof_color = Color(0.2, 0.2, 0.22, 1.0)
+label = ""
+door = true
+texture = ExtResource("9_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/ShutteredHouse"]
+position = Vector2(0, -21)
+shape = SubResource("rectangleshape2d_9")
+
+[node name="LanternWatch" type="StaticBody2D" parent="Entities"]
+position = Vector2(580, 85)
+script = ExtResource("3_script")
+size = Vector2(40, 70)
+wall_color = Color(0.55, 0.54, 0.52, 1.0)
+roof_color = Color(0.3, 0.3, 0.34, 1.0)
+label = "Lantern Watch"
+door = true
+texture = ExtResource("10_texture2d")
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/LanternWatch"]
+position = Vector2(0, -35)
+shape = SubResource("rectangleshape2d_10")
+
+[node name="PlazaCampfire" type="Sprite2D" parent="Entities"]
+position = Vector2(320, 210)
+texture = ExtResource("11_texture2d")
+offset = Vector2(0, -10)
+
+[node name="PlazaSignpost" type="Sprite2D" parent="Entities"]
+position = Vector2(282, 186)
+texture = ExtResource("12_texture2d")
+offset = Vector2(0, -13)
+
+[node name="DeadTreeWest" type="Sprite2D" parent="Entities"]
+position = Vector2(38, 125)
+texture = ExtResource("13_texture2d")
+offset = Vector2(0, -30)
+
+[node name="DeadTreeCairn" type="Sprite2D" parent="Entities"]
+position = Vector2(136, 382)
+texture = ExtResource("13_texture2d")
+offset = Vector2(0, -30)
+
+[node name="DeadTreeEast" type="Sprite2D" parent="Entities"]
+position = Vector2(608, 280)
+texture = ExtResource("13_texture2d")
+offset = Vector2(0, -30)
+
+[node name="MayorTolle" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(150, 162)
+display_name = "Mayor Tolle"
+dialogue_path = "res://data/dialogue/mayor.json"
+facing_row = 0
+sprite_sheet = ExtResource("14_texture2d")
+
+[node name="OrsaKell" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(500, 187)
+display_name = "Orsa Kell"
+dialogue_path = "res://data/dialogue/orsa.json"
+facing_row = 0
+sprite_sheet = ExtResource("16_texture2d")
+
+[node name="BramQuillon" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(300, 360)
+display_name = "Bram Quillon"
+dialogue_path = "res://data/dialogue/bram.json"
+facing_row = 0
+sprite_sheet = ExtResource("17_texture2d")
+
+[node name="TeagueMarrow" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(580, 98)
+display_name = "Teague Marrow"
+dialogue_path = "res://data/dialogue/teague.json"
+facing_row = 0
+sprite_sheet = ExtResource("18_texture2d")
+
+[node name="PellHarrow" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(95, 305)
+display_name = "Pell Harrow"
+dialogue_path = "res://data/dialogue/pell.json"
+facing_row = 0
+sprite_sheet = ExtResource("19_texture2d")
+
+[node name="AnsaRook" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(205, 314)
+display_name = "Ansa Rook"
+dialogue_path = "res://data/dialogue/ansa.json"
+facing_row = 0
+sprite_sheet = ExtResource("20_texture2d")
+
+[node name="Wren" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(255, 230)
+display_name = "Wren"
+dialogue_path = "res://data/dialogue/wren.json"
+facing_row = 0
+sprite_sheet = ExtResource("21_texture2d")
+
+[node name="HallSign" type="Area2D" parent="Interactables"]
+position = Vector2(120, 160)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Read"
+message = "Wrackmouth Hall. Salvage claims are filed here. Walk-ins are not welcome after dark."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/HallSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="ForgeSign" type="Area2D" parent="Interactables"]
+position = Vector2(470, 187)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Read"
+message = "KELL. Bone and iron. Mended, forged, weighed. No credit."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/ForgeSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="InnSign" type="Area2D" parent="Interactables"]
+position = Vector2(275, 352)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Read"
+message = "THE SALT GULL. Beds, stew, no questions."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/InnSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="ShutterSign" type="Area2D" parent="Interactables"]
+position = Vector2(560, 340)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Examine"
+message = "Shuttered. The salvager family left a week before the autumn wrecks stopped."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/ShutterSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="HarrowSign" type="Area2D" parent="Interactables"]
+position = Vector2(80, 300)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Examine"
+message = "Nets drying on the wall. Pell Harrow's house."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/HarrowSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="RookSign" type="Area2D" parent="Interactables"]
+position = Vector2(205, 310)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Examine"
+message = "A lantern burns in the window all night. The widow Rook's."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/RookSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="WatchSign" type="Area2D" parent="Interactables"]
+position = Vector2(560, 95)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("22_script")
+prompt = "Read"
+message = "LANTERN WATCH. Keepers log every light and every shape in the fog."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/WatchSign"]
+shape = SubResource("circleshape2d_11")
+
+[node name="InnBed" type="Area2D" parent="Interactables"]
+position = Vector2(358, 352)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("23_script")
+prompt = "Rent a bed (5 coin)"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/InnBed"]
+shape = SubResource("circleshape2d_12")
+
+[node name="RatHole1" type="Area2D" parent="Interactables"]
+position = Vector2(115, 82)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Block the hole"
+message = "You wedge a flat stone into the hole. Something scrabbles away behind it."
+sets_flag = "rathole_1"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/RatHole1"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/RatHole1"]
+texture = ExtResource("25_texture2d")
+
+[node name="RatHole2" type="Area2D" parent="Interactables"]
+position = Vector2(150, 82)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Block the hole"
+message = "You wedge a flat stone into the hole. Something scrabbles away behind it."
+sets_flag = "rathole_2"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/RatHole2"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/RatHole2"]
+texture = ExtResource("25_texture2d")
+
+[node name="RatHole3" type="Area2D" parent="Interactables"]
+position = Vector2(185, 82)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Block the hole"
+message = "You wedge a flat stone into the hole. Something scrabbles away behind it."
+sets_flag = "rathole_3"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/RatHole3"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/RatHole3"]
+texture = ExtResource("25_texture2d")
+
+[node name="Moonherb1" type="Area2D" parent="Interactables"]
+position = Vector2(44, 372)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Gather"
+message = "Pale leaves that hold the dusk longer than the rest of the field. Moonherb."
+item = "moonherb"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/Moonherb1"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb1"]
+texture = ExtResource("26_texture2d")
+
+[node name="Moonherb2" type="Area2D" parent="Interactables"]
+position = Vector2(92, 392)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Gather"
+message = "Pale leaves that hold the dusk longer than the rest of the field. Moonherb."
+item = "moonherb"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/Moonherb2"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb2"]
+texture = ExtResource("26_texture2d")
+
+[node name="Moonherb3" type="Area2D" parent="Interactables"]
+position = Vector2(112, 360)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Gather"
+message = "Pale leaves that hold the dusk longer than the rest of the field. Moonherb."
+item = "moonherb"
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/Moonherb3"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb3"]
+texture = ExtResource("26_texture2d")
+
+[node name="OpenGrave" type="Area2D" parent="Interactables"]
+position = Vector2(70, 376)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("24_script")
+prompt = "Examine"
+message = "The grave has been dug open from below, not above. A hex-mark is burned into the cracked lid, fresh enough to smell. Among the spilled earth lies a scorched bone, and when you lift it, the mark is on it too."
+item = "hex_bone"
+sets_flag = "saw_grave"
+requires = PackedStringArray("stage:work_to_belong=cairns")
+locked_message = "Old cairns, wind-scoured. Gull bones and salt. The mayor sent you for herbs; the herbs grow close by."
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/OpenGrave"]
+shape = SubResource("circleshape2d_13")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/OpenGrave"]
+texture = ExtResource("27_texture2d")
+
+[node name="ToBeach" type="Area2D" parent="Zones"]
+position = Vector2(320, 0)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("28_script")
+target_scene = "res://scenes/world/beach.tscn"
+target_spawn = "from_town"
+
+[node name="Shape" type="CollisionShape2D" parent="Zones/ToBeach"]
+shape = SubResource("rectangleshape2d_14")
+
+[node name="ToRoad" type="Area2D" parent="Zones"]
+position = Vector2(640, 212)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("28_script")
+target_scene = "res://scenes/world/crossholm_road.tscn"
+target_spawn = "from_wrackmouth"
+
+[node name="Shape" type="CollisionShape2D" parent="Zones/ToRoad"]
+shape = SubResource("rectangleshape2d_15")
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="from_beach" type="Marker2D" parent="Spawns"]
+position = Vector2(320, 28)
+
+[node name="from_road" type="Marker2D" parent="Spawns"]
+position = Vector2(612, 212)
+
+[node name="Player" parent="Entities" instance=ExtResource("29_packedscene")]
+position = Vector2(320, 28)
+
+[node name="Hud" parent="." instance=ExtResource("30_packedscene")]
+
+[node name="DialogueBox" parent="." instance=ExtResource("31_packedscene")]

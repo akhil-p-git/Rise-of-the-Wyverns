@@ -1,0 +1,24 @@
+{
+  "entries": [
+    {"if": ["flag:saw_grave"], "node": "scared"},
+    {"if": [], "node": "curious"}
+  ],
+  "nodes": {
+    "curious": {
+      "speaker": "Wren",
+      "text": "You were on the ship, weren't you? The prison one? Mam says convicts are just people who got caught. What did you do?",
+      "choices": [
+        {"text": "Maybe I'll tell you someday.", "next": "curious2"},
+        {"text": "Go and play."}
+      ]
+    },
+    "curious2": {
+      "speaker": "Wren",
+      "text": "I won't tell anyone. Honest. Teague says there are things in the fog at night. Do you think he is making it up?"
+    },
+    "scared": {
+      "speaker": "Wren",
+      "text": "The big bones are gone. I climbed on them all summer! Pell says nobody took them. If nobody took them, where did they go?"
+    }
+  }
+}

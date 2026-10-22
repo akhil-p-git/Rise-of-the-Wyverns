@@ -1,0 +1,269 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/beach.gd" id="1_beach"]
+[ext_resource type="Texture2D" path="res://assets/beach/ground.png" id="2_ground"]
+[ext_resource type="Texture2D" path="res://assets/beach/wreck.png" id="3_wreck"]
+[ext_resource type="Texture2D" path="res://assets/beach/wyvern_skeleton.png" id="4_skeleton"]
+[ext_resource type="Texture2D" path="res://assets/beach/crate.png" id="5_crate"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="6_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="7_hud"]
+[ext_resource type="Script" path="res://scripts/interactable.gd" id="8_interactable"]
+[ext_resource type="Shader" path="res://shaders/water.gdshader" id="9_water"]
+[ext_resource type="Texture2D" path="res://assets/beach/water_mask.png" id="10_mask"]
+[ext_resource type="Script" path="res://scripts/pickup.gd" id="11_pickup"]
+[ext_resource type="Script" path="res://scripts/scene_exit.gd" id="12_exit"]
+[ext_resource type="Texture2D" path="res://assets/props/iron_scrap.png" id="13_scrap"]
+[ext_resource type="Texture2D" path="res://assets/props/driftwood.png" id="14_driftwood"]
+[ext_resource type="Texture2D" path="res://assets/props/campfire_unlit.png" id="15_campfire"]
+
+[sub_resource type="ShaderMaterial" id="water_material"]
+shader = ExtResource("9_water")
+shader_parameter/water_mask = ExtResource("10_mask")
+
+[sub_resource type="RectangleShape2D" id="wall_v"]
+size = Vector2(16, 224)
+
+[sub_resource type="CircleShape2D" id="rock_big"]
+radius = 13.0
+
+[sub_resource type="CircleShape2D" id="rock_small"]
+radius = 9.0
+
+[sub_resource type="RectangleShape2D" id="wreck_base"]
+size = Vector2(62, 12)
+
+[sub_resource type="RectangleShape2D" id="crate_base"]
+size = Vector2(34, 10)
+
+[sub_resource type="CircleShape2D" id="reach_wreck"]
+radius = 40.0
+
+[sub_resource type="CircleShape2D" id="reach_skeleton"]
+radius = 36.0
+
+[sub_resource type="CircleShape2D" id="reach_crate"]
+radius = 22.0
+
+[sub_resource type="CircleShape2D" id="reach_scrap"]
+radius = 12.0
+
+[sub_resource type="RectangleShape2D" id="exit_south"]
+size = Vector2(32, 8)
+
+[node name="Beach" type="Node2D"]
+script = ExtResource("1_beach")
+
+[node name="Ground" type="Sprite2D" parent="."]
+material = SubResource("water_material")
+texture = ExtResource("2_ground")
+centered = false
+
+[node name="Decals" type="Node2D" parent="."]
+
+[node name="WyvernSkeleton" type="Sprite2D" parent="Decals"]
+position = Vector2(194, 102)
+texture = ExtResource("4_skeleton")
+
+[node name="Bounds" type="StaticBody2D" parent="."]
+
+[node name="Sea" type="CollisionPolygon2D" parent="Bounds"]
+polygon = PackedVector2Array(-16, -16, 336, -16, 336, 35, 319, 35, 310, 35, 300, 37, 290, 37, 280, 36, 270, 33, 260, 26, 250, 26, 240, 26, 230, 28, 220, 29, 210, 32, 200, 38, 190, 43, 180, 45, 170, 47, 160, 53, 150, 53, 140, 53, 130, 53, 120, 55, 110, 61, 100, 63, 90, 61, 80, 63, 70, 65, 60, 66, 50, 65, 40, 63, 30, 59, 20, 58, 10, 52, 0, 50, -16, 50)
+
+[node name="West" type="CollisionShape2D" parent="Bounds"]
+position = Vector2(-8, 90)
+shape = SubResource("wall_v")
+
+[node name="East" type="CollisionShape2D" parent="Bounds"]
+position = Vector2(328, 90)
+shape = SubResource("wall_v")
+
+[node name="GrassWest" type="CollisionPolygon2D" parent="Bounds"]
+polygon = PackedVector2Array(-16, 120, 0, 121, 20, 128, 35, 135, 45, 148, 70, 156, 110, 154, 125, 146, 135, 140, 138, 150, 137, 165, 137, 196, -16, 196)
+
+[node name="GrassEast" type="CollisionPolygon2D" parent="Bounds"]
+polygon = PackedVector2Array(162, 196, 162, 165, 163, 152, 175, 142, 200, 138, 230, 138, 260, 138, 285, 128, 300, 120, 320, 114, 336, 114, 336, 196)
+
+[node name="Rocks" type="StaticBody2D" parent="."]
+
+[node name="PoolWest" type="CollisionPolygon2D" parent="Rocks"]
+polygon = PackedVector2Array(97.0, 112.0, 93.7, 119.4, 84.6, 125.3, 71.3, 128.6, 56.7, 128.6, 43.4, 125.3, 34.3, 119.4, 31.0, 112.0, 34.3, 104.6, 43.4, 98.7, 56.7, 95.4, 71.3, 95.4, 84.6, 98.7, 93.7, 104.6)
+
+[node name="PoolEast" type="CollisionPolygon2D" parent="Rocks"]
+polygon = PackedVector2Array(288.0, 80.0, 284.7, 89.5, 275.6, 97.2, 262.3, 101.4, 247.7, 101.4, 234.4, 97.2, 225.3, 89.5, 222.0, 80.0, 225.3, 70.5, 234.4, 62.8, 247.7, 58.6, 262.3, 58.6, 275.6, 62.8, 284.7, 70.5)
+
+[node name="Boulder1" type="CollisionShape2D" parent="Rocks"]
+position = Vector2(8, 85)
+shape = SubResource("rock_big")
+
+[node name="Boulder2" type="CollisionShape2D" parent="Rocks"]
+position = Vector2(107, 88)
+shape = SubResource("rock_big")
+
+[node name="Boulder3" type="CollisionShape2D" parent="Rocks"]
+position = Vector2(220, 53)
+shape = SubResource("rock_small")
+
+[node name="Boulder4" type="CollisionShape2D" parent="Rocks"]
+position = Vector2(190, 68)
+shape = SubResource("rock_small")
+
+[node name="Boulder5" type="CollisionShape2D" parent="Rocks"]
+position = Vector2(312, 108)
+shape = SubResource("rock_big")
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Wreck" type="StaticBody2D" parent="Entities"]
+position = Vector2(50, 92)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Wreck"]
+position = Vector2(0, -44)
+texture = ExtResource("3_wreck")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/Wreck"]
+position = Vector2(0, -8)
+shape = SubResource("wreck_base")
+
+[node name="Crate" type="StaticBody2D" parent="Entities"]
+position = Vector2(138, 108)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Crate"]
+position = Vector2(0, -16)
+texture = ExtResource("5_crate")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/Crate"]
+position = Vector2(0, -5)
+shape = SubResource("crate_base")
+
+[node name="Driftwood" type="Sprite2D" parent="Entities"]
+position = Vector2(236, 122)
+offset = Vector2(0, -12)
+texture = ExtResource("14_driftwood")
+
+[node name="CampfireUnlit" type="Sprite2D" parent="Entities"]
+position = Vector2(124, 134)
+offset = Vector2(0, -8)
+texture = ExtResource("15_campfire")
+
+[node name="Player" parent="Entities" instance=ExtResource("6_player")]
+position = Vector2(150, 100)
+
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="WreckSign" type="Area2D" parent="Interactables"]
+position = Vector2(50, 100)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("8_interactable")
+prompt = "Search"
+message = "Splintered hull timbers. The ship's name is scraped off the stern."
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/WreckSign"]
+shape = SubResource("reach_wreck")
+
+[node name="SkeletonSign" type="Area2D" parent="Interactables"]
+position = Vector2(194, 102)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("8_interactable")
+prompt = "Examine"
+message = "Bones the length of a longboat. Two hind legs and great winged arms, bleached by salt."
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/SkeletonSign"]
+shape = SubResource("reach_skeleton")
+
+[node name="CrateSign" type="Area2D" parent="Interactables"]
+position = Vector2(138, 108)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_pickup")
+prompt = "Open"
+message = "You bundle the salt-cured ship fittings and rope from the split crate for Orsa."
+item = "salvage_crate"
+requires = PackedStringArray("started:work_to_belong")
+locked_message = "Split open by the surf. Heavy ship-stamped fittings inside, too much to carry without a reason."
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/CrateSign"]
+shape = SubResource("reach_crate")
+
+[node name="IronScrap1" type="Area2D" parent="Interactables"]
+position = Vector2(88, 72)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_pickup")
+prompt = "Take iron scrap"
+message = "Bent iron hull-strapping washed up by the tide."
+item = "iron_scrap"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/IronScrap1"]
+shape = SubResource("reach_scrap")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/IronScrap1"]
+texture = ExtResource("13_scrap")
+
+[node name="IronScrap2" type="Area2D" parent="Interactables"]
+position = Vector2(168, 66)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_pickup")
+prompt = "Take iron scrap"
+message = "Heavy iron rivets and chain links that still ring true."
+item = "iron_scrap"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/IronScrap2"]
+shape = SubResource("reach_scrap")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/IronScrap2"]
+texture = ExtResource("13_scrap")
+
+[node name="IronScrap3" type="Area2D" parent="Interactables"]
+position = Vector2(282, 116)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_pickup")
+prompt = "Take iron scrap"
+message = "A salt-pitted iron bracket wedged among the shingle."
+item = "iron_scrap"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/IronScrap3"]
+shape = SubResource("reach_scrap")
+
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/IronScrap3"]
+texture = ExtResource("13_scrap")
+
+[node name="Zones" type="Node2D" parent="."]
+
+[node name="ToTown" type="Area2D" parent="Zones"]
+position = Vector2(150, 184)
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("12_exit")
+target_scene = "res://scenes/world/wrackmouth.tscn"
+target_spawn = "from_beach"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Zones/ToTown"]
+shape = SubResource("exit_south")
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="from_town" type="Marker2D" parent="Spawns"]
+position = Vector2(150, 162)
+
+[node name="Hud" parent="." instance=ExtResource("7_hud")]
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Fade" type="ColorRect" parent="Overlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
