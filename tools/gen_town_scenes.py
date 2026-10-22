@@ -220,14 +220,30 @@ def pickup(
 
 
 def npc(
-    s: Scene, name: str, x, y, display, dialogue, tint, row=0, sheet: str = ""
+    s: Scene,
+    name: str,
+    x,
+    y,
+    display,
+    dialogue,
+    tint,
+    row=0,
+    sheet: str = "",
+    behaviour: str = "stationary",
+    wander_radius: float = 24.0,
+    waypoints: tuple[tuple[float, float], ...] = (),
 ) -> None:
     props = {
         "position": v(x, y),
         "display_name": f'"{display}"',
         "dialogue_path": f'"res://data/dialogue/{dialogue}.json"',
         "facing_row": str(row),
+        "behaviour": f'"{behaviour}"',
+        "wander_radius": f"{wander_radius:g}",
     }
+    if waypoints:
+        coords = ", ".join(f"{wx:g}, {wy:g}" for wx, wy in waypoints)
+        props["waypoints"] = f"PackedVector2Array({coords})"
     if sheet:
         props["sprite_sheet"] = s.ext("Texture2D", f"res://assets/npc/{sheet}.png")
     else:
@@ -445,6 +461,7 @@ def wrackmouth() -> str:
         "mayor",
         col(0.55, 0.85, 0.6),
         sheet="mayor",
+        behaviour="stationary",
     )
     npc(
         s,
@@ -455,6 +472,8 @@ def wrackmouth() -> str:
         "orsa",
         col(0.9, 0.65, 0.5),
         sheet="orsa",
+        behaviour="wander",
+        wander_radius=16,
     )
     npc(
         s,
@@ -465,6 +484,8 @@ def wrackmouth() -> str:
         "bram",
         col(0.95, 0.85, 0.55),
         sheet="bram",
+        behaviour="wander",
+        wander_radius=18,
     )
     npc(
         s,
@@ -475,6 +496,8 @@ def wrackmouth() -> str:
         "teague",
         col(0.7, 0.75, 0.95),
         sheet="teague",
+        behaviour="pace",
+        waypoints=((556, 102), (604, 102)),
     )
     npc(
         s,
@@ -485,6 +508,8 @@ def wrackmouth() -> str:
         "pell",
         col(0.75, 0.7, 0.65),
         sheet="pell",
+        behaviour="wander",
+        wander_radius=22,
     )
     npc(
         s,
@@ -495,8 +520,21 @@ def wrackmouth() -> str:
         "ansa",
         col(0.85, 0.7, 0.85),
         sheet="ansa",
+        behaviour="wander",
+        wander_radius=20,
     )
-    npc(s, "Wren", 255, 230, "Wren", "wren", col(1.0, 0.8, 0.8), sheet="wren")
+    npc(
+        s,
+        "Wren",
+        255,
+        230,
+        "Wren",
+        "wren",
+        col(1.0, 0.8, 0.8),
+        sheet="wren",
+        behaviour="wander",
+        wander_radius=28,
+    )
 
     sign(
         s,
@@ -702,6 +740,7 @@ def crossholm_road() -> str:
         col(0.85, 0.8, 0.6),
         2,
         sheet="dov",
+        behaviour="stationary",
     )
 
     sign(

@@ -195,6 +195,8 @@ position = Vector2(414, 298)
 display_name = "Dov Carrow"
 dialogue_path = "res://data/dialogue/dov.json"
 facing_row = 2
+behaviour = "stationary"
+wander_radius = 24
 sprite_sheet = ExtResource("11_texture2d")
 
 [node name="FarmSign" type="Area2D" parent="Interactables"]

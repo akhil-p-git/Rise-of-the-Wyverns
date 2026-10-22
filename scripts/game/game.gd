@@ -113,6 +113,10 @@ func _apply_display_settings() -> void:
 		DisplayServer.window_set_vsync_mode(target_vsync)
 
 
+func is_changing_scene() -> bool:
+	return _changing
+
+
 ## Fades out, loads the scene, and fades in; the new scene calls `take_spawn()` to find its
 ## entry point.
 func go_to(scene_path: String, spawn := "") -> void:

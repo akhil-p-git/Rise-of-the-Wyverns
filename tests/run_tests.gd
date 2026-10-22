@@ -504,7 +504,77 @@ func test_town_scenes() -> void:
 	check(wm != null, "wrackmouth.tscn instantiates")
 	check(wm.get_node_or_null("Ground") is Sprite2D, "wrackmouth has Sprite2D ground")
 	check(wm.get_node("Entities/MayorHall").texture != null, "MayorHall has building texture")
-	check(wm.get_node("Entities/MayorTolle").sprite_sheet != null, "MayorTolle has custom NPC sprite sheet")
+	var mayor: Npc = wm.get_node("Entities/MayorTolle")
+	var orsa: Npc = wm.get_node("Entities/OrsaKell")
+	var teague: Npc = wm.get_node("Entities/TeagueMarrow")
+	var wren: Npc = wm.get_node("Entities/Wren")
+	var player: Player = wm.get_node("Entities/Player")
+	check(mayor.sprite_sheet != null, "MayorTolle has custom NPC sprite sheet")
+
+	# Seed all NPCs deterministically
+	var all_npcs: Array[Npc] = []
+	for child in wm.get_node("Entities").get_children():
+		if child is Npc:
+			var n := child as Npc
+			n.set_seed(12345 + all_npcs.size() * 97)
+			all_npcs.append(n)
+
+	# Place Orsa close to Forge wall so wander must avoid wall collisions over 3000 frames
+	var dt := 1.0 / 60.0
+	var stayed_in_radius := true
+	var never_overlapped_wall := true
+	var mayor_stayed_put := true
+	var reached_wp0 := false
+	var reached_wp1 := false
+
+	var total_usec := 0
+	for frame_i in 3000:
+		var t0 := Time.get_ticks_usec()
+		for n: Npc in all_npcs:
+			n._physics_process(dt)
+		total_usec += Time.get_ticks_usec() - t0
+
+		if orsa.global_position.distance_to(orsa.home_position) > orsa.wander_radius + 0.01:
+			stayed_in_radius = false
+		if orsa._is_blocked(orsa.global_position):
+			never_overlapped_wall = false
+		if mayor.global_position.distance_to(mayor.home_position) > 0.001:
+			mayor_stayed_put = false
+		if teague.global_position.distance_to(teague.waypoints[0]) <= 2.0:
+			reached_wp0 = true
+		if teague.global_position.distance_to(teague.waypoints[1]) <= 2.0:
+			reached_wp1 = true
+
+	var avg_ms := float(total_usec) / 3000.0 / 1000.0
+	print("NPC physics benchmark (7 NPCs in Wrackmouth): %.4f ms/frame" % avg_ms)
+	check(avg_ms < 0.2, "all Wrackmouth NPCs under 0.2 ms/frame (got %.4f ms)" % avg_ms)
+	check(stayed_in_radius, "wander NPC stays inside wander_radius over 3000 frames")
+	check(never_overlapped_wall, "wander NPC never overlaps a wall over 3000 frames")
+	check(mayor_stayed_put, "stationary NPC does not move over 3000 frames")
+	check(reached_wp0 and reached_wp1, "pace NPC reaches each waypoint")
+
+	# Interaction test: stops NPC, faces player, resumes after end_interaction
+	player.global_position = wren.global_position + Vector2(-18.0, 0.0)
+	wren.interact(player)
+	check(wren.interacting, "interacting sets NPC interacting=true")
+	eq(wren.facing_row, 2, "NPC turns left (row 2) to face player on the left")
+	var pos_during := wren.global_position
+	for i in 120:
+		wren._physics_process(dt)
+	eq(wren.global_position, pos_during, "NPC does not move while interacting")
+	if wm.get_node("DialogueBox").is_open():
+		wm.get_node("DialogueBox")._close()
+	else:
+		wren.end_interaction()
+	check(not wren.interacting, "NPC resumes after dialogue closes")
+	var moved_after := false
+	for i in 300:
+		wren._physics_process(dt)
+		if wren.global_position.distance_to(pos_during) > 1.0:
+			moved_after = true
+			break
+	check(moved_after, "wander NPC moves again after interaction ends")
+
 	wm.queue_free()
 	await get_tree().process_frame
 
