@@ -11,6 +11,7 @@ Every asset in the game (art, audio, fonts, code from elsewhere) is listed here 
 | FLUX.2 [klein] 4B weights (tool, not shipped) | https://huggingface.co/black-forest-labs/FLUX.2-klein-4B (revision `e7b7dc27`) | Apache 2.0 (per the model card) | 2026-10-20 | Used by `~/work/Dev/tools/imgen/generate.py`. Anything it produces is "AI-assisted" for Steam's AI disclosure question and may not be copyrightable. |
 | `addons/godot_mcp_enhanced` (editor tool, not shipped) | https://github.com/DaRealDaHoodie/Claude-GoDot-MCP @cdaf821 | MIT | 2026-10-20 | Patched locally for Godot 4.7: `http_server.gd` lines 218 and 235 use `: String` instead of `:=`. Remove from exports. |
 | `assets/ui/NotoSerifDisplay-Medium.ttf`, `assets/ui/OFL.txt`, `assets/ui/grim_theme.tres` | The Noto Project Authors (`https://github.com/notofonts/latin-greek-cyrillic`, copied from `/usr/share/fonts/noto/NotoSerifDisplay-Medium.ttf`) | SIL Open Font License 1.1 (`https://scripts.sil.org/OFL`, saved at `assets/ui/OFL.txt`) | 2026-10-21 | Not AI-generated. High-contrast display serif used across HUD, dialogue and menus via `assets/ui/grim_theme.tres`. Permits commercial use and embedding. |
+| `shaders/character_palette.gdshader`, `scripts/game/character.gd`, `scenes/menu/{main_menu,character_creation}.tscn` | written for this project | project-owned code | 2026-10-21 | Not AI-generated. Palette-swap shader and UI scenes for pre-intro character creation. |
 
 ## Rules
 - Prefer CC0 or paid packs with commercial licenses. Keep the license file next to each pack.

@@ -33,7 +33,7 @@ func _on_stats_changed(_stat: StringName, stats: Stats) -> void:
 
 
 func show_message(text: String) -> void:
-	_message.text = text
+	_message.text = Game.format_text(text)
 	_message_timer.start(MESSAGE_SECONDS)
 
 

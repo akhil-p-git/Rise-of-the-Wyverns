@@ -13,6 +13,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	test_stats()
 	test_settings_and_theme()
+	await test_character_and_menus()
 	test_logic_and_data()
 	await test_town_scenes()
 	await test_room()
@@ -97,6 +98,95 @@ func test_settings_and_theme() -> void:
 		for slider_style: String in ["slider", "grabber_area", "grabber_area_highlight"]:
 			check(theme.has_stylebox(slider_style, "HSlider"), "grim_theme HSlider has %s stylebox" % slider_style)
 		check(theme.has_stylebox("panel", "PanelContainer"), "grim_theme PanelContainer has panel stylebox")
+
+
+func test_character_and_menus() -> void:
+	var c := Character.new()
+	check(Character.SKIN_TONES.size() >= 5, "at least 5 skin tones")
+	check(Character.HAIR_COLOURS.size() >= 6, "at least 6 hair colours")
+	check(Character.CLOTHING_COLOURS.size() >= 4, "at least 4 clothing colours")
+	eq(c.pronouns, "they/them", "default pronouns they/them")
+	eq(c.difficulty, "Normal", "default difficulty Normal")
+	eq(c.hardcore, false, "default hardcore false")
+
+	# Pronoun sets & sentence-start capitalisation
+	var tpl := "{they} staggered ashore. Carry {them} to {their} bed; the pack is {theirs}, and {they} steadied {themself}."
+	c.pronouns = "she/her"
+	eq(
+		c.format_text(tpl),
+		"She staggered ashore. Carry her to her bed; the pack is hers, and she steadied herself.",
+		"she/her pronouns and sentence-start capitalisation"
+	)
+	c.pronouns = "he/him"
+	eq(
+		c.format_text(tpl),
+		"He staggered ashore. Carry him to his bed; the pack is his, and he steadied himself.",
+		"he/him pronouns and sentence-start capitalisation"
+	)
+	c.pronouns = "they/them"
+	eq(
+		c.format_text(tpl),
+		"They staggered ashore. Carry them to their bed; the pack is theirs, and they steadied themself.",
+		"they/them pronouns and sentence-start capitalisation"
+	)
+
+	# DialogueRunner pronoun resolution
+	var p_tree := {
+		"entries": [{"if": [], "node": "n1"}],
+		"nodes": {"n1": {"speaker": "Test", "text": "{they} {is_are} here."}},
+	}
+	var p_runner := DialogueRunner.new()
+	c.pronouns = "she/her"
+	p_runner.begin(p_tree, Game.state, c)
+	eq(p_runner.text(), "She is here.", "DialogueRunner resolves she/her tokens")
+	c.pronouns = "they/them"
+	p_runner.begin(p_tree, Game.state, c)
+	eq(p_runner.text(), "They are here.", "DialogueRunner resolves they/them tokens")
+
+	# Difficulty damage scale
+	var prev_char := Game.character
+	Game.character = c
+	c.difficulty = "Easy"
+	eq(Game.difficulty_damage_scale(), 0.75, "Easy difficulty scale is 0.75")
+	c.difficulty = "Normal"
+	eq(Game.difficulty_damage_scale(), 1.0, "Normal difficulty scale is 1.0")
+	c.difficulty = "Hard"
+	eq(Game.difficulty_damage_scale(), 1.5, "Hard difficulty scale is 1.5")
+
+	# Palette shader material parameters
+	c.skin_index = 3
+	c.hair_index = 4
+	c.cloth_index = 2
+	var mat := c.make_material()
+	check(mat != null and mat.shader != null, "Character creates ShaderMaterial")
+	eq(mat.get_shader_parameter("skin_color"), c.skin_color(), "shader skin_color matches character")
+	eq(mat.get_shader_parameter("hair_color"), c.hair_color(), "shader hair_color matches character")
+	eq(mat.get_shader_parameter("cloth_color"), c.cloth_color(), "shader cloth_color matches character")
+	Game.character = prev_char
+
+	# Scene chain resolution and headless instantiation
+	check(ResourceLoader.exists("res://scenes/menu/main_menu.tscn"), "main_menu.tscn exists")
+	check(ResourceLoader.exists(MainMenu.CREATION_SCENE), "MainMenu -> CharacterCreation target exists")
+	check(ResourceLoader.exists(CharacterCreation.INTRO_SCENE), "CharacterCreation -> Intro target exists")
+	check(ResourceLoader.exists("res://scenes/world/beach.tscn"), "Intro -> Beach target exists")
+
+	var menu: MainMenu = load("res://scenes/menu/main_menu.tscn").instantiate()
+	root.add_child(menu)
+	await physics_frames(2)
+	check(menu != null, "main_menu.tscn instantiates headless")
+	check(not menu.get_node("Center/MainBox/Buttons/ContinueButton").visible, "Continue stays hidden")
+	menu.queue_free()
+	await get_tree().process_frame
+
+	var cc: CharacterCreation = load("res://scenes/menu/character_creation.tscn").instantiate()
+	root.add_child(cc)
+	await physics_frames(2)
+	check(cc != null, "character_creation.tscn instantiates headless")
+	for step_i in 5:
+		cc.set_step(step_i)
+		eq(cc.step_index, step_i, "character_creation switches to step %d" % step_i)
+	cc.queue_free()
+	await get_tree().process_frame
 
 
 func physics_frames(n: int) -> void:

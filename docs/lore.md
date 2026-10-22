@@ -1,6 +1,6 @@
 # Rise of the Wyverns: lore, world and progression
 
-Status: decided in the 2026-10-21 brainstorm unless marked (proposed) or (open). Source of truth for story, world, factions and character systems; code and art follow this file.
+Status: decided in the 2026-10-22 brainstorm unless marked (proposed) or (open). Source of truth for story, world, factions and character systems; code and art follow this file.
 
 ## Pitch
 
@@ -44,7 +44,7 @@ Rules that keep them distinct from Skyrim's dragons:
 
 ## Story structure
 
-1. The beach. Intro cutscene, shipwreck, character creation at the tide pool.
+1. Main menu and character creation (before the intro; see `docs/main-menu-and-character-creation.md`), then the shipwreck intro cutscene and the starting beach.
 2. Wrackmouth, the peaceful first town. The mayor's chores teach the basics. The last chore reveals Malrec's hex-mark and the missing wyvern bones.
 3. The mayor sends you to Crossholm with the news and the hex-marked bone.
 4. The eight great wyverns, in any order, with towns, side quests, guild questlines and dungeons between them.
@@ -135,20 +135,12 @@ Each skill has its own perk tree. Branches fill gaps that aren't skills of their
 
 ### Character creation
 
-At the tide pool: appearance, then a conviction (what you were convicted of). Each conviction gives +10 to two skills and a story hook. Custom spends the same 20 points freely.
-
-| Conviction | Skills | Story hook |
-| --- | --- | --- |
-| Smuggling | Sneak, Charisma | The Unwritten know your kind |
-| Desertion | One-Handed, Block | The Lantern Watch distrusts you |
-| Debt | Charisma, Blacksmithing | The mayor softens a little |
-| Poaching | Archery, Alchemy | You know the wilds by the cairns |
-| Grave-robbing | Sneak, Summoning | You recognise the exile's grave-sigils |
-| Heresy | Healing, Mystic Arts | The Hexwardens take an interest in you |
-| Brawling | Two-Handed, Heavy Armour | The salvagers back off |
-| Arson | Elemental, Light Armour | Townsfolk keep you away from the stores |
-| Forgery | Enchanting, Charisma | Garrison clerks check your papers twice |
-| Custom | Pick your own | None |
+Before the opening cutscene (see `docs/main-menu-and-character-creation.md`):
+- Appearance (skin tone, hair colour, clothing colour via palette swap on the survivor sprite, with a randomise option).
+- Pronouns (`she/her`, `he/him`, `they/them`).
+- Difficulty (`Easy`, `Normal`, `Hard`).
+- Optional Hardcore mode ("death ends this life for good").
+- Convictions are cut: every character starts with identical skill values.
 
 ## Originality guardrails
 

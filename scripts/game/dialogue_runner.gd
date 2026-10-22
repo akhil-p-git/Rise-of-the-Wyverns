@@ -9,15 +9,17 @@ extends RefCounted
 
 var node_id := ""
 var finished := true
+var character: Character
 
 var _tree: Dictionary
 var _state: GameState
 
 
 ## Starts the tree. Returns false when no entry matches, so the caller can skip the talk.
-func begin(tree: Dictionary, state: GameState) -> bool:
+func begin(tree: Dictionary, state: GameState, char_override: Character = null) -> bool:
 	_tree = tree
 	_state = state
+	character = char_override if char_override != null else Game.character
 	for entry: Dictionary in tree.get("entries", []):
 		if state.check(entry.get("if", [])):
 			_enter(entry["node"])
@@ -31,7 +33,8 @@ func speaker() -> String:
 
 
 func text() -> String:
-	return _node().get("text", "")
+	var raw: String = _node().get("text", "")
+	return character.format_text(raw) if character != null else raw
 
 
 ## The choices the player can pick right now, in order. Empty means "press to continue".
@@ -39,7 +42,10 @@ func choices() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for choice: Dictionary in _node().get("choices", []):
 		if _state.check(choice.get("if", [])):
-			out.append(choice)
+			var resolved := choice.duplicate()
+			if resolved.has("text") and character != null:
+				resolved["text"] = character.format_text(String(resolved["text"]))
+			out.append(resolved)
 	return out
 
 

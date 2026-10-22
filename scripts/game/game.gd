@@ -9,6 +9,7 @@ const FADE_SECONDS := 0.35
 
 var state: GameState
 var stats := Stats.new()
+var character := Character.new()
 var fullscreen := false
 var vsync := true
 
@@ -43,7 +44,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func reset() -> void:
 	state = GameState.new(StoryData.load_json(STORY_PATH))
 	stats = Stats.new()
+	if character == null:
+		character = Character.new()
 	_spawn = ""
+
+
+func difficulty_damage_scale() -> float:
+	return character.damage_scale() if character else 1.0
+
+
+func format_text(text: String) -> String:
+	return character.format_text(text) if character else text
 
 
 func set_fullscreen(enabled: bool, path := SETTINGS_PATH) -> void:

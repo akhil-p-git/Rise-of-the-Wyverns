@@ -1,0 +1,298 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/menu/character_creation.gd" id="1_cc"]
+[ext_resource type="Theme" path="res://assets/ui/grim_theme.tres" id="2_theme"]
+[ext_resource type="Texture2D" path="res://assets/hero/hero_sheet.png" id="3_hero"]
+[ext_resource type="Texture2D" path="res://assets/intro/storm_sea.png" id="4_sea"]
+
+[node name="CharacterCreation" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_cc")
+
+[node name="Backdrop" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("4_sea")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.035, 0.055, 0.82)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 18
+
+[node name="RootVBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderRow" type="HBoxContainer" parent="Margin/RootVBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/RootVBox/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.78, 0.64, 0.36, 1)
+theme_override_font_sizes/font_size = 18
+text = "The Survivor"
+
+[node name="StepLabel" type="Label" parent="Margin/RootVBox/HeaderRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.56, 0.53, 1)
+theme_override_font_sizes/font_size = 14
+text = "Step 1 of 5 — Appearance"
+
+[node name="BodyRow" type="HBoxContainer" parent="Margin/RootVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="PreviewPanel" type="PanelContainer" parent="Margin/RootVBox/BodyRow"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/BodyRow/PreviewPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/BodyRow/PreviewPanel/Margin"]
+layout_mode = 2
+alignment = 1
+
+[node name="SpriteStage" type="Control" parent="Margin/RootVBox/BodyRow/PreviewPanel/Margin/VBox"]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PreviewSprite" type="Sprite2D" parent="Margin/RootVBox/BodyRow/PreviewPanel/Margin/VBox/SpriteStage"]
+position = Vector2(78, 74)
+scale = Vector2(3, 3)
+texture = ExtResource("3_hero")
+hframes = 4
+vframes = 4
+
+[node name="FacingLabel" type="Label" parent="Margin/RootVBox/BodyRow/PreviewPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.56, 0.53, 1)
+theme_override_font_sizes/font_size = 11
+text = "Facing: South"
+horizontal_alignment = 1
+
+[node name="RightPanel" type="PanelContainer" parent="Margin/RootVBox/BodyRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/BodyRow/RightPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="StepAppearance" type="VBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SkinRow" type="HBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/SkinRow"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Skin Tone"
+
+[node name="Prev" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/SkinRow"]
+layout_mode = 2
+text = "<"
+
+[node name="Value" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/SkinRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Weathered Fair"
+horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/SkinRow"]
+layout_mode = 2
+text = ">"
+
+[node name="HairRow" type="HBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/HairRow"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Hair Colour"
+
+[node name="Prev" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/HairRow"]
+layout_mode = 2
+text = "<"
+
+[node name="Value" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/HairRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Dark Umber"
+horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/HairRow"]
+layout_mode = 2
+text = ">"
+
+[node name="ClothRow" type="HBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ClothRow"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Tunic"
+
+[node name="Prev" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ClothRow"]
+layout_mode = 2
+text = "<"
+
+[node name="Value" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ClothRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Convict Slate"
+horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ClothRow"]
+layout_mode = 2
+text = ">"
+
+[node name="RandomButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance"]
+layout_mode = 2
+text = "Randomise Appearance"
+
+[node name="StepPronouns" type="VBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Prompt" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepPronouns"]
+layout_mode = 2
+text = "How the folk of Vessary speak of you:"
+
+[node name="SheButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepPronouns"]
+layout_mode = 2
+text = "she / her"
+
+[node name="HeButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepPronouns"]
+layout_mode = 2
+text = "he / him"
+
+[node name="TheyButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepPronouns"]
+layout_mode = 2
+text = "they / them"
+
+[node name="SampleLabel" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepPronouns"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.56, 0.53, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="StepDifficulty" type="VBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Prompt" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepDifficulty"]
+layout_mode = 2
+text = "Choose how harshly the coast strikes:"
+
+[node name="EasyButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepDifficulty"]
+layout_mode = 2
+text = "Easy"
+
+[node name="NormalButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepDifficulty"]
+layout_mode = 2
+text = "Normal"
+
+[node name="HardButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepDifficulty"]
+layout_mode = 2
+text = "Hard"
+
+[node name="DescLabel" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepDifficulty"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.56, 0.53, 1)
+
+[node name="StepHardcore" type="VBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ToggleButton" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepHardcore"]
+layout_mode = 2
+text = "Hardcore: OFF"
+
+[node name="WarningLabel" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepHardcore"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.25, 0.25, 1)
+text = "Death ends this life for good."
+autowrap_mode = 3
+
+[node name="NoteLabel" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepHardcore"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.56, 0.53, 1)
+theme_override_font_sizes/font_size = 11
+text = "When enabled, falling in battle will erase the save file once the save system lands."
+autowrap_mode = 3
+
+[node name="StepConfirm" type="VBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepConfirm"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.64, 0.36, 1)
+text = "Confirm Survivor"
+
+[node name="SummaryLabel" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepConfirm"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="FooterRow" type="HBoxContainer" parent="Margin/RootVBox"]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="Margin/RootVBox/FooterRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Main Menu"
+
+[node name="Spacer" type="Control" parent="Margin/RootVBox/FooterRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NextButton" type="Button" parent="Margin/RootVBox/FooterRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Next"

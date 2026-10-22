@@ -33,6 +33,8 @@ var _prompt := ""
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	add_to_group("player")
+	if _sprite.texture and _sprite.texture.resource_path == "res://assets/hero/hero_sheet.png" and Game.character:
+		_sprite.material = Game.character.make_material()
 
 
 func _physics_process(delta: float) -> void:
