@@ -44,6 +44,19 @@ func heal(amount: float) -> void:
 	changed.emit(&"health")
 
 
+## Refills health, stamina and mana, as after a night's rest. A dead actor stays dead.
+func restore_all() -> void:
+	if health <= 0.0:
+		return
+	health = max_health
+	stamina = max_stamina
+	mana = max_mana
+	_since_stamina_use = STAMINA_REGEN_DELAY
+	changed.emit(&"health")
+	changed.emit(&"stamina")
+	changed.emit(&"mana")
+
+
 ## Spends up to `amount` of stamina. Returns false when there is none left to spend.
 func use_stamina(amount: float) -> bool:
 	if stamina <= 0.0:

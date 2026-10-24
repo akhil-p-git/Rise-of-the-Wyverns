@@ -59,8 +59,9 @@ is_outdoor = false
 color = Color(1.0, 0.96, 0.88, 1.0)
 
 [node name="Floor" type="TextureRect" parent="."]
-offset_right = 460
-offset_bottom = 280
+offset_right = 1840
+offset_bottom = 1120
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_texture2d")
 stretch_mode = 1
 

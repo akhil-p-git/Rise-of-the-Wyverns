@@ -2,12 +2,19 @@ shader_type canvas_item;
 
 // Palette-swap shader for assets/hero/hero_sheet.png (96x128, 4x4 grid of 24x32 cells).
 // Recolours hair, skin, and tunic while preserving dark outlines, eyes, and leather boots.
+// The texture and the source_color uniforms arrive linearised, but the thresholds and luma divisors below are tuned on
+// sRGB values, so the maths runs in sRGB (decoded here) and the result is written as sRGB. Without this the skin renders
+// orange-red and the hair and tunic too dark.
 uniform vec4 skin_color : source_color = vec4(0.855, 0.624, 0.490, 1.0);
 uniform vec4 hair_color : source_color = vec4(0.290, 0.212, 0.165, 1.0);
 uniform vec4 cloth_color : source_color = vec4(0.314, 0.306, 0.294, 1.0);
 
 void fragment() {
 	vec4 tex = texture(TEXTURE, UV);
+	tex.rgb = pow(tex.rgb, vec3(1.0 / 2.2));
+	vec3 skin = pow(skin_color.rgb, vec3(1.0 / 2.2));
+	vec3 hair = pow(hair_color.rgb, vec3(1.0 / 2.2));
+	vec3 cloth = pow(cloth_color.rgb, vec3(1.0 / 2.2));
 	if (tex.a < 0.5) {
 		COLOR = tex;
 	} else {
@@ -53,11 +60,11 @@ void fragment() {
 			);
 
 			if (is_cloth) {
-				tex.rgb = clamp(cloth_color.rgb * (luma / 0.28), 0.0, 1.0);
+				tex.rgb = clamp(cloth * (luma / 0.28), 0.0, 1.0);
 			} else if (is_skin) {
-				tex.rgb = clamp(skin_color.rgb * (luma / 0.62), 0.0, 1.0);
+				tex.rgb = clamp(skin * (luma / 0.62), 0.0, 1.0);
 			} else if (is_hair) {
-				tex.rgb = clamp(hair_color.rgb * (luma / 0.22), 0.0, 1.0);
+				tex.rgb = clamp(hair * (luma / 0.22), 0.0, 1.0);
 			}
 		}
 		COLOR = tex * COLOR;

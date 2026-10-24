@@ -49,7 +49,14 @@ func set_time(hour: int, minute: int = 0) -> void:
 	current_minute = float((hour % 24) * 60 + (minute % 60))
 	_last_hour = get_hour()
 	_was_night = is_night()
+	hour_passed.emit(_last_hour)
 	day_phase_changed.emit(_was_night)
+
+
+## Skips ahead `hours` whole game hours (the T wait menu), emitting every hour and phase change on the way.
+func wait_hours(hours: int) -> void:
+	for i in maxi(hours, 0):
+		advance_seconds(60.0 * 60.0 / TIME_SCALE)
 
 
 func get_hour() -> int:
@@ -69,14 +76,14 @@ func is_day() -> bool:
 	return not is_night()
 
 
+## The hour only ("10 AM"); the HUD refreshes it when the hour changes, not every minute.
 func get_time_string() -> String:
 	var h := get_hour()
-	var m := get_minute()
 	var period := "AM" if h < 12 else "PM"
 	var disp_h := h % 12
 	if disp_h == 0:
 		disp_h = 12
-	return "%d:%02d %s" % [disp_h, m, period]
+	return "%d %s" % [disp_h, period]
 
 
 func get_status_string() -> String:
@@ -92,6 +99,21 @@ func is_building_locked(building_id: String) -> bool:
 	if building_id in NAILED_SHUT:
 		return true
 	return is_night()
+
+
+## 0.0 in full daylight, 1.0 in deep night, eased through dusk (18:00-21:00) and dawn (05:00-07:00).
+func get_night_factor() -> float:
+	var h := current_minute / 60.0
+	if h >= 12.0:
+		return smoothstep(18.0, 21.0, h)
+	return 1.0 - smoothstep(5.0, 7.0, h)
+
+
+## Multiplier that cancels the ambient tint, for light sprites that must keep their own colour at night
+## (the outdoor CanvasModulate would otherwise darken a window glow along with the walls around it).
+func get_light_compensation() -> Color:
+	var amb := get_ambient_color()
+	return Color(1.0 / amb.r, 1.0 / amb.g, 1.0 / amb.b, 1.0)
 
 
 func get_ambient_color() -> Color:

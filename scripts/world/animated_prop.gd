@@ -3,6 +3,8 @@ extends StaticBody2D
 ## Solid world prop with an animated sprite sheet (e.g. town fireplace) and optional
 ## pulsing additive light halo.
 
+const GLOW_COLOR := Color(1.0, 0.85, 0.55, 1.0)
+
 @export var fps := 8.0
 @export var glow_texture: Texture2D
 @export var glow_scale := Vector2(0.45, 0.36)
@@ -24,7 +26,6 @@ func _ready() -> void:
 		var mat := CanvasItemMaterial.new()
 		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 		_glow.material = mat
-		_glow.modulate = Color(1.0, 0.85, 0.55, 0.65)
 		add_child(_glow)
 
 
@@ -35,5 +36,8 @@ func _process(delta: float) -> void:
 		_sprite.frame = int(_time * fps) % total
 	if _glow != null:
 		var pulse := 0.62 + 0.14 * sin(_time * 5.2) + 0.06 * cos(_time * 11.7)
-		_glow.modulate.a = clampf(pulse, 0.42, 0.85)
-		_glow.scale = glow_scale * (0.97 + 0.05 * sin(_time * 4.3))
+		# Night darkens the scene (CanvasModulate), so the halo widens and brightens to light the ground.
+		var night := TimeSystem.get_night_factor()
+		_glow.modulate = GLOW_COLOR * TimeSystem.get_light_compensation()
+		_glow.modulate.a = clampf(pulse * lerpf(0.8, 1.4, night), 0.42, 1.0)
+		_glow.scale = glow_scale * (0.97 + 0.05 * sin(_time * 4.3)) * lerpf(1.0, 1.9, night)

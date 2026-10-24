@@ -167,13 +167,15 @@ def build_room_base(
         color="Color(1.0, 0.96, 0.88, 1.0)",
     )
 
-    # Tiled Floor (TextureRect with STRETCH_TILE)
+    # Tiled Floor (TextureRect with STRETCH_TILE). The tile is 4x density art, so the rect is
+    # laid out in texture pixels and scaled down 0.25 to world units.
     s.node(
         "Floor",
         "TextureRect",
         ".",
-        offset_right=str(int(w)),
-        offset_bottom=str(int(h)),
+        offset_right=str(int(w) * 4),
+        offset_bottom=str(int(h) * 4),
+        scale=v(0.25, 0.25),
         texture=s.ext("Texture2D", floor_tex),
         stretch_mode="1",
     )

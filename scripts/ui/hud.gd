@@ -14,6 +14,9 @@ const InventoryPanelScript = preload("res://scripts/ui/inventory_panel.gd")
 @onready var _tracker: Label = $Tracker
 @onready var _time_label: Label = get_node_or_null("TimeLabel")
 @onready var inventory: InventoryPanelScript = $InventoryPanel
+@onready var wait_panel: WaitPanel = $WaitPanel
+
+var _player: Player
 
 
 func _ready() -> void:
@@ -23,10 +26,9 @@ func _ready() -> void:
 	Game.state.inventory_changed.connect(_refresh_tracker.unbind(1))
 	_refresh_tracker()
 	_update_time()
-
-
-func _process(_delta: float) -> void:
-	_update_time()
+	TimeSystem.hour_passed.connect(_update_time.unbind(1))
+	TimeSystem.day_phase_changed.connect(_update_time.unbind(1))
+	wait_panel.waited.connect(_on_waited)
 
 
 func _update_time() -> void:
@@ -35,10 +37,28 @@ func _update_time() -> void:
 
 
 func bind(player: Player) -> void:
+	_player = player
 	var stats := player.stats
 	stats.changed.connect(_on_stats_changed.bind(stats))
 	player.prompt_changed.connect(_on_prompt_changed)
 	_refresh(stats)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("wait") and _can_wait():
+		get_viewport().set_input_as_handled()
+		_player.input_enabled = false
+		wait_panel.open()
+
+
+func _can_wait() -> bool:
+	return _player != null and _player.input_enabled and not inventory.is_open() and not wait_panel.is_open()
+
+
+func _on_waited(hours: int) -> void:
+	_player.input_enabled = true
+	if hours > 0:
+		show_message("You wait %d hour%s, and wake rested. It is %s." % [hours, "" if hours == 1 else "s", TimeSystem.get_time_string()])
 
 
 func _on_stats_changed(_stat: StringName, stats: Stats) -> void:

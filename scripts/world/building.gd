@@ -28,6 +28,8 @@ extends StaticBody2D
 	set(value):
 		label = value
 		queue_redraw()
+const GLOW_COLOR := Color(1.0, 0.88, 0.58, 1.0)
+
 @export var chimney_offsets: PackedVector2Array = []
 @export var window_offsets: PackedVector2Array = []
 
@@ -53,7 +55,6 @@ func _setup_atmosphere() -> void:
 			g.position = wpos
 			g.scale = Vector2(0.24, 0.24)
 			g.material = add_mat
-			g.modulate = Color(1.0, 0.88, 0.58, 0.68)
 			add_child(g)
 			_glow_sprites.append(g)
 
@@ -82,7 +83,11 @@ func _process(delta: float) -> void:
 	for i in _glow_sprites.size():
 		var g := _glow_sprites[i]
 		var flicker := 0.64 + 0.14 * sin(_anim_time * 2.8 + float(i) * 1.3) + 0.05 * cos(_anim_time * 6.5)
-		g.modulate.a = clampf(flicker, 0.48, 0.86)
+		# The CanvasModulate darkens everything at night, so the glow grows and brightens to read as light.
+		var night := TimeSystem.get_night_factor()
+		g.modulate = GLOW_COLOR * TimeSystem.get_light_compensation()
+		g.modulate.a = clampf(flicker * lerpf(0.55, 1.35, night), 0.3, 1.0)
+		g.scale = Vector2(0.24, 0.24) * lerpf(1.0, 1.7, night)
 
 
 func _draw() -> void:

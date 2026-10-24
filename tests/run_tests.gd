@@ -57,6 +57,15 @@ func test_stats() -> void:
 	eq(died_count[0], 1, "died emitted once")
 	s.heal(50.0)
 	eq(s.health, 0.0, "dead actors are not healed")
+	s.restore_all()
+	eq(s.health, 0.0, "restore_all does not revive the dead")
+
+	var r := Stats.new()
+	r.damage(60.0)
+	r.use_stamina(80.0)
+	r.spend_mana(40.0)
+	r.restore_all()
+	eq([r.health, r.stamina, r.mana], [r.max_health, r.max_stamina, r.max_mana], "restore_all refills every vital")
 
 	var t := Stats.new()
 	check(t.use_stamina(40.0), "use_stamina spends when available")
@@ -372,6 +381,38 @@ func test_room() -> void:
 	check(hud.inventory.is_open(), "inventory.toggle() toggles to open")
 	hud.inventory.toggle()
 	check(not hud.inventory.is_open(), "inventory.toggle() toggles to closed")
+
+	# Waiting (T): opens the menu, skips the clock, refills every vital
+	TimeSystem.set_time(20, 0)
+	Game.stats.damage(50.0)
+	Game.stats.use_stamina(60.0)
+	Game.stats.spend_mana(30.0)
+	var wait_event := InputEventAction.new()
+	wait_event.action = "wait"
+	wait_event.pressed = true
+	hud._unhandled_input(wait_event)
+	check(hud.wait_panel.is_open(), "pressing wait opens the wait panel")
+	check(not player.input_enabled, "the wait panel freezes the player")
+	hud.wait_panel.adjust(5)
+	eq(hud.wait_panel.hours, 6, "wait panel adjusts hours")
+	hud.wait_panel.adjust(100)
+	eq(hud.wait_panel.hours, WaitPanel.MAX_HOURS, "wait panel caps at 24 hours")
+	hud.wait_panel.adjust(-100)
+	eq(hud.wait_panel.hours, WaitPanel.MIN_HOURS, "wait panel floors at 1 hour")
+	hud.wait_panel.adjust(5)
+	hud.wait_panel.confirm()
+	check(not hud.wait_panel.is_open(), "confirming closes the wait panel")
+	check(player.input_enabled, "the player can move again after waiting")
+	eq(TimeSystem.get_hour(), 2, "waiting 6 hours from 8 PM lands at 2 AM")
+	eq(
+		[Game.stats.health, Game.stats.stamina, Game.stats.mana],
+		[Game.stats.max_health, Game.stats.max_stamina, Game.stats.max_mana],
+		"waiting regenerates all vitals"
+	)
+	hud._unhandled_input(wait_event)
+	hud.wait_panel.cancel()
+	check(player.input_enabled and TimeSystem.get_hour() == 2, "cancelling the wait changes nothing")
+	TimeSystem.set_time(12, 0)
 
 	room.queue_free()
 	await get_tree().process_frame
@@ -701,6 +742,29 @@ func test_day_night_and_interiors() -> void:
 	check(TimeSystem.is_day(), "6:00 AM unlocks town (is_day=true)")
 	check(not TimeSystem.is_night(), "6:00 AM is not night")
 	check(not TimeSystem.is_building_locked("mayor_hall"), "Mayor's Hall unlocked at 6:00 AM")
+
+	# The HUD clock shows whole hours
+	TimeSystem.set_time(15, 45)
+	eq(TimeSystem.get_time_string(), "3 PM", "clock shows the hour only")
+	TimeSystem.set_time(0, 0)
+	eq(TimeSystem.get_time_string(), "12 AM", "midnight reads 12 AM")
+	TimeSystem.set_time(12, 0)
+	eq(TimeSystem.get_night_factor(), 0.0, "no night at noon")
+	TimeSystem.set_time(0, 0)
+	eq(TimeSystem.get_night_factor(), 1.0, "full night at midnight")
+	TimeSystem.set_time(19, 30)
+	check(TimeSystem.get_night_factor() > 0.0 and TimeSystem.get_night_factor() < 1.0, "dusk eases into night")
+
+	# Waiting skips whole hours, emitting each one and the night/day switches
+	var seen_hours: Array[int] = []
+	var on_hour := func(h: int) -> void: seen_hours.append(h)
+	TimeSystem.hour_passed.connect(on_hour)
+	TimeSystem.set_time(21, 0)
+	seen_hours.clear()
+	TimeSystem.wait_hours(2)
+	TimeSystem.hour_passed.disconnect(on_hour)
+	eq(seen_hours, [22, 23], "wait_hours emits every hour it crosses")
+	check(TimeSystem.is_night(), "waiting from 9 PM for 2 hours reaches night")
 
 	# Ambient lighting color
 	TimeSystem.set_time(12, 0)
