@@ -1,4 +1,8 @@
-"""Builds all game-ready pixel art assets from raw Gemini images and kitbashed components.
+"""Builds all game-ready high-density pixel art assets from raw Gemini images and kitbashed components.
+
+All characters, buildings, and props are built at 4x world texel density (rendered at scale 0.25 in
+Godot's canvas_items stretch mode), and ground maps at 1280x720 / 1280x840, preserving full native
+pixel-art sharpness in fullscreen.
 
 Run: python3 tools/build_all_art.py
 """
@@ -6,13 +10,33 @@ Run: python3 tools/build_all_art.py
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
-from pixelize import pixelize, remove_background
+from PIL import Image, ImageDraw, ImageFilter
+from pixelize import remove_background
 
 ROOT = Path(__file__).resolve().parent.parent
 
 NEW_RAW = ROOT / "assets" / "source" / "gemini" / "new"
 OLD_BEACH_RAW = ROOT / "assets" / "source" / "gemini" / "beach"
+INTRO_RAW = ROOT / "assets" / "source" / "gemini" / "intro"
+
+
+def clean_rgba(im: Image.Image, tolerance: int = 165) -> Image.Image:
+    """Removes background and neutralizes any magenta/purple anti-aliased fringe pixels
+    without destructive low-color palette quantization."""
+    rgba = remove_background(im, tolerance)
+    arr = np.array(rgba).astype(int)
+    r, g, b, a = arr[..., 0], arr[..., 1], arr[..., 2], arr[..., 3]
+    purple_excess = np.minimum(r, b) - g
+    is_halo = (a > 0) & (purple_excess > 35) & (r > 95) & (b > 95)
+    arr[is_halo, 3] = 0
+    a = arr[..., 3]
+    is_tinted_edge = (a > 0) & (purple_excess > 18)
+    luma = ((0.299 * r + 0.587 * g + 0.114 * b) * 0.65).astype(int)
+    arr[is_tinted_edge, 0] = np.clip(luma[is_tinted_edge], 16, 80)
+    arr[is_tinted_edge, 1] = np.clip(luma[is_tinted_edge] - 2, 14, 78)
+    arr[is_tinted_edge, 2] = np.clip(luma[is_tinted_edge] + 2, 18, 84)
+    arr[..., 3] = np.where(arr[..., 3] >= 128, 255, 0)
+    return Image.fromarray(arr.astype(np.uint8), "RGBA")
 
 
 def strip_sand_island(im: Image.Image) -> Image.Image:
@@ -26,12 +50,10 @@ def strip_sand_island(im: Image.Image) -> Image.Image:
         arr[..., 2].astype(int),
         arr[..., 3].astype(int),
     )
-    # Pale beige sand and dark wet-sand shadow at base of beach props
     is_pale_sand = (
         (a > 0) & (r > 150) & (g > 138) & (b > 95) & (r >= g - 6) & (g >= b + 12)
     )
     arr[is_pale_sand, 3] = 0
-    # Also remove flat muddy-brown ground shadow blobs on the bottom 30% that are disconnected or border-adjacent
     yy = np.arange(h)[:, None]
     is_ground_shadow = (
         (yy > int(h * 0.65))
@@ -46,7 +68,6 @@ def strip_sand_island(im: Image.Image) -> Image.Image:
         & ((r - b) > 15)
     )
     arr[is_ground_shadow, 3] = 0
-    # Erode 1-2px isolated crumbs left behind in the bottom 40%
     for _ in range(3):
         alpha = arr[..., 3] > 0
         for y in range(int(h * 0.58), h):
@@ -66,44 +87,415 @@ def strip_sand_island(im: Image.Image) -> Image.Image:
     return Image.fromarray(arr, "RGBA")
 
 
+def resize_crisp_rgba(im: Image.Image, target_w: int, target_h: int) -> Image.Image:
+    """Resizes an RGBA pixel-art sprite to (target_w, target_h) preserving sharp pixel edges
+    and clean binary alpha."""
+    im = im.convert("RGBA")
+    # Snap via nearest-neighbor so existing pixel-art blocks and 1px outlines stay razor-sharp
+    out = im.resize((target_w, target_h), Image.NEAREST)
+    arr = np.array(out)
+    arr[..., 3] = np.where(arr[..., 3] >= 128, 255, 0)
+    return Image.fromarray(arr, "RGBA")
+
+
 def save_sprite(
     im: Image.Image,
     dst: Path,
-    width: int,
-    colors: int = 24,
+    world_width: int,
     strip_sand: bool = False,
+    scale_factor: int = 4,
 ) -> Image.Image:
-    key = np.array(im.convert("RGB"))[0, 0]
-    rgba = remove_background(im, 165)
+    rgba = clean_rgba(im, 165)
     if strip_sand:
         rgba = strip_sand_island(rgba)
     bbox = rgba.getchannel("A").getbbox()
     if bbox:
         rgba = rgba.crop(bbox)
-    out = pixelize(rgba, width, colors, 128, key)
+    target_w = world_width * scale_factor
+    target_h = max(scale_factor, round(rgba.height * target_w / rgba.width))
+    out = resize_crisp_rgba(rgba, target_w, target_h)
     dst.parent.mkdir(parents=True, exist_ok=True)
     out.save(dst)
     print(f"wrote {dst.relative_to(ROOT)} ({out.width}x{out.height})")
     return out
 
 
-def build_grounds() -> None:
-    # 1. Beach ground (320x180)
+def _build_grass_tile_layer(tw: int, th: int, base_rgb: np.ndarray) -> np.ndarray:
+    """Synthesizes a true 1:1 pixel-art meadow grass & moss layer at 4x world resolution
+    (4 texels per world unit). Uses multi-pixel (2-3px wide, 6-9px tall) shaded grass blade
+    clusters, clover rosettes, and wildflowers with clean 1px dark pine bases—zero 1px noise
+    and zero 8x8 blocky upscaling."""
+    # Smooth macro lighting from base_rgb so forest shadows and sunlit clearings are preserved
+    macro_pil = (
+        Image.fromarray(base_rgb.astype(np.uint8), "RGB")
+        .resize((max(16, tw // 32), max(16, th // 32)), Image.BILINEAR)
+        .resize((tw, th), Image.BILINEAR)
+    )
+    macro = np.array(macro_pil, dtype=np.float32)
+    macro_lum = 0.299 * macro[..., 0] + 0.587 * macro[..., 1] + 0.114 * macro[..., 2]
+    # Normalize shade factor around 1.0 (clamped 0.72 .. 1.24)
+    shade = np.clip(macro_lum / 58.0, 0.72, 1.24)[..., None]
+
+    # Build a 256x256 seamless pixel-art grass tile in PIL, then tile across (tw, th)
+    tile_sz = 256
+    tile = Image.new("RGB", (tile_sz, tile_sz), (34, 60, 32))
+    px = tile.load()
+    rng = np.random.default_rng(421337)
+
+    # 1. Soft organic moss patches (12-24px across) on the base turf
+    for _ in range(140):
+        cx = int(rng.integers(0, tile_sz))
+        cy = int(rng.integers(0, tile_sz))
+        rx = int(rng.integers(8, 22))
+        ry = int(rng.integers(6, 16))
+        col = (28, 52, 28) if rng.random() < 0.55 else (40, 70, 36)
+        for dy in range(-ry, ry + 1):
+            for dx in range(-rx, rx + 1):
+                if (dx / rx) ** 2 + (dy / ry) ** 2 <= 1.0:
+                    px[(cx + dx) % tile_sz, (cy + dy) % tile_sz] = col
+
+    # 2. Hand-crafted pixel-art grass blade clusters (2px wide blades, 6-9px tall, 1px dark base)
+    # Each tuft is a coherent pixel-art sprite matching the Hero/Building pixel scale
+    for _ in range(720):
+        cx = int(rng.integers(0, tile_sz))
+        cy = int(rng.integers(0, tile_sz))
+        n_blades = int(rng.integers(3, 6))
+        span = (n_blades - 1) * 3
+        start_x = cx - span // 2
+        for b_i in range(n_blades):
+            bx = start_x + b_i * 3
+            bh = int(rng.integers(5, 9))
+            lean = -1 if b_i < n_blades // 2 else (1 if b_i > n_blades // 2 else 0)
+            # 1px dark pine root shadow at base
+            for w_off in range(2):
+                px[(bx + w_off) % tile_sz, (cy + 1) % tile_sz] = (18, 34, 20)
+                px[(bx + w_off) % tile_sz, cy % tile_sz] = (24, 44, 24)
+            # Upward blade body (2px wide at bottom, tapering to 1-2px at tip)
+            for dy in range(1, bh + 1):
+                cur_x = bx + (lean if dy >= bh // 2 else 0)
+                if dy <= 2:
+                    bcol = (32, 58, 30)
+                    w_max = 2
+                elif dy < bh - 1:
+                    bcol = (46, 80, 38)
+                    w_max = 2
+                else:
+                    bcol = (64, 102, 48)
+                    w_max = 1 if dy == bh else 2
+                for w_off in range(w_max):
+                    px[(cur_x + w_off) % tile_sz, (cy - dy) % tile_sz] = bcol
+
+    # 3. Hand-crafted pixel-art 4-leaf clover rosettes (8x8 texels)
+    leaf_offsets = [(-2, -2), (2, -2), (-2, 2), (2, 2)]
+    for _ in range(55):
+        cx = int(rng.integers(0, tile_sz))
+        cy = int(rng.integers(0, tile_sz))
+        for ox, oy in leaf_offsets:
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    x0 = (cx + ox + dx) % tile_sz
+                    y0 = (cy + oy + dy) % tile_sz
+                    if abs(dx) == 1 and abs(dy) == 1:
+                        px[x0, y0] = (20, 38, 22)
+                    elif dy == -1:
+                        px[x0, y0] = (70, 110, 52)
+                    else:
+                        px[x0, y0] = (50, 86, 42)
+        px[cx % tile_sz, cy % tile_sz] = (22, 40, 22)
+
+    # 4. Crisp pixel-art wildflowers (6x6 texels with 2x2 petals and 1px dark stem)
+    for _ in range(28):
+        cx = int(rng.integers(0, tile_sz))
+        cy = int(rng.integers(0, tile_sz))
+        is_blue = rng.random() < 0.45
+        p_hi = (145, 192, 235) if is_blue else (232, 236, 224)
+        p_lo = (98, 146, 196) if is_blue else (188, 196, 184)
+        # Stem shadow
+        for dy in range(1, 4):
+            px[cx % tile_sz, (cy + dy) % tile_sz] = (20, 38, 22)
+        # 4 petals around center
+        for ox, oy in ((0, -2), (0, 2), (-2, 0), (2, 0)):
+            px[(cx + ox) % tile_sz, (cy + oy) % tile_sz] = p_hi
+            px[(cx + ox + 1) % tile_sz, (cy + oy) % tile_sz] = p_lo
+        # Golden center
+        px[cx % tile_sz, cy % tile_sz] = (238, 192, 62)
+        px[(cx + 1) % tile_sz, cy % tile_sz] = (196, 148, 42)
+
+    terrain_dir = ROOT / "assets" / "terrain"
+    terrain_dir.mkdir(parents=True, exist_ok=True)
+    tile.save(terrain_dir / "grass_tile.png")
+    tile_arr = np.array(tile, dtype=np.float32)
+    reps_y = (th + tile_sz - 1) // tile_sz
+    reps_x = (tw + tile_sz - 1) // tile_sz
+    tiled = np.tile(tile_arr, (reps_y, reps_x, 1))[:th, :tw]
+    return np.clip(tiled * shade, 10.0, 245.0)
+
+
+def _build_cobble_layer(tw: int, th: int) -> np.ndarray:
+    """Loads or builds the organic Voronoi cobblestone tile (`assets/terrain/cobble_tile.png`)
+    and tiles it across (tw, th)."""
+    from build_modular_art import build_organic_terrain_tiles
+
+    cob_path = ROOT / "assets" / "terrain" / "cobble_tile.png"
+    if not cob_path.exists():
+        build_organic_terrain_tiles()
+    tile_arr = np.array(Image.open(cob_path).convert("RGB"), dtype=np.float32)
+    tile_sz = tile_arr.shape[0]
+    reps_y = (th + tile_sz - 1) // tile_sz
+    reps_x = (tw + tile_sz - 1) // tile_sz
+    return np.tile(tile_arr, (reps_y, reps_x, 1))[:th, :tw]
+
+
+def _build_dirt_layer(tw: int, th: int, base_rgb: np.ndarray) -> np.ndarray:
+    """Loads or builds the organic dirt & polygonal rubble tile (`assets/terrain/dirt_rubble_tile.png`)
+    and tiles it across (tw, th) modulated by smooth road shading."""
+    from build_modular_art import build_organic_terrain_tiles
+
+    dirt_path = ROOT / "assets" / "terrain" / "dirt_rubble_tile.png"
+    if not dirt_path.exists():
+        build_organic_terrain_tiles()
+    macro_pil = (
+        Image.fromarray(base_rgb.astype(np.uint8), "RGB")
+        .resize((max(16, tw // 24), max(16, th // 24)), Image.BILINEAR)
+        .resize((tw, th), Image.BILINEAR)
+    )
+    macro = np.array(macro_pil, dtype=np.float32)
+    macro_lum = 0.299 * macro[..., 0] + 0.587 * macro[..., 1] + 0.114 * macro[..., 2]
+    shade = np.clip(macro_lum / 108.0, 0.84, 1.14)[..., None]
+
+    tile_arr = np.array(Image.open(dirt_path).convert("RGB"), dtype=np.float32)
+    tile_sz = tile_arr.shape[0]
+    reps_y = (th + tile_sz - 1) // tile_sz
+    reps_x = (tw + tile_sz - 1) // tile_sz
+    tiled = np.tile(tile_arr, (reps_y, reps_x, 1))[:th, :tw]
+    return np.clip(tiled * shade, 16.0, 235.0)
+
+
+def sharpen_ground(
+    im: Image.Image,
+    world_size: tuple[int, int],
+    grim_grade: bool = False,
+    add_micro_detail: bool = True,
+    scale_factor: int = 4,
+    mode: str = "town",
+) -> Image.Image:
+    """Produces a true 4x-density (4 texels per world unit) pixel-art ground map.
+    Replaces stretched low-res grass, dirt, and cobblestones with native 1:1 pixel-art
+    terrain layers while preserving landmarks (tide pools, waves, cairns, scorched ash)."""
+    ww, wh = world_size
+    tw, th = ww * scale_factor, wh * scale_factor
+    rgb = im.convert("RGB")
+    if grim_grade:
+        arr0 = np.array(rgb).astype(float)
+        r0, g0, b0 = arr0[..., 0], arr0[..., 1], arr0[..., 2]
+        is_green0 = (g0 > r0 * 1.06) & (g0 > b0 * 1.10)
+        arr0[is_green0, 0] = np.clip(r0[is_green0] * 0.84 + 6, 0, 255)
+        arr0[is_green0, 1] = np.clip(g0[is_green0] * 0.72 + 4, 0, 255)
+        arr0[is_green0, 2] = np.clip(b0[is_green0] * 0.86 + 8, 0, 255)
+        arr0 = np.clip((arr0 - 108.0) * 1.16 + 100.0, 10, 248)
+        rgb = Image.fromarray(arr0.astype(np.uint8), "RGB")
+
+    if not add_micro_detail:
+        rgb_sharp = rgb.filter(
+            ImageFilter.UnsharpMask(radius=1.4, percent=200, threshold=2)
+        )
+        mid = rgb_sharp.resize((ww * 2, wh * 2), Image.LANCZOS)
+        quant = mid.quantize(
+            colors=64, method=Image.FASTOCTREE, dither=Image.NONE
+        ).convert("RGBA")
+        return quant.resize((tw, th), Image.NEAREST)
+
+    # Smoothly upscale source to (tw, th) for clean contour masks (zero 8x8 stair-stepping)
+    smooth_pil = rgb.resize((tw, th), Image.BICUBIC)
+    base_arr = np.array(smooth_pil, dtype=np.float32)
+
+    # Also build a crisp edge-sharpened version of the source for landmarks (waves, cliffs, ash, cairns)
+    landmark_pil = rgb.filter(
+        ImageFilter.UnsharpMask(radius=1.5, percent=220, threshold=2)
+    ).resize((ww * 2, wh * 2), Image.LANCZOS)
+    landmark_pil = landmark_pil.filter(
+        ImageFilter.UnsharpMask(radius=0.8, percent=160, threshold=2)
+    ).resize((tw, th), Image.NEAREST)
+    landmark_arr = np.array(landmark_pil, dtype=np.float32)
+
+    yy, xx = np.mgrid[0:th, 0:tw]
+
+    # Classify terrain masks using a heavily smoothed version of the source so pebbles/flowers
+    # inside a road or meadow never punch holes that fall back to the low-res source image!
+    zone_pil = rgb.resize((max(32, ww // 6), max(32, wh // 6)), Image.BILINEAR).resize(
+        (tw, th), Image.BICUBIC
+    )
+    z_arr = np.array(zone_pil, dtype=np.float32)
+    zr, zg, zb = z_arr[..., 0], z_arr[..., 1], z_arr[..., 2]
+    zlum = 0.299 * zr + 0.587 * zg + 0.114 * zb
+
+    wx = xx / float(scale_factor)
+    wy = yy / float(scale_factor)
+
+    # Synthesize 1:1 4x pixel-art layers
+    grass_layer = _build_grass_tile_layer(tw, th, base_arr)
+    dirt_layer = _build_dirt_layer(tw, th, base_arr)
+    cobble_layer = _build_cobble_layer(tw, th)
+
+    is_Plaza_curb = np.zeros((th, tw), dtype=bool)
+
+    if mode == "wrackmouth":
+        # Clean geometric oval for the central town plaza (centered at world 320, 206)
+        plaza_dist = ((wx - 320.0) / 60.0) ** 2 + ((wy - 206.0) / 64.0) ** 2
+        is_cobble = plaza_dist <= 1.0
+        is_Plaza_curb = np.zeros((th, tw), dtype=bool)
+
+        # Smooth road mask covers the 4 dirt roads + plaza apron without any pebble holes
+        is_dirt_zone = (zg < zr * 1.03) & (zr > zb + 6.0)
+        is_cairn_path = (wx < 105.0) & (wy > 325.0) & (zg < zr * 1.04)
+        is_dirt = (
+            is_dirt_zone | is_cairn_path | ((plaza_dist > 1.0) & (plaza_dist <= 1.24))
+        ) & (~is_cobble)
+        is_grass = (~is_cobble) & (~is_dirt)
+
+        out = grass_layer.copy()
+        out[is_dirt] = dirt_layer[is_dirt]
+        out[is_cobble] = cobble_layer[is_cobble]
+
+        from build_modular_art import build_plaza_circle_asset
+
+        plaza_path = ROOT / "assets" / "props" / "plaza_circle.png"
+        plaza_im = (
+            Image.open(plaza_path).convert("RGBA")
+            if plaza_path.exists()
+            else build_plaza_circle_asset(cobble_layer[:256, :256])
+        )
+        out_rgba = Image.fromarray(
+            np.clip(out, 8.0, 248.0).astype(np.uint8), "RGB"
+        ).convert("RGBA")
+        px_off = int(320 * scale_factor - plaza_im.width // 2)
+        py_off = int(206 * scale_factor - plaza_im.height // 2)
+        out_rgba.alpha_composite(plaza_im, (px_off, py_off))
+        out = np.array(out_rgba.convert("RGB"), dtype=np.float32)
+
+    elif mode == "crossholm":
+        # Cobblestone king's road band runs horizontally (world y in 172..224)
+        in_kings_road = (wy >= 172.0) & (wy <= 224.0)
+        # Smooth north dirt track mask
+        is_dirt_track = (
+            (wx >= 250.0)
+            & (wx <= 380.0)
+            & (wy >= 28.0)
+            & (wy <= 190.0)
+            & (zr > zg + 3.0)
+            & (zlum > 42.0)
+        )
+        is_cobble = in_kings_road & (~((wy < 184.0) & is_dirt_track))
+        is_Plaza_curb = (
+            in_kings_road
+            & (((wy >= 172.0) & (wy <= 176.0)) | ((wy >= 220.0) & (wy <= 224.0)))
+            & (~is_dirt_track)
+        )
+        is_dirt = is_dirt_track & (~is_cobble)
+
+        # Preserve only the wyvern-scorched black ash crater (top center) and dark slate rock crags
+        ash_dist = (
+            ((wx - 332.0) / 88.0) ** 2
+            + ((wy - 56.0) / 52.0) ** 2
+            + 0.14 * np.sin(wx * 0.11) * np.cos(wy * 0.13)
+        )
+        in_ash_crater = (ash_dist <= 1.0) & (~is_dirt)
+        in_ash_rim = (ash_dist > 0.82) & (ash_dist <= 1.08) & (~is_dirt)
+        is_grass = (~is_cobble) & (~is_dirt) & (~in_ash_crater)
+
+        out = grass_layer.copy()
+        out[is_dirt] = dirt_layer[is_dirt]
+        out[is_cobble] = cobble_layer[is_cobble]
+
+        # Synthesize crisp 1:1 pixel-art scorched ash & glowing wyvern embers in the crater
+        ash_base = dirt_layer * 0.34
+        ash_base[..., 2] += 4.0
+        ember_hash = (
+            ((xx // 2) * 374761393 + (yy // 2) * 668265263) ^ 0x5BF03635
+        ) & 0xFFFF
+        is_ember = in_ash_crater & (ember_hash < 520)
+        is_ember_core = in_ash_crater & (ember_hash < 160)
+        out[in_ash_crater] = np.clip(ash_base[in_ash_crater], 14.0, 68.0)
+        out[in_ash_rim] = np.clip(out[in_ash_rim] * 0.58, 16.0, 95.0)
+        out[is_ember] = [215.0, 78.0, 24.0]
+        out[is_ember_core] = [252.0, 168.0, 46.0]
+
+    else:
+        # Beach: preserve ocean, pools, and rock rings; upgrade sand, stone path, and coastal grass
+        pool_w = ((wx - 66.0) / 34.0) ** 2 + ((wy - 110.0) / 26.0) ** 2 <= 1.0
+        pool_e = ((wx - 250.0) / 34.0) ** 2 + ((wy - 78.0) / 24.0) ** 2 <= 1.0
+        is_cobble = (wy > 122.0) & (wx > 128.0) & (wx < 172.0) & (zg < zr * 1.06)
+        is_grass = (wy > 105.0) & (zg > zr + 4.0) & (~is_cobble) & (~pool_w) & (~pool_e)
+        is_sand = (
+            (wy > 54.0)
+            & (~is_grass)
+            & (~is_cobble)
+            & (~pool_w)
+            & (~pool_e)
+            & (zlum > 48.0)
+            & (zlum < 145.0)
+            & (np.abs(zr - zg) < 22.0)
+        )
+        # Synthesize crisp 1:1 dark volcanic coastal sand & shingle layer from dirt_layer
+        sand_layer = dirt_layer.copy()
+        sand_lum = (
+            0.299 * sand_layer[..., 0]
+            + 0.587 * sand_layer[..., 1]
+            + 0.114 * sand_layer[..., 2]
+        )
+        sand_layer[..., 0] = np.clip(sand_lum * 0.88 + 6.0, 28.0, 175.0)
+        sand_layer[..., 1] = np.clip(sand_lum * 0.88 + 6.0, 28.0, 175.0)
+        sand_layer[..., 2] = np.clip(sand_lum * 0.84 + 8.0, 28.0, 170.0)
+
+        out = landmark_arr.copy()
+        out[is_sand] = sand_layer[is_sand]
+        out[is_cobble] = cobble_layer[is_cobble]
+        out[is_grass] = grass_layer[is_grass]
+
+    # Draw crisp stone curb bevel on Plaza / King's Road border
+    if np.any(is_Plaza_curb):
+        angle_joint = (
+            ((np.arctan2(wy - 206.0, wx - 320.0) * 18.0) % 1.0 < 0.08)
+            if mode == "wrackmouth"
+            else ((xx % 32) < 2)
+        )
+        curb_body = is_Plaza_curb & (~angle_joint)
+        curb_mortar = is_Plaza_curb & angle_joint
+        out[curb_body] = [118.0, 122.0, 126.0]
+        out[curb_mortar] = [32.0, 34.0, 38.0]
+
+    # Add a 2px dark earth undercut shadow + overhanging 2px pixel-art grass blades at grass borders
+    grass_up = np.roll(is_grass, 3, axis=0)
+    grass_dn = np.roll(is_grass, -3, axis=0)
+    grass_lf = np.roll(is_grass, 3, axis=1)
+    grass_rt = np.roll(is_grass, -3, axis=1)
+    border = (~is_grass) & (grass_up | grass_dn | grass_lf | grass_rt)
+    # Deterministic 2px grass teeth along border
+    tooth = (((xx // 2) * 374761393 + (yy // 2) * 668265263) & 3) < 2
+    out[border & tooth] = [36.0, 66.0, 34.0]
+    out[border & (~tooth)] *= 0.72
+
+    out = np.clip(out, 8.0, 248.0).astype(np.uint8)
+    return Image.fromarray(out, "RGB").convert("RGBA")
+
+
+def build_grounds_and_intro() -> None:
+    # 1. Beach ground (1280x720 = 4x of 320x180 world, scale=0.25)
     beach_src = Image.open(NEW_RAW / "beach_ground_png_1792624473688.jpg")
-    beach_out = pixelize(beach_src, 320, 32, 128)
-    if beach_out.height != 180:
-        beach_out = beach_out.resize((320, 180), Image.NEAREST)
+    beach_out = sharpen_ground(
+        beach_src, (320, 180), grim_grade=False, scale_factor=4, mode="beach"
+    )
     beach_dst = ROOT / "assets" / "beach" / "ground.png"
     beach_out.save(beach_dst)
     print(f"wrote {beach_dst.relative_to(ROOT)} ({beach_out.width}x{beach_out.height})")
 
-    # Build water mask for new beach ground (ocean at top + 2 tide pools)
-    rgb = np.array(beach_out.convert("RGB")).astype(int)
+    # Build water mask at 320x180 for beach shader (UV-mapped 0..1)
+    beach_small = beach_out.resize((320, 180), Image.BILINEAR)
+    rgb = np.array(beach_small.convert("RGB")).astype(int)
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     water = ((b > r + 10) & (g > r + 5)) | (
         (rgb.min(axis=2) > 155) & (np.abs(b - r) < 45)
     )
-    # Keep top-half ocean (y < 68) and the two tide pools around (64, 108) and (250, 78)
     h, w = water.shape
     yy, xx = np.mgrid[0:h, 0:w]
     ocean_zone = yy < 66
@@ -112,7 +504,6 @@ def build_grounds() -> None:
     valid_water = water & (ocean_zone | pool_west | pool_east)
     mask = np.zeros((h, w), dtype=np.uint8)
     mask[valid_water] = 180
-    # Smooth gradient near shore edges
     for y in range(1, h - 1):
         for x in range(1, w - 1):
             if valid_water[y, x] and not (
@@ -126,27 +517,57 @@ def build_grounds() -> None:
     Image.fromarray(mask, "L").save(mask_dst)
     print(f"wrote {mask_dst.relative_to(ROOT)}")
 
-    # 2. Wrackmouth ground (640x420)
-    wm_src = Image.open(NEW_RAW / "wrackmouth_ground_png_1792624491205.jpg").resize(
-        (1280, 840), Image.BILINEAR
+    # 2. Wrackmouth ground (2560x1680 = 4x of 640x420 world, scale=0.25)
+    wm_raw = NEW_RAW / "wrackmouth_ground_v2.jpg"
+    if not wm_raw.exists():
+        wm_raw = NEW_RAW / "wrackmouth_ground_png_1792624491205.jpg"
+    wm_src = Image.open(wm_raw)
+    wm_out = sharpen_ground(
+        wm_src, (640, 420), grim_grade=True, scale_factor=4, mode="wrackmouth"
     )
-    wm_out = pixelize(wm_src, 640, 32, 128)
-    if wm_out.height != 420:
-        wm_out = wm_out.resize((640, 420), Image.NEAREST)
     wm_dst = ROOT / "assets" / "wrackmouth" / "ground.png"
     wm_dst.parent.mkdir(parents=True, exist_ok=True)
     wm_out.save(wm_dst)
     print(f"wrote {wm_dst.relative_to(ROOT)} ({wm_out.width}x{wm_out.height})")
 
-    # 3. Crossholm road ground (640x360)
-    cr_src = Image.open(NEW_RAW / "crossholm_road_ground_png_1792624507900.jpg")
-    cr_out = pixelize(cr_src, 640, 32, 128)
-    if cr_out.height != 360:
-        cr_out = cr_out.resize((640, 360), Image.NEAREST)
+    # 3. Crossholm road ground (2560x1440 = 4x of 640x360 world, scale=0.25)
+    cr_raw = NEW_RAW / "crossholm_road_ground_v2.jpg"
+    if not cr_raw.exists():
+        cr_raw = NEW_RAW / "crossholm_road_ground_png_1792624507900.jpg"
+    cr_src = Image.open(cr_raw)
+    cr_out = sharpen_ground(
+        cr_src, (640, 360), grim_grade=False, scale_factor=4, mode="crossholm"
+    )
     cr_dst = ROOT / "assets" / "crossholm_road" / "ground.png"
     cr_dst.parent.mkdir(parents=True, exist_ok=True)
     cr_out.save(cr_dst)
     print(f"wrote {cr_dst.relative_to(ROOT)} ({cr_out.width}x{cr_out.height})")
+
+    # 4. Intro & Menu storm sea + ships (4x density)
+    intro_dir = ROOT / "assets" / "intro"
+    if (INTRO_RAW / "storm_sea.jpeg").exists():
+        sea_src = Image.open(INTRO_RAW / "storm_sea.jpeg")
+        sea_out = sharpen_ground(
+            sea_src,
+            (320, 180),
+            grim_grade=False,
+            add_micro_detail=False,
+            scale_factor=4,
+        )
+        sea_out.save(intro_dir / "storm_sea.png")
+        print(f"wrote assets/intro/storm_sea.png ({sea_out.width}x{sea_out.height})")
+    if (INTRO_RAW / "ship.jpeg").exists():
+        save_sprite(
+            Image.open(INTRO_RAW / "ship.jpeg"),
+            intro_dir / "ship.png",
+            world_width=120,
+        )
+    if (INTRO_RAW / "ship_broken.jpeg").exists():
+        save_sprite(
+            Image.open(INTRO_RAW / "ship_broken.jpeg"),
+            intro_dir / "ship_broken.png",
+            world_width=110,
+        )
 
 
 def build_buildings() -> None:
@@ -158,39 +579,33 @@ def build_buildings() -> None:
     hall = save_sprite(
         Image.open(NEW_RAW / "mayor_hall_1792624473522.jpg"),
         wm_dir / "mayor_hall.png",
-        width=116,
-        colors=28,
+        world_width=116,
     )
     save_sprite(
         Image.open(NEW_RAW / "forge_1792624501091.jpg"),
         wm_dir / "forge.png",
-        width=96,
-        colors=28,
+        world_width=96,
     )
     save_sprite(
         Image.open(NEW_RAW / "cottage_harrow_1792624473913.jpg"),
         wm_dir / "cottage_harrow.png",
-        width=74,
-        colors=24,
+        world_width=74,
     )
-    save_sprite(
+    rook = save_sprite(
         Image.open(NEW_RAW / "cottage_rook_1792624489518.jpg"),
         wm_dir / "cottage_rook.png",
-        width=68,
-        colors=24,
+        world_width=68,
     )
     shuttered = save_sprite(
         Image.open(NEW_RAW / "cottage_shuttered_1792624502404.jpg"),
         wm_dir / "cottage_shuttered.png",
-        width=68,
-        colors=24,
+        world_width=68,
     )
 
-    # Build Salt Gull Inn from the second two-wing medieval building (`forge_1792624487817.jpg`)
+    # Salt Gull Inn at 4x density (496x440)
     inn_raw = Image.open(NEW_RAW / "forge_1792624487817.jpg")
-    inn_rgba = remove_background(inn_raw, 165)
+    inn_rgba = clean_rgba(inn_raw, 165)
     arr = np.array(inn_rgba)
-    # Paint over the "KELL'S FORGE" text on the wooden signboard (x: 390..485, y: 435..530) with warm wood + white gull icon
     for y in range(435, 530):
         for x in range(388, 488):
             r, g, b, a = arr[y, x]
@@ -212,7 +627,6 @@ def build_buildings() -> None:
         fill=(230, 228, 218, 255),
     )
     arr2 = np.array(inn_edited)
-    # Light up only the dark interior glass panes of the dormer and side windows
     for y1, y2, x1, x2 in ((378, 418, 430, 460), (582, 650, 750, 796)):
         reg = arr2[y1:y2, x1:x2]
         dark_pane = (
@@ -226,24 +640,25 @@ def build_buildings() -> None:
         reg[dark_pane, 2] = 54
     bbox = Image.fromarray(arr2).getchannel("A").getbbox()
     inn_cropped = Image.fromarray(arr2).crop(bbox)
-    inn_out = pixelize(inn_cropped, 124, 28, 128)
+    inn_w = 124 * 4
+    inn_h = round(inn_cropped.height * inn_w / inn_cropped.width)
+    inn_out = resize_crisp_rgba(inn_cropped, inn_w, inn_h)
     inn_out.save(wm_dir / "salt_gull.png")
     print(f"wrote assets/wrackmouth/salt_gull.png ({inn_out.width}x{inn_out.height})")
 
-    # Build Lantern Watch Tower (54x88) by extending Rook cottage into a 2-story stone-and-timber watchtower
-    rook = Image.open(wm_dir / "cottage_rook.png")
+    # Lantern Watch Tower (216x352 = 4x of 54x88)
     tower = build_lantern_watch(rook, hall)
     tower.save(wm_dir / "lantern_watch.png")
     print(f"wrote assets/wrackmouth/lantern_watch.png ({tower.width}x{tower.height})")
 
-    # Build Burned Farm Ruins (82x60) from shuttered cottage with charred palette & glowing embers
+    # Burned Farm Ruins (4x density)
     burned = build_burned_farm(shuttered)
     burned.save(cr_dir / "burned_farm.png")
     print(
         f"wrote assets/crossholm_road/burned_farm.png ({burned.width}x{burned.height})"
     )
 
-    # Build Crossholm Garrison Gate & Walls
+    # Crossholm Garrison Gate & Walls (4x density)
     gate, wall_n, wall_s = build_crossholm_fortifications(hall)
     gate.save(cr_dir / "gate.png")
     wall_n.save(cr_dir / "wall_north.png")
@@ -255,29 +670,26 @@ def build_buildings() -> None:
 
 
 def build_lantern_watch(rook: Image.Image, hall: Image.Image) -> Image.Image:
-    """Constructs a 54x88 2-story coastal watchtower seamlessly from Rook cottage."""
-    # Narrow rook (68x70) to 54x68 for a tower footprint
-    slim = rook.resize((54, 68), Image.NEAREST)
-    # Slice into roof+upper story (y: 0..46), middle wall+window band (y: 26..48), and lower door+stone base (y: 38..68)
-    top_part = slim.crop((0, 0, 54, 46))
-    mid_band = slim.crop((0, 28, 54, 48))
-    bot_part = slim.crop((0, 38, 54, 68))
+    """Constructs a 216x352 (4x of 54x88) 2-story coastal watchtower from 4x Rook cottage."""
+    s = 4
+    slim = rook.resize((54 * s, 68 * s), Image.NEAREST)
+    top_part = slim.crop((0, 0, 54 * s, 46 * s))
+    mid_band = slim.crop((0, 28 * s, 54 * s, 48 * s))
+    bot_part = slim.crop((0, 38 * s, 54 * s, 68 * s))
 
-    img = Image.new("RGBA", (54, 88), (0, 0, 0, 0))
-    img.alpha_composite(bot_part, (0, 58))
-    img.alpha_composite(mid_band, (0, 40))
+    img = Image.new("RGBA", (54 * s, 88 * s), (0, 0, 0, 0))
+    img.alpha_composite(bot_part, (0, 58 * s))
+    img.alpha_composite(mid_band, (0, 40 * s))
     img.alpha_composite(top_part, (0, 0))
-    # Add warm beacon glow in the upper gable window (x: 14..22, y: 24..32)
-    win = hall.crop((19, 55, 27, 66))
-    img.alpha_composite(win, (14, 24))
+    win = hall.crop((19 * s, 55 * s, 27 * s, 66 * s))
+    img.alpha_composite(win, (14 * s, 24 * s))
     return img
 
 
 def build_burned_farm(shuttered: Image.Image) -> Image.Image:
-    """Creates a charred, smoking farmhouse ruin from shuttered cottage with glowing embers."""
+    """Creates a charred, smoking farmhouse ruin at 4x resolution with glowing embers."""
     arr = np.array(shuttered.convert("RGBA")).astype(float)
     alpha = arr[..., 3] > 0
-    # Char and darken wood/stone into soot & ash
     lum = 0.299 * arr[..., 0] + 0.587 * arr[..., 1] + 0.114 * arr[..., 2]
     arr[alpha, 0] = np.clip(lum[alpha] * 0.42 + 8, 12, 75)
     arr[alpha, 1] = np.clip(lum[alpha] * 0.36 + 5, 10, 62)
@@ -285,69 +697,68 @@ def build_burned_farm(shuttered: Image.Image) -> Image.Image:
     out = arr.astype(np.uint8)
     h, w = out.shape[:2]
     rng = np.random.default_rng(99)
-    # Add glowing orange/red embers in the collapsed roof gaps and lower beams
-    for y in range(int(h * 0.25), int(h * 0.88)):
-        for x in range(int(w * 0.18), int(w * 0.82)):
+    for y in range(int(h * 0.25), int(h * 0.88), 2):
+        for x in range(int(w * 0.18), int(w * 0.82), 2):
             if out[y, x, 3] > 0 and out[y, x, 0] > 28 and rng.random() < 0.045:
-                out[y, x, :3] = [235, 95, 25]
-                if x + 1 < w and out[y, x + 1, 3] > 0:
-                    out[y, x + 1, :3] = [255, 165, 45]
+                out[y : y + 2, x : x + 2, :3] = [235, 95, 25]
+                if x + 3 < w and out[y, x + 2, 3] > 0:
+                    out[y : y + 2, x + 2 : x + 4, :3] = [255, 165, 45]
     return Image.fromarray(out, "RGBA")
 
 
 def build_crossholm_fortifications(
     hall: Image.Image,
 ) -> tuple[Image.Image, Image.Image, Image.Image]:
-    """Builds fortified stone garrison walls (north & south) and the closed oak/iron gatehouse
-    using organic weathered stone masonry and iron-studded oak doors from MayorHall."""
-    # Sample a clean horizontal stone masonry block from hall (x: 13..26, y: 74..92)
-    stone_course = hall.crop((13, 75, 26, 91))
-    door_patch = hall.crop((28, 70, 45, 96))
+    """Builds 4x resolution fortified stone garrison walls and gatehouse."""
+    s = 4
+    stone_course = hall.crop((13 * s, 75 * s, 26 * s, 91 * s))
+    door_patch = hall.crop((28 * s, 70 * s, 45 * s, 96 * s))
 
-    def make_wall(w: int, h: int, seed: int) -> Image.Image:
+    def make_wall(world_w: int, world_h: int) -> Image.Image:
+        w, h = world_w * s, world_h * s
         im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-        for ty in range(0, h, 14):
-            offset = ((ty // 14) % 2) * 6
-            for tx in range(-offset, w, 12):
+        step_y = 14 * s
+        step_x = 12 * s
+        for ty in range(0, h, step_y):
+            offset = ((ty // step_y) % 2) * (6 * s)
+            for tx in range(-offset, w, step_x):
                 im.paste(stone_course, (tx, ty))
         arr = np.array(im).astype(float)
-        # Moody highland stone shading with parapet highlight on left edge
         for x in range(w):
-            if x < 9:
-                shade = 0.72
-            elif x < 12:
-                shade = 0.42
+            wx = x / s
+            if wx < 9:
+                shade = 0.76
+            elif wx < 12:
+                shade = 0.44
             else:
-                shade = 0.56 - 0.16 * ((x - 12) / max(1, w - 12))
-            arr[:, x, :3] = np.clip(arr[:, x, :3] * shade, 14, 165)
+                shade = 0.58 - 0.16 * ((wx - 12) / max(1, world_w - 12))
+            arr[:, x, :3] = np.clip(arr[:, x, :3] * shade, 14, 175)
         u = arr.astype(np.uint8)
         u[..., 3] = 255
-        # Crenellations along the front-facing left parapet edge
-        for y in range(5, h - 6, 14):
-            u[y : y + 5, 0:4, 3] = 0
-            u[y : y + 5, 4, :3] = [18, 16, 20]
-        # Crisp dark border outlines
-        u[:, -1, :3] = [18, 16, 20]
-        u[0, :, :3] = [18, 16, 20]
-        u[-1, :, :3] = [18, 16, 20]
+        for y in range(5 * s, h - 6 * s, 14 * s):
+            u[y : y + 5 * s, 0 : 4 * s, 3] = 0
+            u[y : y + 5 * s, 4 * s : 4 * s + 2, :3] = [18, 16, 20]
+        u[:, -2:, :3] = [18, 16, 20]
+        u[:2, :, :3] = [18, 16, 20]
+        u[-2:, :, :3] = [18, 16, 20]
         for y in range(h):
             if u[y, 0, 3] > 0:
-                u[y, 0, :3] = [18, 16, 20]
+                u[y, :2, :3] = [18, 16, 20]
         return Image.fromarray(u, "RGBA")
 
-    wall_n = make_wall(48, 170, 101)
-    wall_s = make_wall(48, 146, 202)
+    wall_n = make_wall(48, 170)
+    wall_s = make_wall(48, 146)
 
-    # Gatehouse (48x64) with stone bastion, iron-studded oak gate, and 2 lit wall torches
     gw, gh = 48, 64
-    gate = make_wall(gw, gh, 303)
-    # Heavy iron-studded double doors centered at road entrance
-    gate.alpha_composite(door_patch.resize((22, 32), Image.NEAREST), (13, 31))
+    gate = make_wall(gw, gh)
+    gate.alpha_composite(
+        door_patch.resize((22 * s, 32 * s), Image.NEAREST), (13 * s, 31 * s)
+    )
     d = ImageDraw.Draw(gate)
-    for tx in (7, gw - 10):
-        d.rectangle([tx, 36, tx + 2, 42], fill=(48, 32, 22, 255))
-        d.rectangle([tx - 1, 32, tx + 3, 36], fill=(235, 145, 38, 255))
-        d.point((tx + 1, 33), fill=(255, 225, 115, 255))
+    for tx in (7 * s, (gw - 10) * s):
+        d.rectangle([tx, 36 * s, tx + 2 * s, 42 * s], fill=(48, 32, 22, 255))
+        d.rectangle([tx - 1 * s, 32 * s, tx + 3 * s, 36 * s], fill=(235, 145, 38, 255))
+        d.rectangle([tx, 33 * s, tx + 2 * s, 35 * s], fill=(255, 225, 115, 255))
     return gate, wall_n, wall_s
 
 
@@ -357,257 +768,335 @@ def build_props() -> None:
     props_dir = ROOT / "assets" / "props"
     props_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. New 2-legged wyvern skeleton on beach (no sand island!)
     save_sprite(
         Image.open(NEW_RAW / "wyvern_skeleton_png_1792624477339.jpg"),
         beach_dir / "wyvern_skeleton.png",
-        width=68,
-        colors=20,
+        world_width=68,
     )
-
-    # 2. Clean sand stickers off beach wreck, crate, dead_tree, driftwood, signpost, campfires
     save_sprite(
         Image.open(OLD_BEACH_RAW / "wreck.jpeg"),
         beach_dir / "wreck.png",
-        width=96,
-        colors=24,
+        world_width=96,
         strip_sand=True,
     )
     save_sprite(
         Image.open(OLD_BEACH_RAW / "crate.jpeg"),
         beach_dir / "crate.png",
-        width=40,
-        colors=20,
+        world_width=40,
         strip_sand=True,
     )
     save_sprite(
         Image.open(OLD_BEACH_RAW / "dead_tree.jpeg"),
         props_dir / "dead_tree.png",
-        width=52,
-        colors=20,
+        world_width=52,
         strip_sand=True,
     )
     save_sprite(
         Image.open(OLD_BEACH_RAW / "driftwood.jpeg"),
         props_dir / "driftwood.png",
-        width=42,
-        colors=18,
+        world_width=42,
         strip_sand=True,
     )
     save_sprite(
         Image.open(OLD_BEACH_RAW / "signpost.jpeg"),
         props_dir / "signpost.png",
-        width=18,
-        colors=16,
+        world_width=18,
         strip_sand=True,
     )
     save_sprite(
         Image.open(OLD_BEACH_RAW / "campfire_lit.jpeg"),
         props_dir / "campfire_lit.png",
-        width=24,
-        colors=20,
+        world_width=24,
         strip_sand=True,
     )
     save_sprite(
         Image.open(OLD_BEACH_RAW / "campfire_unlit.jpeg"),
         props_dir / "campfire_unlit.png",
-        width=24,
-        colors=18,
+        world_width=24,
         strip_sand=True,
     )
-
-    # 3. Overturned merchant cart on Crossholm Road
     save_sprite(
         Image.open(NEW_RAW / "overturned_cart_png_1792624490029.jpg"),
         cr_dir / "cart.png",
-        width=56,
-        colors=24,
+        world_width=56,
     )
 
-    # 4. Craft bespoke pixel art interactable sprites (replacing Polygon2D diamonds!)
-    build_moonherb_sprite().save(props_dir / "moonherb.png")
-    build_open_grave_sprite().save(props_dir / "open_grave.png")
-    build_iron_scrap_sprite().save(props_dir / "iron_scrap.png")
-    build_rathole_sprite().save(props_dir / "rathole.png")
-    print("wrote assets/props/{moonherb,open_grave,iron_scrap,rathole}.png")
+
+def ramp_color(
+    luma: np.ndarray,
+    base_rgb: tuple[int, int, int],
+    ref_luma: float = 0.30,
+    contrast: float = 1.05,
+) -> np.ndarray:
+    base = np.array(base_rgb, dtype=float)
+    ratio = np.clip((luma / max(0.05, ref_luma)) ** contrast, 0.30, 1.50)[..., None]
+    out = base * ratio
+    return np.clip(out, 14, 248).astype(int)
 
 
-def build_moonherb_sprite() -> Image.Image:
-    """18x18 glowing bioluminescent cyan-silver fantasy herb rosette."""
-    im = Image.new("RGBA", (18, 18), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    out = (18, 24, 32, 255)
-    stem = (42, 68, 62, 255)
-    leaf_dk = (75, 145, 165, 255)
-    leaf_md = (135, 215, 230, 255)
-    leaf_lt = (210, 250, 255, 255)
-    # Dark mossy base
-    d.ellipse([4, 12, 13, 16], fill=out)
-    d.ellipse([5, 12, 12, 15], fill=stem)
-    # Radiating spade leaves
-    leaves = [
-        [(9, 13), (4, 9), (3, 5), (7, 7)],
-        [(9, 13), (13, 9), (14, 5), (10, 7)],
-        [(9, 12), (7, 6), (9, 2), (11, 6)],
-        [(8, 14), (2, 13), (3, 10), (7, 11)],
-        [(10, 14), (15, 13), (14, 10), (11, 11)],
-    ]
-    for poly in leaves:
-        d.polygon(poly, fill=leaf_dk, outline=out)
-    # Bright glowing veins/tips
-    for px, py in ((9, 4), (9, 5), (5, 7), (12, 7), (4, 11), (13, 11), (8, 8), (10, 8)):
-        d.point((px, py), fill=leaf_md)
-    for px, py in ((9, 3), (5, 6), (12, 6), (9, 7)):
-        d.point((px, py), fill=leaf_lt)
-    return im
+def style_npc_sheet(sheet: Image.Image, cfg: dict) -> Image.Image:
+    """Applies multi-tone pixel-art shading ramps and accessories across the 384x512 sheet."""
+    arr = np.array(sheet.convert("RGBA")).astype(int)
+    cw, ch = 96, 128
+    for r in range(4):
+        for c in range(4):
+            y0, y1 = r * ch, (r + 1) * ch
+            x0, x1 = c * cw, (c + 1) * cw
+            cell = arr[y0:y1, x0:x1]
+            a = cell[..., 3] > 0
+            if not a.any():
+                continue
+            pr, pg, pb = cell[..., 0], cell[..., 1], cell[..., 2]
+            mx = np.maximum(np.maximum(pr, pg), pb)
+            mn = np.minimum(np.minimum(pr, pg), pb)
+            chroma = mx - mn
+            luma = (0.299 * pr + 0.587 * pg + 0.114 * pb) / 255.0
+            yy, xx = np.mgrid[0:ch, 0:cw]
 
+            not_outline = a & (mx >= 32)
+            is_eye_box = (
+                (
+                    (r == 0)
+                    & (yy >= 34)
+                    & (yy <= 46)
+                    & (xx >= 34)
+                    & (xx <= 62)
+                    & ((mn > 160) | (mx < 95))
+                )
+                | (
+                    (r == 2)
+                    & (yy >= 32)
+                    & (yy <= 45)
+                    & (xx >= 26)
+                    & (xx <= 45)
+                    & ((mn > 160) | (mx < 95))
+                )
+                | (
+                    (r == 3)
+                    & (yy >= 32)
+                    & (yy <= 45)
+                    & (xx >= 51)
+                    & (xx <= 70)
+                    & ((mn > 160) | (mx < 95))
+                )
+            )
+            editable = not_outline & (~is_eye_box)
 
-def build_open_grave_sprite() -> Image.Image:
-    """32x24 cracked stone cairn tomb dug open with glowing red-orange hex sigil and bone."""
-    im = Image.new("RGBA", (32, 24), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    out = (20, 18, 22, 255)
-    dirt = (48, 38, 30, 255)
-    pit = (16, 12, 14, 255)
-    stone_dk = (65, 68, 72, 255)
-    stone_md = (95, 100, 104, 255)
-    stone_lt = (128, 132, 136, 255)
-    hex_dk = (185, 45, 20, 255)
-    hex_lt = (255, 135, 35, 255)
-    bone = (218, 210, 188, 255)
+            # Face & ear protection zone so ear/jaw shadows are always treated as skin, never hair
+            in_face_lower = (
+                ((r == 0) & (yy >= 39) & (yy <= 56) & (xx >= 34) & (xx <= 62))
+                | ((r == 2) & (yy >= 38) & (yy <= 56) & (xx <= 50))
+                | ((r == 3) & (yy >= 38) & (yy <= 56) & (xx >= 46))
+            )
 
-    # Spilled earth mound & dark pit opening
-    d.ellipse([2, 8, 29, 22], fill=dirt, outline=out)
-    d.rectangle([7, 10, 22, 19], fill=pit, outline=out)
-    # Displaced cracked stone tomb slab tilted to the right
-    d.polygon([(12, 5), (28, 8), (26, 18), (10, 15)], fill=stone_md, outline=out)
-    d.line([(12, 6), (27, 9)], fill=stone_lt)
-    d.line([(18, 7), (16, 15)], fill=out)  # crack across lid
-    # Glowing arcane hex-sigil burned into the stone slab
-    for px, py in ((19, 10), (20, 9), (21, 10), (22, 11), (20, 12), (18, 11), (21, 12)):
-        d.point((px, py), fill=hex_dk)
-    for px, py in ((20, 10), (20, 11), (21, 11)):
-        d.point((px, py), fill=hex_lt)
-    # Headstone cairn stones on left
-    d.ellipse([3, 4, 11, 12], fill=stone_dk, outline=out)
-    d.ellipse([4, 2, 10, 7], fill=stone_md, outline=out)
-    # Scorched bone sticking out of the pit
-    d.line([(9, 16), (14, 13)], fill=bone)
-    d.point((8, 16), fill=bone)
-    d.point((14, 12), fill=hex_lt)
-    return im
+            is_cloth = editable & (yy >= 54) & (yy <= 102) & (chroma <= 22)
+            is_skin = (
+                editable
+                & (~is_cloth)
+                & (yy >= 26)
+                & (yy <= 100)
+                & (
+                    ((pr >= 115) & (pg >= 70) & ((pr - pb) >= 32) & ((pr - pg) >= 12))
+                    | (in_face_lower & (pr >= 85) & ((pr - pb) >= 20))
+                )
+                & (~((r == 1) & (yy < 57)))
+            )
+            is_hair = (
+                editable
+                & (~is_cloth)
+                & (~is_skin)
+                & (~in_face_lower)
+                & ((yy <= 54) | ((r == 1) & (yy <= 58)))
+            )
+            is_pauldron = (
+                editable
+                & (~is_cloth)
+                & (~is_skin)
+                & (~is_hair)
+                & (yy >= 53)
+                & (yy < 73)
+            )
+            is_wraps = (
+                editable
+                & (~is_cloth)
+                & (~is_skin)
+                & (yy >= 73)
+                & (yy < 95)
+                & ((xx < 36) | (xx > 60) | (r in (2, 3)))
+            )
+            is_belt = (
+                editable
+                & (~is_cloth)
+                & (~is_skin)
+                & (~is_wraps)
+                & (yy >= 82)
+                & (yy < 95)
+            )
+            is_pants = editable & (~is_cloth) & (~is_skin) & (yy >= 95) & (yy < 112)
+            is_boots = editable & (yy >= 112)
 
+            if "skin" in cfg:
+                cell[is_skin, :3] = ramp_color(luma[is_skin], cfg["skin"], 0.62, 0.95)
+            if "hair" in cfg:
+                cell[is_hair, :3] = ramp_color(luma[is_hair], cfg["hair"], 0.24, 1.05)
+            if "tunic" in cfg:
+                cell[is_cloth, :3] = ramp_color(
+                    luma[is_cloth], cfg["tunic"], 0.30, 1.10
+                )
+            if "pauldron" in cfg:
+                cell[is_pauldron, :3] = ramp_color(
+                    luma[is_pauldron], cfg["pauldron"], 0.34, 1.05
+                )
+            if "wraps" in cfg:
+                cell[is_wraps, :3] = ramp_color(luma[is_wraps], cfg["wraps"], 0.50, 1.0)
+            if "belt" in cfg:
+                cell[is_belt, :3] = ramp_color(luma[is_belt], cfg["belt"], 0.28, 1.05)
+            if "pants" in cfg:
+                cell[is_pants, :3] = ramp_color(
+                    luma[is_pants], cfg["pants"], 0.30, 1.10
+                )
+            if "boots" in cfg:
+                cell[is_boots, :3] = ramp_color(
+                    luma[is_boots], cfg["boots"], 0.28, 1.05
+                )
 
-def build_iron_scrap_sprite() -> Image.Image:
-    """20x16 pile of salvaged rusted ship iron plates and chain."""
-    im = Image.new("RGBA", (20, 16), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    out = (18, 16, 20, 255)
-    iron_dk = (58, 62, 68, 255)
-    iron_md = (92, 98, 106, 255)
-    iron_lt = (142, 148, 156, 255)
-    rust = (138, 72, 42, 255)
+            if cfg.get("apron") is not None and r in (0, 2, 3):
+                apron_col = cfg["apron"]
+                if r == 0:
+                    ap_mask = (
+                        is_cloth & (yy >= 68) & (yy <= 102) & (xx >= 38) & (xx <= 58)
+                    )
+                    ap_border = (
+                        is_cloth
+                        & (yy >= 68)
+                        & (yy <= 102)
+                        & ((xx == 37) | (xx == 59) | (yy == 68))
+                        & (xx >= 37)
+                        & (xx <= 59)
+                    )
+                elif r == 2:
+                    ap_mask = is_cloth & (yy >= 68) & (yy <= 102) & (xx <= 45)
+                    ap_border = (
+                        is_cloth & (yy >= 68) & (yy <= 102) & ((xx == 46) | (yy == 68))
+                    )
+                else:
+                    ap_mask = is_cloth & (yy >= 68) & (yy <= 102) & (xx >= 51)
+                    ap_border = (
+                        is_cloth & (yy >= 68) & (yy <= 102) & ((xx == 50) | (yy == 68))
+                    )
+                cell[ap_mask, :3] = ramp_color(luma[ap_mask], apron_col, 0.30, 1.1)
+                cell[ap_border, :3] = [24, 20, 22]
 
-    # Bent iron hull plate
-    d.polygon([(3, 10), (12, 5), (17, 8), (9, 13)], fill=iron_md, outline=out)
-    d.line([(5, 9), (11, 6)], fill=iron_lt)
-    # Second iron bracket & rivets
-    d.polygon([(2, 7), (8, 4), (11, 6), (5, 10)], fill=iron_dk, outline=out)
-    for px, py in ((6, 6), (10, 9), (13, 8), (8, 11)):
-        d.point((px, py), fill=rust)
-    for px, py in ((7, 5), (14, 8), (9, 10)):
-        d.point((px, py), fill=iron_lt)
-    return im
+            if cfg.get("mayor_regalia"):
+                mantle_mask = is_cloth & (yy >= 54) & (yy <= 67)
+                cell[mantle_mask, :3] = ramp_color(
+                    luma[mantle_mask], (158, 32, 42), 0.30, 1.10
+                )
+                if r == 0:
+                    chain_curve = (
+                        np.abs((yy - 58) - (10.0 - 0.07 * ((xx - 48.0) ** 2))) <= 1.5
+                    )
+                    chain_mask = is_cloth & chain_curve & (xx >= 36) & (xx <= 60)
+                    chain_outline = (
+                        is_cloth
+                        & (
+                            np.abs((yy - 58) - (10.0 - 0.07 * ((xx - 48.0) ** 2)))
+                            <= 2.5
+                        )
+                        & (~chain_mask)
+                        & (xx >= 36)
+                        & (xx <= 60)
+                    )
+                    cell[chain_outline, :3] = [28, 22, 18]
+                    cell[chain_mask, :3] = [238, 196, 74]
+                    med = is_cloth & (((xx - 48.0) ** 2 + (yy - 71.0) ** 2) <= 9.0)
+                    med_out = (
+                        is_cloth
+                        & (((xx - 48.0) ** 2 + (yy - 71.0) ** 2) <= 15.0)
+                        & (~med)
+                    )
+                    cell[med_out, :3] = [24, 18, 16]
+                    cell[med, :3] = [245, 205, 82]
+                    cell[70, 47, :3] = [255, 245, 180]
+                    cell[71, 48, :3] = [195, 40, 48]
+                hem_gold = is_cloth & (yy >= 95) & (yy <= 98)
+                cell[hem_gold, :3] = ramp_color(
+                    luma[hem_gold], (225, 182, 66), 0.30, 1.1
+                )
 
-
-def build_rathole_sprite() -> Image.Image:
-    """18x14 dark stone cellar foundation burrow hole with rubble."""
-    im = Image.new("RGBA", (18, 14), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    out = (16, 14, 18, 255)
-    hole = (12, 10, 14, 255)
-    stone_dk = (62, 64, 68, 255)
-    stone_md = (92, 94, 98, 255)
-    dirt = (68, 52, 38, 255)
-
-    # Stone arch surround
-    d.ellipse([2, 2, 15, 12], fill=stone_md, outline=out)
-    d.chord([4, 4, 13, 13], start=180, end=360, fill=hole, outline=out)
-    d.rectangle([4, 7, 13, 11], fill=hole)
-    # Small cobbles and dirt outside hole
-    d.ellipse([1, 9, 5, 13], fill=stone_dk, outline=out)
-    d.ellipse([12, 9, 16, 13], fill=dirt, outline=out)
-    return im
+    return Image.fromarray(arr.astype(np.uint8), "RGBA")
 
 
 def build_characters() -> None:
-    """Builds the 4x4 Hero sheet (96x128, cell 24x32) and 8 distinct custom NPC sheets."""
-    im_a = remove_background(
-        Image.open(NEW_RAW / "hero_sheet_png_1792624478858.jpg"), 165
-    )
+    """Builds the 4x4 Hero sheet (384x512, cell 96x128) with stabilized torso/head walk cycle
+    and 8 distinct multi-tone NPC sheets."""
+    im_a = clean_rgba(Image.open(NEW_RAW / "hero_sheet_png_1792624478858.jpg"), 165)
 
-    def get_cell(im: Image.Image, r: int, c: int, target_h: int = 30) -> Image.Image:
-        cw, ch = im.width // 4, im.height // 4
-        cell = im.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch))
-        bbox = cell.getchannel("A").getbbox()
-        cell = cell.crop(bbox)
-        target_w = max(1, round(cell.width * target_h / cell.height))
-        small = (
-            cell.convert("RGBa").resize((target_w, target_h), Image.BOX).convert("RGBA")
-        )
-        arr = np.array(small)
-        arr[..., 3] = np.where(arr[..., 3] >= 120, 255, 0)
-        return Image.fromarray(arr, "RGBA")
+    def raw_cell(r: int, c: int) -> Image.Image:
+        return im_a.crop((c * 256, r * 256, (c + 1) * 256, (r + 1) * 256))
 
-    def make_opposite_stride(stride: Image.Image, idle: Image.Image) -> Image.Image:
-        """Creates the opposite-foot stride for side view by combining upper body of idle
-        with horizontally mirrored lower legs of stride."""
-        out = idle.copy()
-        w, h = out.size
-        leg_y = int(h * 0.68)
-        legs = stride.crop((0, leg_y, w, h)).transpose(Image.FLIP_LEFT_RIGHT)
-        out.paste((0, 0, 0, 0), (0, leg_y, w, h))
-        out.alpha_composite(legs, (0, leg_y))
-        return out
+    def make_front_back_row(r: int) -> list[Image.Image]:
+        """Animates front/back walk purely by lifting alternating boots vertically (dx=0)
+        from the centered `idle` frame so the ankles never sway left and right."""
+        idle = raw_cell(r, 0)
+        leg_y = 200
+        # Split idle lower legs cleanly at the centerline x=128
+        left_leg = idle.crop((0, leg_y, 128, 254))
+        right_leg = idle.crop((128, leg_y, 256, 254))
+        upper_body = idle.crop((0, 0, 256, leg_y + 2))
 
-    # Assemble 4x4 grid (Down, Up, Left, Right) at 24x32 per cell = 96x128 sheet
-    def assemble_base_sheet(target_h: int = 30) -> Image.Image:
-        down = [
-            get_cell(im_a, 0, 0, target_h),
-            get_cell(im_a, 0, 1, target_h),
-            get_cell(im_a, 0, 2, target_h),
-            get_cell(im_a, 0, 3, target_h),
-        ]
-        up = [
-            get_cell(im_a, 1, 0, target_h),
-            get_cell(im_a, 1, 1, target_h),
-            get_cell(im_a, 1, 2, target_h),
-            get_cell(im_a, 1, 3, target_h),
-        ]
-        left_idle = get_cell(im_a, 2, 0, target_h)
-        left_step1 = get_cell(im_a, 2, 1, target_h)
-        left_step2 = make_opposite_stride(left_step1, left_idle)
-        left = [left_idle, left_step1, left_idle, left_step2]
+        # Step A: Left foot lifts straight up (dy = -10, dx = 0); Right foot plants (dy = +2, dx = 0)
+        step_a = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+        step_a.alpha_composite(right_leg, (128, leg_y + 2))
+        step_a.alpha_composite(left_leg, (0, leg_y - 10))
+        step_a.alpha_composite(upper_body, (0, 0))
 
-        right = [f.transpose(Image.FLIP_LEFT_RIGHT) for f in left]
+        # Step B: Right foot lifts straight up (dy = -10, dx = 0); Left foot plants (dy = +2, dx = 0)
+        step_b = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+        step_b.alpha_composite(left_leg, (0, leg_y + 2))
+        step_b.alpha_composite(right_leg, (128, leg_y - 10))
+        step_b.alpha_composite(upper_body, (0, 0))
+        return [idle, step_a, idle.copy(), step_b]
 
-        cell_w, cell_h = 24, 32
-        sheet = Image.new("RGBA", (cell_w * 4, cell_h * 4), (0, 0, 0, 0))
-        for r, row in enumerate([down, up, left, right]):
-            for c, frame in enumerate(row):
-                x = c * cell_w + (cell_w - frame.width) // 2
-                y = r * cell_h + cell_h - frame.height
-                sheet.alpha_composite(frame, (x, y))
+    def make_side_row() -> list[Image.Image]:
+        """Animates side walk by scissoring two left-pointing boots forward/back under the
+        hips without ever flipping a boot backwards or shifting the hip centerline."""
+        idle = raw_cell(2, 0)
+        leg_y = 200
+        boot_front = idle.crop((0, leg_y, 256, 254))
+        # Create a slightly darker rear leg (still pointing LEFT, never flipped!)
+        b_arr = np.array(boot_front).astype(np.float32)
+        b_alpha = b_arr[..., 3] > 0
+        b_arr[b_alpha, :3] = np.clip(b_arr[b_alpha, :3] * 0.78, 12.0, 240.0)
+        boot_back = Image.fromarray(b_arr.astype(np.uint8), "RGBA")
+        upper_body = idle.crop((0, 0, 256, leg_y + 2))
 
-        alpha = np.array(sheet)[..., 3]
-        quant = sheet.convert("RGB").quantize(
-            colors=24, method=Image.MEDIANCUT, dither=Image.NONE
-        )
-        out = np.array(quant.convert("RGBA"))
-        out[..., 3] = np.where(alpha >= 128, 255, 0)
-        return Image.fromarray(out, "RGBA")
+        # Step A: front leg steps forward (-8px), back leg trails (+8px, lifted 4px)
+        step_a = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+        step_a.alpha_composite(boot_back, (8, leg_y - 4))
+        step_a.alpha_composite(boot_front, (-8, leg_y - 2))
+        step_a.alpha_composite(upper_body, (0, 0))
 
-    hero_sheet = assemble_base_sheet(30)
+        # Step B: back leg steps forward (-8px, lifted 4px), front leg trails (+8px)
+        step_b = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+        step_b.alpha_composite(boot_back, (-8, leg_y - 4))
+        step_b.alpha_composite(boot_front, (8, leg_y - 2))
+        step_b.alpha_composite(upper_body, (0, 0))
+        return [idle, step_a, idle.copy(), step_b]
+
+    down = make_front_back_row(0)
+    up = make_front_back_row(1)
+    left = make_side_row()
+    right = [f.transpose(Image.FLIP_LEFT_RIGHT) for f in left]
+
+    cell_w, cell_h = 96, 128
+    hero_sheet = Image.new("RGBA", (cell_w * 4, cell_h * 4), (0, 0, 0, 0))
+    for r, row in enumerate([down, up, left, right]):
+        for c, frame in enumerate(row):
+            cropped = frame.crop((32, 0, 224, 256))
+            scaled = cropped.resize((cell_w, cell_h), Image.NEAREST)
+            hero_sheet.alpha_composite(scaled, (c * cell_w, r * cell_h))
+
     hero_dst = ROOT / "assets" / "hero" / "hero_sheet.png"
     hero_dst.parent.mkdir(parents=True, exist_ok=True)
     hero_sheet.save(hero_dst)
@@ -615,195 +1104,121 @@ def build_characters() -> None:
         f"wrote {hero_dst.relative_to(ROOT)} ({hero_sheet.width}x{hero_sheet.height})"
     )
 
-    # Build 8 distinct NPC sprite sheets in assets/npc/
     npc_dir = ROOT / "assets" / "npc"
     npc_dir.mkdir(parents=True, exist_ok=True)
 
     npcs = {
         "mayor": {
-            "hair": (145, 150, 158),  # silver-streaked grey hair
-            "tunic": (38, 78, 56),  # dark pine-green magistrate coat
-            "pants": (32, 58, 44),  # long coat hem
-            "leather": (195, 158, 64),  # brass chain of office
-            "beard": None,
-            "chain": True,
-            "height": 30,
+            "hair": (185, 192, 204),  # striking silver-white magistrate hair
+            "skin": (222, 172, 142),
+            "tunic": (34, 82, 58),  # deep emerald-pine magistrate coat
+            "pauldron": (165, 34, 44),  # crimson velvet shoulder mantle
+            "wraps": (198, 162, 68),  # gold-trimmed cuffs
+            "belt": (195, 155, 56),  # gilded sash
+            "pants": (28, 56, 42),
+            "boots": (42, 34, 30),
+            "mayor_regalia": True,
         },
         "orsa": {
-            "hair": (148, 68, 42),  # braided copper-auburn hair
-            "tunic": (52, 54, 60),  # charcoal smith shirt
-            "pants": (108, 68, 42),  # heavy leather smith apron
-            "leather": (75, 78, 86),  # iron bracers
-            "beard": None,
-            "apron": (118, 74, 44),
-            "height": 30,
+            "hair": (168, 68, 36),  # fiery copper-auburn hair
+            "skin": (204, 142, 106),  # warm forge-bronzed skin
+            "tunic": (54, 58, 66),  # dark iron-charcoal smith shirt
+            "pauldron": (92, 98, 108),  # forged steel shoulder guard
+            "wraps": (84, 90, 100),  # steel bracers
+            "belt": (78, 52, 36),
+            "pants": (64, 52, 44),
+            "boots": (48, 38, 32),
+            "apron": (122, 74, 42),  # shaded leather smith apron
         },
         "bram": {
-            "hair": (92, 62, 38),  # brown hair
-            "tunic": (135, 58, 48),  # warm burgundy-brown tavern vest
-            "pants": (72, 58, 46),  # dark trousers
-            "leather": (198, 184, 158),  # rolled cream linen sleeves
-            "beard": (82, 52, 32),  # full bushy brown beard
-            "apron": (178, 168, 148),
-            "height": 30,
+            "hair": (96, 58, 36),  # chestnut brown hair
+            "skin": (218, 160, 126),
+            "tunic": (142, 46, 42),  # rich burgundy tavern vest
+            "pauldron": (118, 38, 34),
+            "wraps": (212, 198, 174),  # rolled cream linen sleeves
+            "belt": (72, 48, 32),
+            "pants": (62, 52, 44),
+            "boots": (52, 40, 32),
+            "apron": (188, 176, 152),  # shaded linen innkeeper apron
         },
         "teague": {
-            "hair": (52, 68, 88),  # dark navy oilskin hood
-            "tunic": (46, 62, 82),  # navy-slate watchman cloak
-            "pants": (38, 48, 62),  # dark oilskins
-            "leather": (185, 148, 62),  # brass lantern clasp
-            "beard": (135, 138, 142),  # salt-and-pepper beard
-            "height": 30,
+            "hair": (124, 134, 148),  # weathered storm-grey hair
+            "skin": (208, 156, 124),
+            "tunic": (42, 62, 92),  # midnight-navy watchman oilskin coat
+            "pauldron": (188, 148, 58),  # brass lantern-keeper's clasp
+            "wraps": (58, 76, 104),
+            "belt": (165, 128, 48),
+            "pants": (36, 48, 68),
+            "boots": (38, 34, 34),
         },
         "pell": {
-            "hair": (155, 160, 164),  # sea-grey hair
-            "tunic": (58, 88, 94),  # weathered teal-slate fisherman wool sweater
-            "pants": (62, 58, 50),
-            "leather": (98, 78, 56),
-            "beard": (148, 152, 156),  # grey fisherman beard
-            "height": 30,
+            "hair": (168, 164, 148),  # sea-bleached sandy grey hair
+            "skin": (198, 140, 104),  # sun-weathered fisherman tan
+            "tunic": (52, 94, 102),  # coastal teal-slate wool sweater
+            "pauldron": (108, 76, 52),  # weathered driftwood-brown leather
+            "wraps": (138, 118, 94),  # rope-twine wrist wraps
+            "belt": (74, 56, 40),
+            "pants": (58, 62, 64),
+            "boots": (46, 40, 34),
         },
         "ansa": {
-            "hair": (58, 44, 62),  # dark plum-charcoal widow's shawl
-            "tunic": (68, 52, 74),  # mourning dress bodice
-            "pants": (52, 40, 58),  # long dark skirt
-            "leather": (88, 72, 92),
-            "beard": None,
-            "height": 29,
+            "hair": (38, 32, 46),  # raven-black hair
+            "skin": (230, 188, 162),  # pale salt complexion
+            "tunic": (78, 52, 92),  # deep twilight-plum mourning dress
+            "pauldron": (104, 72, 118),  # plum-violet shawl
+            "wraps": (142, 124, 152),  # lavender-grey cuffs
+            "belt": (58, 40, 68),
+            "pants": (54, 38, 64),
+            "boots": (36, 28, 40),
         },
         "wren": {
-            "hair": (188, 148, 78),  # sandy-gold hair
-            "tunic": (124, 78, 52),  # russet tunic
-            "pants": (68, 76, 58),  # mossy trousers
-            "leather": (92, 112, 68),  # green scarf/wraps
-            "beard": None,
-            "height": 27,  # younger/shorter lookout
+            "hair": (198, 154, 68),  # bright golden-straw hair
+            "skin": (220, 168, 136),
+            "tunic": (64, 98, 58),  # forest-moss green tunic
+            "pauldron": (134, 88, 48),  # warm russet leather shoulder patch
+            "wraps": (176, 142, 96),
+            "belt": (92, 64, 38),
+            "pants": (72, 66, 52),
+            "boots": (56, 44, 34),
         },
         "dov": {
-            "hair": (78, 58, 42),
-            "tunic": (118, 108, 76),  # olive-tan padded gambeson
-            "pants": (68, 62, 52),
-            "leather": (92, 96, 104),  # iron shoulder guard
-            "beard": (72, 52, 38),
-            "height": 30,
+            "hair": (68, 48, 34),  # dark umber hair
+            "skin": (186, 128, 92),  # warm ochre-bronze skin
+            "tunic": (138, 112, 58),  # highland amber-ochre gambeson
+            "pauldron": (112, 118, 128),  # steel road-guard pauldron
+            "wraps": (102, 108, 118),  # steel bracers
+            "belt": (68, 48, 32),
+            "pants": (62, 58, 48),
+            "boots": (44, 36, 30),
         },
     }
 
     for name, cfg in npcs.items():
-        base = assemble_base_sheet(cfg["height"])
-        styled = style_npc_sheet(base, cfg)
+        styled = style_npc_sheet(hero_sheet, cfg)
         dst = npc_dir / f"{name}.png"
         styled.save(dst)
         print(f"wrote {dst.relative_to(ROOT)} ({styled.width}x{styled.height})")
 
 
-def style_npc_sheet(sheet: Image.Image, cfg: dict) -> Image.Image:
-    """Applies custom pixel-art clothing palette and details (beard, apron, chain) per cell."""
-    arr = np.array(sheet.convert("RGBA")).astype(int)
-    cell_w, cell_h = 24, 32
-    hair_col = np.array(cfg["hair"])
-    tunic_col = np.array(cfg["tunic"])
-    pants_col = np.array(cfg["pants"])
-    leather_col = np.array(cfg["leather"])
-
-    for r in range(4):
-        for c in range(4):
-            y0, y1 = r * cell_h, (r + 1) * cell_h
-            x0, x1 = c * cell_w, (c + 1) * cell_w
-            cell = arr[y0:y1, x0:x1]
-            alpha = cell[..., 3] > 0
-            if not alpha.any():
-                continue
-            ys = np.where(alpha)[0]
-            top_y, bot_y = ys.min(), ys.max()
-            span = max(1, bot_y - top_y)
-
-            for py in range(top_y, bot_y + 1):
-                rel_y = (py - top_y) / span
-                for px in range(cell_w):
-                    if cell[py, px, 3] == 0:
-                        continue
-                    pr, pg, pb = cell[py, px, :3]
-                    lum = (0.299 * pr + 0.587 * pg + 0.114 * pb) / 255.0
-                    # Preserve very dark outlines
-                    if max(pr, pg, pb) < 38:
-                        continue
-                    # Skin pixels (warm peach/tan on face and hands)
-                    is_skin = (
-                        (pr > 145) and (pg > 95) and (pr - pb > 42) and (pr > pg + 18)
-                    )
-                    # Grey tunic pixels (low saturation)
-                    is_grey = abs(pr - pg) <= 18 and abs(pg - pb) <= 18 and pr < 160
-
-                    if rel_y < 0.44 and not is_skin:
-                        # Hair / hood region
-                        scale = np.clip(lum * 1.35, 0.45, 1.35)
-                        cell[py, px, :3] = np.clip(hair_col * scale, 20, 245)
-                    elif rel_y >= 0.40 and rel_y < 0.73:
-                        if is_grey:
-                            scale = np.clip(lum * 1.45, 0.5, 1.35)
-                            cell[py, px, :3] = np.clip(tunic_col * scale, 20, 245)
-                        elif not is_skin:
-                            scale = np.clip(lum * 1.25, 0.5, 1.3)
-                            cell[py, px, :3] = np.clip(leather_col * scale, 20, 245)
-                    elif rel_y >= 0.73 and rel_y < 0.90:
-                        if not is_skin:
-                            scale = np.clip(lum * 1.35, 0.45, 1.3)
-                            cell[py, px, :3] = np.clip(pants_col * scale, 20, 245)
-
-            # Add custom pixel details (beard on front/side rows, brass chain, smith apron)
-            if cfg.get("beard") is not None and r in (0, 2, 3):
-                bcol = cfg["beard"]
-                by = top_y + int(span * 0.36)
-                if r == 0:
-                    for bx in range(9, 15):
-                        if cell[by, bx, 3] > 0:
-                            cell[by, bx, :3] = bcol
-                            if by + 1 < cell_h:
-                                cell[by + 1, bx, :3] = [max(15, v - 20) for v in bcol]
-                elif r == 2:
-                    for bx in range(7, 11):
-                        if cell[by, bx, 3] > 0:
-                            cell[by, bx, :3] = bcol
-                elif r == 3:
-                    for bx in range(13, 17):
-                        if cell[by, bx, 3] > 0:
-                            cell[by, bx, :3] = bcol
-
-            if cfg.get("chain") and r == 0:
-                cy = top_y + int(span * 0.48)
-                for dx, dy in (
-                    (-3, 0),
-                    (-2, 1),
-                    (-1, 2),
-                    (0, 2),
-                    (1, 2),
-                    (2, 1),
-                    (3, 0),
-                ):
-                    cx = 12 + dx
-                    if (
-                        0 <= cy + dy < cell_h
-                        and 0 <= cx < cell_w
-                        and cell[cy + dy, cx, 3] > 0
-                    ):
-                        cell[cy + dy, cx, :3] = [225, 185, 72]
-
-            if cfg.get("apron") is not None and r == 0:
-                acol = cfg["apron"]
-                for ay in range(top_y + int(span * 0.52), top_y + int(span * 0.82)):
-                    for ax in range(9, 15):
-                        if cell[ay, ax, 3] > 0:
-                            cell[ay, ax, :3] = acol
-
-    return Image.fromarray(arr.astype(np.uint8), "RGBA")
-
-
 def main() -> None:
-    build_grounds()
+    from build_modular_art import (
+        build_combat_sheets_and_icons,
+        build_hd_props_and_cemetery,
+        build_modular_buildings_and_smoke,
+        build_organic_terrain_tiles,
+        build_plaza_circle_asset,
+    )
+
+    _, cobble_tile = build_organic_terrain_tiles()
+    build_plaza_circle_asset(cobble_tile)
+    build_grounds_and_intro()
     build_buildings()
     build_props()
+    build_hd_props_and_cemetery()
+    build_modular_buildings_and_smoke()
     build_characters()
+    build_combat_sheets_and_icons()
+    print("All high-density art assets built successfully!")
 
 
 if __name__ == "__main__":

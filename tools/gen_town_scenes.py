@@ -93,6 +93,11 @@ def static_rect(s: Scene, name: str, parent: str, x, y, w, h) -> None:
     )
 
 
+def _vec2_array(pts: tuple[tuple[float, float], ...]) -> str:
+    coords = ", ".join(f"{px:g}, {py:g}" for px, py in pts)
+    return f"PackedVector2Array({coords})"
+
+
 def building(
     s: Scene,
     name: str,
@@ -104,6 +109,8 @@ def building(
     label="",
     door=True,
     texture: str = "",
+    chimney_offsets: tuple[tuple[float, float], ...] = (),
+    window_offsets: tuple[tuple[float, float], ...] = (),
 ) -> None:
     w, h = size
     props = {
@@ -117,6 +124,10 @@ def building(
     }
     if texture:
         props["texture"] = s.ext("Texture2D", texture)
+    if chimney_offsets:
+        props["chimney_offsets"] = _vec2_array(chimney_offsets)
+    if window_offsets:
+        props["window_offsets"] = _vec2_array(window_offsets)
     s.node(name, "StaticBody2D", "Entities", **props)
     s.node(
         "Shape",
@@ -127,27 +138,81 @@ def building(
     )
 
 
-def prop_sprite(s: Scene, name: str, x, y, texture: str, offset_y: float = -12) -> None:
+def prop_sprite(
+    s: Scene,
+    name: str,
+    x,
+    y,
+    texture: str,
+    offset_y: float = -12,
+    col_size: tuple[float, float] = (14, 8),
+    col_offset_y: float = -4,
+    hframes: int = 1,
+    glow_texture: str = "",
+) -> None:
+    cw, ch = col_size
+    body_props = {"position": v(x, y)}
+    if hframes > 1 or glow_texture:
+        body_props["script"] = s.ext("Script", "res://scripts/world/animated_prop.gd")
+        if glow_texture:
+            body_props["glow_texture"] = s.ext("Texture2D", glow_texture)
+    s.node(name, "StaticBody2D", "Entities", **body_props)
+    sp_props = {
+        "scale": v(0.25, 0.25),
+        "texture": s.ext("Texture2D", texture),
+        "offset": v(0, offset_y * 4),
+    }
+    if hframes > 1:
+        sp_props["hframes"] = str(hframes)
+    s.node("Sprite2D", "Sprite2D", f"Entities/{name}", **sp_props)
     s.node(
-        name,
-        "Sprite2D",
-        "Entities",
-        position=v(x, y),
-        texture=s.ext("Texture2D", texture),
-        offset=v(0, offset_y),
+        "Shape",
+        "CollisionShape2D",
+        f"Entities/{name}",
+        position=v(0, col_offset_y),
+        shape=s.rect(cw, ch),
     )
 
 
-def sign(s: Scene, name: str, x, y, prompt: str, message: str) -> None:
+def sign(
+    s: Scene, name: str, x, y, prompt: str, message: str, radius: float = 12
+) -> None:
     interactable(
         s,
         name,
         x,
         y,
         "res://scripts/interactable.gd",
-        10,
+        radius,
         prompt=f'"{prompt}"',
         message=f'"{message}"',
+    )
+
+
+def door(
+    s: Scene,
+    name: str,
+    x: float,
+    y: float,
+    building_id: str,
+    building_name: str,
+    target_scene: str,
+    target_spawn: str,
+    is_exit: bool = False,
+    radius: float = 18.0,
+) -> None:
+    interactable(
+        s,
+        name,
+        x,
+        y,
+        "res://scripts/world/building_door.gd",
+        radius,
+        building_id=f'"{building_id}"',
+        building_name=f'"{building_name}"',
+        target_scene=f'"{target_scene}"',
+        target_spawn=f'"{target_spawn}"',
+        is_exit="true" if is_exit else "false",
     )
 
 
@@ -207,6 +272,7 @@ def pickup(
             "Sprite2D",
             "Sprite2D",
             f"Interactables/{name}",
+            scale=v(0.25, 0.25),
             texture=s.ext("Texture2D", texture),
         )
     else:
@@ -292,6 +358,7 @@ def frame(
             "Ground",
             "Sprite2D",
             ".",
+            scale=v(0.25, 0.25),
             texture=s.ext("Texture2D", ground_texture),
             centered="false",
         )
@@ -379,6 +446,8 @@ def wrackmouth() -> str:
         *hall,
         label="Mayor's Hall",
         texture="res://assets/wrackmouth/mayor_hall.png",
+        chimney_offsets=((33.5, -100.0),),
+        window_offsets=((-41.0, -31.0), (13.0, -53.0), (-12.0, -18.0), (1.0, -28.0)),
     )
     building(
         s,
@@ -390,6 +459,8 @@ def wrackmouth() -> str:
         col(0.3, 0.2, 0.18),
         label="Kell's Forge",
         texture="res://assets/wrackmouth/forge.png",
+        chimney_offsets=((-23.5, -77.0),),
+        window_offsets=((-18.0, -22.0), (14.0, -26.0)),
     )
     building(
         s,
@@ -401,6 +472,8 @@ def wrackmouth() -> str:
         col(0.23, 0.2, 0.2),
         label="The Salt Gull",
         texture="res://assets/wrackmouth/salt_gull.png",
+        chimney_offsets=((40.8, -103.5),),
+        window_offsets=((-24.0, -28.0), (16.0, -26.0), (28.0, -48.0)),
     )
     building(
         s,
@@ -411,6 +484,7 @@ def wrackmouth() -> str:
         col(0.44, 0.38, 0.32),
         col(0.26, 0.24, 0.28),
         texture="res://assets/wrackmouth/cottage_harrow.png",
+        window_offsets=((12.0, -20.0),),
     )
     building(
         s,
@@ -421,6 +495,20 @@ def wrackmouth() -> str:
         col(0.47, 0.4, 0.33),
         col(0.3, 0.26, 0.24),
         texture="res://assets/wrackmouth/cottage_rook.png",
+        chimney_offsets=((18.0, -65.0),),
+        window_offsets=((-10.0, -20.0),),
+    )
+    building(
+        s,
+        "WeaverCottage",
+        408,
+        126,
+        (64, 44),
+        col(0.44, 0.38, 0.32),
+        col(0.26, 0.24, 0.28),
+        texture="res://assets/wrackmouth/cottage_weaver.png",
+        chimney_offsets=((22.5, -69.0),),
+        window_offsets=((-12.0, -20.0),),
     )
     building(
         s,
@@ -442,25 +530,101 @@ def wrackmouth() -> str:
         col(0.3, 0.3, 0.34),
         label="Lantern Watch",
         texture="res://assets/wrackmouth/lantern_watch.png",
+        window_offsets=((-6.0, -58.0), (-6.0, -24.0)),
     )
 
     prop_sprite(
-        s, "PlazaCampfire", 320, 210, "res://assets/props/campfire_lit.png", -10
+        s,
+        "PlazaCampfire",
+        320,
+        210,
+        "res://assets/props/campfire_lit_sheet.png",
+        -10,
+        col_size=(20, 10),
+        col_offset_y=-4,
+        hframes=4,
+        glow_texture="res://assets/props/fire_glow.png",
     )
-    prop_sprite(s, "PlazaSignpost", 282, 186, "res://assets/props/signpost.png", -13)
-    prop_sprite(s, "DeadTreeWest", 38, 125, "res://assets/props/dead_tree.png", -30)
-    prop_sprite(s, "DeadTreeCairn", 136, 382, "res://assets/props/dead_tree.png", -30)
-    prop_sprite(s, "DeadTreeEast", 608, 280, "res://assets/props/dead_tree.png", -30)
+    prop_sprite(
+        s,
+        "PlazaSignpost",
+        282,
+        186,
+        "res://assets/props/signpost.png",
+        -13,
+        col_size=(10, 7),
+        col_offset_y=-3.5,
+    )
+    prop_sprite(
+        s,
+        "DeadTreeWest",
+        38,
+        125,
+        "res://assets/props/dead_tree.png",
+        -30,
+        col_size=(14, 9),
+        col_offset_y=-4.5,
+    )
+    prop_sprite(
+        s,
+        "DeadTreeCairn",
+        136,
+        382,
+        "res://assets/props/dead_tree.png",
+        -30,
+        col_size=(14, 9),
+        col_offset_y=-4.5,
+    )
+    prop_sprite(
+        s,
+        "DeadTreeEast",
+        608,
+        280,
+        "res://assets/props/dead_tree.png",
+        -30,
+        col_size=(14, 9),
+        col_offset_y=-4.5,
+    )
+    prop_sprite(
+        s,
+        "CairnHeadstone1",
+        30,
+        348,
+        "res://assets/props/headstone_1.png",
+        -11,
+        col_size=(14, 8),
+        col_offset_y=-4,
+    )
+    prop_sprite(
+        s,
+        "CairnHeadstone2",
+        84,
+        346,
+        "res://assets/props/headstone_2.png",
+        -10,
+        col_size=(14, 8),
+        col_offset_y=-4,
+    )
+    prop_sprite(
+        s,
+        "CairnPile",
+        34,
+        396,
+        "res://assets/props/cairn_stones.png",
+        -12,
+        col_size=(24, 12),
+        col_offset_y=-6,
+    )
 
     npc(
         s,
-        "MayorTolle",
-        150,
-        162,
-        "Mayor Tolle",
-        "mayor",
-        col(0.55, 0.85, 0.6),
-        sheet="mayor",
+        "GuardRorik",
+        180,
+        160,
+        "Guard Rorik",
+        "guard",
+        col(0.7, 0.75, 0.85),
+        sheet="guard",
         behaviour="stationary",
     )
     npc(
@@ -538,52 +702,101 @@ def wrackmouth() -> str:
 
     sign(
         s,
-        "HallSign",
-        120,
-        160,
+        "PlazaSign",
+        282,
+        186,
         "Read",
-        "Wrackmouth Hall. Salvage claims are filed here. Walk-ins are not welcome after dark.",
+        "North: Wreckers' Strand. East: Crossholm Road. West: Old Cairns. Below the planks: ALL SALVAGE WEIGHED AT THE HALL.",
+        radius=15,
     )
     sign(
         s,
-        "ForgeSign",
-        470,
-        187,
-        "Read",
-        "KELL. Bone and iron. Mended, forged, weighed. No credit.",
+        "PlazaFire",
+        320,
+        208,
+        "Warm hands",
+        "Driftwood and peat burn low in the stone ring, throwing salt-scented sparks against the fog.",
+        radius=18,
     )
-    sign(s, "InnSign", 275, 352, "Read", "THE SALT GULL. Beds, stew, no questions.")
-    sign(
+    door(
         s,
-        "ShutterSign",
-        560,
-        340,
-        "Examine",
-        "Shuttered. The salvager family left a week before the autumn wrecks stopped.",
+        "DoorMayorHall",
+        150,
+        152,
+        "mayor_hall",
+        "Mayor's Hall",
+        "res://scenes/interiors/mayor_hall.tscn",
+        "from_town",
     )
-    sign(
+    door(
         s,
-        "HarrowSign",
+        "DoorForge",
+        474,
+        182,
+        "forge",
+        "Kell's Forge",
+        "res://scenes/interiors/forge.tscn",
+        "from_town",
+    )
+    door(
+        s,
+        "DoorSaltGull",
+        320,
+        345,
+        "salt_gull",
+        "The Salt Gull",
+        "res://scenes/interiors/salt_gull.tscn",
+        "from_town",
+    )
+    door(
+        s,
+        "DoorHarrowHouse",
         80,
-        300,
-        "Examine",
-        "Nets drying on the wall. Pell Harrow's house.",
+        292,
+        "cottage_harrow",
+        "Harrow Cottage",
+        "res://scenes/interiors/cottage_harrow.tscn",
+        "from_town",
     )
-    sign(
+    door(
         s,
-        "RookSign",
+        "DoorRookCottage",
         205,
-        310,
-        "Examine",
-        "A lantern burns in the window all night. The widow Rook's.",
+        302,
+        "cottage_rook",
+        "Rook Cottage",
+        "res://scenes/interiors/cottage_rook.tscn",
+        "from_town",
     )
-    sign(
+    door(
         s,
-        "WatchSign",
+        "DoorWeaverCottage",
+        408,
+        128,
+        "cottage_weaver",
+        "Weaver Cottage",
+        "res://scenes/interiors/cottage_weaver.tscn",
+        "from_town",
+    )
+    door(
+        s,
+        "DoorShutteredHouse",
         560,
-        95,
-        "Read",
-        "LANTERN WATCH. Keepers log every light and every shape in the fog.",
+        332,
+        "cottage_shuttered",
+        "Shuttered Cottage",
+        "",
+        "",
+    )
+    door(
+        s,
+        "DoorLanternWatch",
+        580,
+        105,
+        "lantern_watch",
+        "Lantern Watch",
+        "res://scenes/interiors/lantern_watch.tscn",
+        "from_town",
     )
     interactable(
         s,
@@ -595,19 +808,19 @@ def wrackmouth() -> str:
         prompt='"Rent a bed (5 coin)"',
     )
 
-    for i, x in enumerate((115, 150, 185), start=1):
+    for i, (rx, ry) in enumerate(((86, 116), (86, 144), (212, 138)), start=1):
         pickup(
             s,
             f"RatHole{i}",
-            x,
-            82,
+            rx,
+            ry,
             "Block the hole",
             "You wedge a flat stone into the hole. Something scrabbles away behind it.",
             col(0.15, 0.1, 0.08),
             sets_flag=f"rathole_{i}",
             texture="res://assets/props/rathole.png",
         )
-    for i, (x, y) in enumerate(((44, 372), (92, 392), (112, 360)), start=1):
+    for i, (x, y) in enumerate(((48, 368), (96, 392), (114, 358)), start=1):
         pickup(
             s,
             f"Moonherb{i}",
@@ -647,7 +860,21 @@ def wrackmouth() -> str:
         "res://scenes/world/crossholm_road.tscn",
         "from_wrackmouth",
     )
-    finish(s, {"from_beach": (320, 28), "from_road": (W - 28, 212)}, (320, 28))
+    finish(
+        s,
+        {
+            "from_beach": (320, 28),
+            "from_road": (W - 28, 212),
+            "from_mayor_hall": (150, 185),
+            "from_forge": (474, 205),
+            "from_salt_gull": (320, 370),
+            "from_lantern_watch": (580, 130),
+            "from_cottage_harrow": (80, 318),
+            "from_cottage_rook": (205, 326),
+            "from_cottage_weaver": (408, 152),
+        },
+        (320, 28),
+    )
     return s.render()
 
 
@@ -727,9 +954,36 @@ def crossholm_road() -> str:
         door=False,
         texture="res://assets/crossholm_road/cart.png",
     )
-    prop_sprite(s, "RoadSignpost", 60, 174, "res://assets/props/signpost.png", -13)
-    prop_sprite(s, "DeadTreeRoad1", 170, 95, "res://assets/props/dead_tree.png", -30)
-    prop_sprite(s, "DeadTreeRoad2", 485, 110, "res://assets/props/dead_tree.png", -30)
+    prop_sprite(
+        s,
+        "RoadSignpost",
+        60,
+        174,
+        "res://assets/props/signpost.png",
+        -13,
+        col_size=(10, 7),
+        col_offset_y=-3.5,
+    )
+    prop_sprite(
+        s,
+        "DeadTreeRoad1",
+        170,
+        95,
+        "res://assets/props/dead_tree.png",
+        -30,
+        col_size=(14, 9),
+        col_offset_y=-4.5,
+    )
+    prop_sprite(
+        s,
+        "DeadTreeRoad2",
+        485,
+        110,
+        "res://assets/props/dead_tree.png",
+        -30,
+        col_size=(14, 9),
+        col_offset_y=-4.5,
+    )
     npc(
         s,
         "DovCarrow",
