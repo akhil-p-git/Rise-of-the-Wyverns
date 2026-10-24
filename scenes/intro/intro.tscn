@@ -12,6 +12,7 @@
 [sub_resource type="ShaderMaterial" id="storm_water"]
 shader = ExtResource("4_water")
 shader_parameter/water_mask = ExtResource("3_mask")
+shader_parameter/art_size = Vector2(640, 360)
 shader_parameter/swell_pixels = 2.6
 shader_parameter/speed = 1.7
 shader_parameter/glint_amount = 0.05
@@ -21,18 +22,21 @@ script = ExtResource("1_intro")
 
 [node name="Sea" type="Sprite2D" parent="."]
 material = SubResource("storm_water")
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_sea")
 centered = false
 
 [node name="Ship" type="Node2D" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="Ship"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("5_ship")
 
 [node name="Wreckage" type="Node2D" parent="."]
 visible = false
 
 [node name="Broken" type="Sprite2D" parent="Wreckage"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("6_broken")
 
 [node name="Debris" type="CPUParticles2D" parent="Wreckage"]

@@ -7,7 +7,7 @@ signal dialogue_requested(npc: Npc)
 
 const WALK_SPEED := 30.0
 const WALK_FRAME_TIME := 0.18
-const STEP_BOB := 1.5
+const STEP_BOB := 0.0
 
 @export var display_name := ""
 @export_file("*.json") var dialogue_path := ""
@@ -29,7 +29,8 @@ var _fidget_timer := 2.5
 var _walk_time := 0.0
 var _wp_index := 0
 var _wp_dir := 1
-var _rest_offset_y := -16.0
+var _rest_offset_y := -64.0
+var _base_scale := Vector2(0.25, 0.25)
 var _query := PhysicsShapeQueryParameters2D.new()
 
 @onready var _sprite: Sprite2D = $Sprite2D
@@ -40,6 +41,7 @@ var _query := PhysicsShapeQueryParameters2D.new()
 func _ready() -> void:
 	prompt = "Talk"
 	home_position = global_position
+	_base_scale = _sprite.scale
 	if rng.seed == 0:
 		rng.seed = hash(name) ^ int(home_position.x * 31.0 + home_position.y * 97.0)
 	if sprite_sheet != null:
@@ -174,7 +176,7 @@ func _stop_movement() -> void:
 		_sprite.frame_coords = Vector2i(0, facing_row)
 		_sprite.offset.y = _rest_offset_y
 		_sprite.rotation = 0.0
-		_sprite.scale = Vector2.ONE
+		_sprite.scale = _base_scale
 
 
 func _do_fidget() -> void:
@@ -195,5 +197,5 @@ func _do_fidget() -> void:
 	else:
 		# Subtle breathing / shoulder shift
 		var tw := create_tween()
-		tw.tween_property(_sprite, "scale", Vector2(1.03, 0.97), 0.15)
-		tw.tween_property(_sprite, "scale", Vector2.ONE, 0.18)
+		tw.tween_property(_sprite, "scale", _base_scale * Vector2(1.03, 0.97), 0.15)
+		tw.tween_property(_sprite, "scale", _base_scale, 0.18)

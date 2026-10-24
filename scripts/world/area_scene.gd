@@ -6,10 +6,13 @@ extends Node2D
 @export var area_size := Vector2i(640, 360)
 @export var music_cue := "mus_wrackmouth"
 @export var ambience_cues: PackedStringArray = ["amb_wind", "amb_gulls"]
+@export var is_outdoor := true
 
 @onready var _player: Player = $Entities/Player
 @onready var _hud: Hud = $Hud
 @onready var _dialogue: DialogueBox = $DialogueBox
+
+var _day_night_mod: CanvasModulate = null
 
 
 func _ready() -> void:
@@ -23,6 +26,17 @@ func _ready() -> void:
 	Audio.play_ambience(Array(ambience_cues))
 	_hud.bind(_player)
 	_place_player(Game.take_spawn())
+
+	if is_outdoor:
+		var mod := get_node_or_null("DayNightModulate") as CanvasModulate
+		if mod == null:
+			mod = CanvasModulate.new()
+			mod.name = "DayNightModulate"
+			add_child(mod)
+		_day_night_mod = mod
+		if TimeSystem:
+			_day_night_mod.color = TimeSystem.get_ambient_color()
+
 	for node in $Interactables.get_children():
 		if node is Interactable:
 			node.interacted.connect(_hud.show_message)
@@ -32,6 +46,11 @@ func _ready() -> void:
 	for node in $Zones.get_children():
 		if node is FlagZone:
 			node.triggered.connect(_hud.show_message)
+
+
+func _process(_delta: float) -> void:
+	if is_outdoor and _day_night_mod != null and TimeSystem:
+		_day_night_mod.color = TimeSystem.get_ambient_color()
 
 
 func _place_player(spawn: String) -> void:

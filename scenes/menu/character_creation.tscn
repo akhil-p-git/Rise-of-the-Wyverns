@@ -94,7 +94,7 @@ size_flags_vertical = 3
 
 [node name="PreviewSprite" type="Sprite2D" parent="Margin/RootVBox/BodyRow/PreviewPanel/Margin/VBox/SpriteStage"]
 position = Vector2(78, 74)
-scale = Vector2(3, 3)
+scale = Vector2(0.85, 0.85)
 texture = ExtResource("3_hero")
 hframes = 4
 vframes = 4

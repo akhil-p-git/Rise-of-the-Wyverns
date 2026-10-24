@@ -3,6 +3,7 @@ extends CanvasLayer
 ## Stat bars, the interact prompt, and a short message line.
 
 const MESSAGE_SECONDS := 4.0
+const InventoryPanelScript = preload("res://scripts/ui/inventory_panel.gd")
 
 @onready var _health: ProgressBar = $Bars/Health
 @onready var _stamina: ProgressBar = $Bars/Stamina
@@ -11,6 +12,8 @@ const MESSAGE_SECONDS := 4.0
 @onready var _message: Label = $Message
 @onready var _message_timer: Timer = $MessageTimer
 @onready var _tracker: Label = $Tracker
+@onready var _time_label: Label = get_node_or_null("TimeLabel")
+@onready var inventory: InventoryPanelScript = $InventoryPanel
 
 
 func _ready() -> void:
@@ -19,6 +22,16 @@ func _ready() -> void:
 	Game.state.flag_changed.connect(_refresh_tracker.unbind(1))
 	Game.state.inventory_changed.connect(_refresh_tracker.unbind(1))
 	_refresh_tracker()
+	_update_time()
+
+
+func _process(_delta: float) -> void:
+	_update_time()
+
+
+func _update_time() -> void:
+	if _time_label != null and TimeSystem != null:
+		_time_label.text = TimeSystem.get_status_string()
 
 
 func bind(player: Player) -> void:

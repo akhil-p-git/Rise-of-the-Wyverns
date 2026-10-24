@@ -17,8 +17,9 @@ script = ExtResource("1_npc")
 prompt = "Talk"
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_hero")
-offset = Vector2(0, -16)
+offset = Vector2(0, -64)
 hframes = 4
 vframes = 4
 

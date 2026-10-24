@@ -46,13 +46,19 @@ size = Vector2(56, 36)
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_8"]
 size = Vector2(46, 22)
 
-[sub_resource type="CircleShape2D" id="circleshape2d_9"]
-radius = 10
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_9"]
+size = Vector2(10, 7)
 
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_10"]
+size = Vector2(14, 9)
+
+[sub_resource type="CircleShape2D" id="circleshape2d_11"]
+radius = 12
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_12"]
 size = Vector2(24, 40)
 
-[sub_resource type="RectangleShape2D" id="rectangleshape2d_11"]
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_13"]
 size = Vector2(16, 56)
 
 [node name="CrossholmRoad" type="Node2D"]
@@ -63,6 +69,7 @@ music_cue = "mus_crossholm_road"
 ambience_cues = PackedStringArray("amb_wind")
 
 [node name="Ground" type="Sprite2D" parent="."]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_texture2d")
 centered = false
 
@@ -175,20 +182,41 @@ texture = ExtResource("8_texture2d")
 position = Vector2(0, -11)
 shape = SubResource("rectangleshape2d_8")
 
-[node name="RoadSignpost" type="Sprite2D" parent="Entities"]
+[node name="RoadSignpost" type="StaticBody2D" parent="Entities"]
 position = Vector2(60, 174)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/RoadSignpost"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("9_texture2d")
-offset = Vector2(0, -13)
+offset = Vector2(0, -52)
 
-[node name="DeadTreeRoad1" type="Sprite2D" parent="Entities"]
+[node name="Shape" type="CollisionShape2D" parent="Entities/RoadSignpost"]
+position = Vector2(0, -3.5)
+shape = SubResource("rectangleshape2d_9")
+
+[node name="DeadTreeRoad1" type="StaticBody2D" parent="Entities"]
 position = Vector2(170, 95)
-texture = ExtResource("10_texture2d")
-offset = Vector2(0, -30)
 
-[node name="DeadTreeRoad2" type="Sprite2D" parent="Entities"]
-position = Vector2(485, 110)
+[node name="Sprite2D" type="Sprite2D" parent="Entities/DeadTreeRoad1"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("10_texture2d")
-offset = Vector2(0, -30)
+offset = Vector2(0, -120)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/DeadTreeRoad1"]
+position = Vector2(0, -4.5)
+shape = SubResource("rectangleshape2d_10")
+
+[node name="DeadTreeRoad2" type="StaticBody2D" parent="Entities"]
+position = Vector2(485, 110)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/DeadTreeRoad2"]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("10_texture2d")
+offset = Vector2(0, -120)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/DeadTreeRoad2"]
+position = Vector2(0, -4.5)
+shape = SubResource("rectangleshape2d_10")
 
 [node name="DovCarrow" parent="Entities" instance=ExtResource("12_packedscene")]
 position = Vector2(414, 298)
@@ -209,7 +237,7 @@ prompt = "Examine"
 message = "Charred roof-beams, still warm. Whatever came through here did not stop to take anything. The fields are scorched in a long, wide stripe."
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/FarmSign"]
-shape = SubResource("circleshape2d_9")
+shape = SubResource("circleshape2d_11")
 
 [node name="RoadSign" type="Area2D" parent="Interactables"]
 position = Vector2(60, 176)
@@ -221,7 +249,7 @@ prompt = "Read"
 message = "Wrackmouth, back west. Crossholm, east. Travel by day."
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/RoadSign"]
-shape = SubResource("circleshape2d_9")
+shape = SubResource("circleshape2d_11")
 
 [node name="GateSign" type="Area2D" parent="Interactables"]
 position = Vector2(560, 176)
@@ -233,7 +261,7 @@ prompt = "Read"
 message = "CROSSHOLM GARRISON. Gate closed at dusk. State your business."
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/GateSign"]
-shape = SubResource("circleshape2d_9")
+shape = SubResource("circleshape2d_11")
 
 [node name="GateZone" type="Area2D" parent="Zones"]
 position = Vector2(560, 200)
@@ -244,7 +272,7 @@ flag = "reached_crossholm"
 message = "Crossholm, at last: torches, spears and a gate that does not open. The captain will hear you out."
 
 [node name="Shape" type="CollisionShape2D" parent="Zones/GateZone"]
-shape = SubResource("rectangleshape2d_10")
+shape = SubResource("rectangleshape2d_12")
 
 [node name="ToWrackmouth" type="Area2D" parent="Zones"]
 position = Vector2(0, 204)
@@ -255,7 +283,7 @@ target_scene = "res://scenes/world/wrackmouth.tscn"
 target_spawn = "from_road"
 
 [node name="Shape" type="CollisionShape2D" parent="Zones/ToWrackmouth"]
-shape = SubResource("rectangleshape2d_11")
+shape = SubResource("rectangleshape2d_13")
 
 [node name="Spawns" type="Node2D" parent="."]
 

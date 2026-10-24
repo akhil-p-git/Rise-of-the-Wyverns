@@ -17,6 +17,7 @@ func _ready() -> void:
 	await test_character_and_menus()
 	test_logic_and_data()
 	await test_town_scenes()
+	await test_day_night_and_interiors()
 	await test_room()
 	await test_beach()
 	await test_intro()
@@ -319,6 +320,59 @@ func test_room() -> void:
 	var health_bar: ProgressBar = room.get_node("Hud/Bars/Health")
 	eq(health_bar.value, 70.0, "HUD health bar follows stats")
 
+	# Combat punches and blocking
+	var attack_events: Array[bool] = []
+	player.attacked.connect(func(is_power: bool) -> void: attack_events.append(is_power))
+
+	player.perform_normal_attack()
+	check(player.is_attacking, "perform_normal_attack sets is_attacking")
+	eq(player.last_attack_was_power, false, "perform_normal_attack sets last_attack_was_power to false")
+	eq(attack_events.size(), 1, "attacked signal emitted once")
+	eq(attack_events[-1], false, "attacked signal passes is_power=false")
+	await physics_frames(18)
+	check(not player.is_attacking, "normal attack finishes after duration")
+
+	player.stats.stamina = 100.0
+	var power_ok := player.perform_power_attack()
+	check(power_ok, "perform_power_attack succeeds with full stamina")
+	check(player.is_attacking, "perform_power_attack sets is_attacking")
+	eq(player.last_attack_was_power, true, "perform_power_attack sets last_attack_was_power to true")
+	eq(player.stats.stamina, 80.0, "power attack spends 20 stamina")
+	eq(attack_events.size(), 2, "attacked signal emitted twice")
+	eq(attack_events[-1], true, "attacked signal passes is_power=true")
+	await physics_frames(25)
+	check(not player.is_attacking, "power attack finishes after duration")
+
+	# Blocking (high guard)
+	Input.action_press("block")
+	await physics_frames(2)
+	check(player.is_blocking, "pressing block sets player.is_blocking")
+	Input.action_release("block")
+	await physics_frames(2)
+	check(not player.is_blocking, "releasing block clears player.is_blocking")
+
+	# Inventory satchel UI
+	var hud: Hud = room.get_node("Hud")
+	check(hud.inventory != null, "HUD has InventoryPanel")
+	check(not hud.inventory.is_open(), "inventory starts closed")
+
+	Game.state.apply(["give:moonherb:3", "give:coin:12"])
+	hud.inventory.open()
+	check(hud.inventory.is_open(), "inventory.open() opens inventory")
+	await physics_frames(2)
+	check(hud.inventory.item_row_count() >= 1, "inventory displays carried items")
+
+	hud.inventory.select_item("moonherb")
+	check(hud.inventory._selected_item == "moonherb", "item selection updates _selected_item")
+
+	hud.inventory.close()
+	check(not hud.inventory.is_open(), "inventory.close() closes inventory")
+
+	hud.inventory.toggle()
+	check(hud.inventory.is_open(), "inventory.toggle() toggles to open")
+	hud.inventory.toggle()
+	check(not hud.inventory.is_open(), "inventory.toggle() toggles to closed")
+
 	room.queue_free()
 	await get_tree().process_frame
 
@@ -438,7 +492,7 @@ func test_logic_and_data() -> void:
 			for cond: String in st.get("done_when", []):
 				_validate_cond(cond, "story.quests.%s.%s" % [qid, st["id"]], items_dict, quests_dict, stage_ids_by_quest)
 
-	var dialogue_files := ["ansa", "bram", "dov", "mayor", "orsa", "pell", "teague", "wren"]
+	var dialogue_files := ["ansa", "bram", "chancellor", "dov", "guard", "mayor", "orsa", "pell", "teague", "wizard", "wren"]
 	for dlg_name: String in dialogue_files:
 		var path := "res://data/dialogue/%s.json" % dlg_name
 		var tree := StoryData.load_json(path)
@@ -504,12 +558,13 @@ func test_town_scenes() -> void:
 	check(wm != null, "wrackmouth.tscn instantiates")
 	check(wm.get_node_or_null("Ground") is Sprite2D, "wrackmouth has Sprite2D ground")
 	check(wm.get_node("Entities/MayorHall").texture != null, "MayorHall has building texture")
-	var mayor: Npc = wm.get_node("Entities/MayorTolle")
+	var guard: Npc = wm.get_node("Entities/GuardRorik")
 	var orsa: Npc = wm.get_node("Entities/OrsaKell")
 	var teague: Npc = wm.get_node("Entities/TeagueMarrow")
 	var wren: Npc = wm.get_node("Entities/Wren")
 	var player: Player = wm.get_node("Entities/Player")
-	check(mayor.sprite_sheet != null, "MayorTolle has custom NPC sprite sheet")
+	check(guard.sprite_sheet != null, "GuardRorik has custom NPC sprite sheet")
+	check(wm.get_node_or_null("Entities/MayorTolle") == null, "Mayor Tolle is inside Mayor's Hall, not outside on street")
 
 	# Seed all NPCs deterministically
 	var all_npcs: Array[Npc] = []
@@ -523,7 +578,7 @@ func test_town_scenes() -> void:
 	var dt := 1.0 / 60.0
 	var stayed_in_radius := true
 	var never_overlapped_wall := true
-	var mayor_stayed_put := true
+	var guard_stayed_put := true
 	var reached_wp0 := false
 	var reached_wp1 := false
 
@@ -538,8 +593,8 @@ func test_town_scenes() -> void:
 			stayed_in_radius = false
 		if orsa._is_blocked(orsa.global_position):
 			never_overlapped_wall = false
-		if mayor.global_position.distance_to(mayor.home_position) > 0.001:
-			mayor_stayed_put = false
+		if guard.global_position.distance_to(guard.home_position) > 0.001:
+			guard_stayed_put = false
 		if teague.global_position.distance_to(teague.waypoints[0]) <= 2.0:
 			reached_wp0 = true
 		if teague.global_position.distance_to(teague.waypoints[1]) <= 2.0:
@@ -550,7 +605,7 @@ func test_town_scenes() -> void:
 	check(avg_ms < 0.2, "all Wrackmouth NPCs under 0.2 ms/frame (got %.4f ms)" % avg_ms)
 	check(stayed_in_radius, "wander NPC stays inside wander_radius over 3000 frames")
 	check(never_overlapped_wall, "wander NPC never overlaps a wall over 3000 frames")
-	check(mayor_stayed_put, "stationary NPC does not move over 3000 frames")
+	check(guard_stayed_put, "stationary NPC does not move over 3000 frames")
 	check(reached_wp0 and reached_wp1, "pace NPC reaches each waypoint")
 
 	# Interaction test: stops NPC, faces player, resumes after end_interaction
@@ -574,6 +629,17 @@ func test_town_scenes() -> void:
 			moved_after = true
 			break
 	check(moved_after, "wander NPC moves again after interaction ends")
+
+	# Verify realistic prop collisions for PlazaSignpost (282, 186) and PlazaCampfire (320, 210)
+	await place(player, Vector2(262, 185))
+	await hold(["move_right"], 45)
+	check(player.global_position.x < 276.0, "PlazaSignpost blocks the player (x=%s)" % player.global_position.x)
+	check(player.global_position.x > 268.0, "player reaches PlazaSignpost collider (x=%s)" % player.global_position.x)
+
+	await place(player, Vector2(296, 209))
+	await hold(["move_right"], 45)
+	check(player.global_position.x < 308.0, "PlazaCampfire blocks the player (x=%s)" % player.global_position.x)
+	check(player.global_position.x > 300.0, "player reaches PlazaCampfire collider (x=%s)" % player.global_position.x)
 
 	wm.queue_free()
 	await get_tree().process_frame
@@ -603,3 +669,174 @@ func test_intro() -> void:
 		check(player.speed_scale < 1.0, "the survivor staggers ashore at reduced speed")
 		beach.queue_free()
 		await get_tree().process_frame
+
+
+func test_day_night_and_interiors() -> void:
+	# 1. TimeSystem Day/Night Cycle & Locking rules
+	check(TimeSystem != null, "TimeSystem autoload is registered")
+	TimeSystem.set_time(12, 0)
+	eq(TimeSystem.get_hour(), 12, "TimeSystem sets hour to 12")
+	eq(TimeSystem.get_minute(), 0, "TimeSystem sets minute to 0")
+	check(TimeSystem.is_day(), "12:00 PM is day")
+	check(not TimeSystem.is_night(), "12:00 PM is not night")
+	check(not TimeSystem.is_building_locked("mayor_hall"), "Mayor's Hall unlocked at noon")
+	check(not TimeSystem.is_building_locked("forge"), "Forge unlocked at noon")
+	check(not TimeSystem.is_building_locked("salt_gull"), "Salt Gull unlocked at noon")
+	check(TimeSystem.is_building_locked("cottage_shuttered"), "Shuttered cottage always locked")
+
+	# 10:00 PM (22:00) lock time
+	TimeSystem.set_time(22, 15)
+	eq(TimeSystem.get_hour(), 22, "TimeSystem sets hour to 22")
+	check(TimeSystem.is_night(), "10:15 PM is night")
+	check(not TimeSystem.is_day(), "10:15 PM is not day")
+	check(TimeSystem.is_building_locked("mayor_hall"), "Mayor's Hall locked at 10:15 PM")
+	check(TimeSystem.is_building_locked("forge"), "Forge locked at 10:15 PM")
+	check(TimeSystem.is_building_locked("cottage_harrow"), "Harrow Cottage locked at 10:15 PM")
+	# Salt Gull Inn is EXEMPT: stays unlocked!
+	check(not TimeSystem.is_building_locked("salt_gull"), "Salt Gull Inn remains UNLOCKED at night (22:15)")
+
+	# 6:00 AM unlock time
+	TimeSystem.set_time(6, 0)
+	eq(TimeSystem.get_hour(), 6, "TimeSystem sets hour to 6")
+	check(TimeSystem.is_day(), "6:00 AM unlocks town (is_day=true)")
+	check(not TimeSystem.is_night(), "6:00 AM is not night")
+	check(not TimeSystem.is_building_locked("mayor_hall"), "Mayor's Hall unlocked at 6:00 AM")
+
+	# Ambient lighting color
+	TimeSystem.set_time(12, 0)
+	var day_col: Color = TimeSystem.get_ambient_color()
+	eq(day_col, Color(1.0, 1.0, 1.0, 1.0), "Noon ambient color is white")
+	TimeSystem.set_time(1, 0)
+	var night_col: Color = TimeSystem.get_ambient_color()
+	check(night_col.r < 0.6 and night_col.b > night_col.r, "Night ambient color is dark blue-tinted")
+
+	# 2. Door interactable in town
+	var wm: Node = load("res://scenes/world/wrackmouth.tscn").instantiate()
+	root.add_child(wm)
+	await physics_frames(2)
+	var door_hall: BuildingDoor = wm.get_node("Interactables/DoorMayorHall")
+	var door_inn: BuildingDoor = wm.get_node("Interactables/DoorSaltGull")
+	check(door_hall != null, "Wrackmouth has DoorMayorHall")
+	check(door_inn != null, "Wrackmouth has DoorSaltGull")
+
+	TimeSystem.set_time(12, 0)
+	door_hall._update_state()
+	door_inn._update_state()
+	check(not door_hall.is_locked(), "DoorMayorHall unlocked at noon")
+	eq(door_hall.prompt, "Enter Mayor's Hall", "Door prompt shows Enter at noon")
+
+	TimeSystem.set_time(23, 0)
+	door_hall._update_state()
+	door_inn._update_state()
+	check(door_hall.is_locked(), "DoorMayorHall locked at 11 PM")
+	eq(door_hall.prompt, "Locked", "Door prompt shows Locked at night")
+	check(not door_inn.is_locked(), "DoorSaltGull stays unlocked at 11 PM")
+	eq(door_inn.prompt, "Enter The Salt Gull", "DoorSaltGull prompt shows Enter at night")
+
+	wm.queue_free()
+	await get_tree().process_frame
+
+	# 3. All 7 interior scenes instantiate headless with correct structure
+	var interior_paths := [
+		"res://scenes/interiors/mayor_hall.tscn",
+		"res://scenes/interiors/forge.tscn",
+		"res://scenes/interiors/salt_gull.tscn",
+		"res://scenes/interiors/lantern_watch.tscn",
+		"res://scenes/interiors/cottage_harrow.tscn",
+		"res://scenes/interiors/cottage_rook.tscn",
+		"res://scenes/interiors/cottage_weaver.tscn",
+	]
+	for ipath in interior_paths:
+		var scene: AreaScene = load(ipath).instantiate()
+		root.add_child(scene)
+		await physics_frames(2)
+		check(scene != null, "%s instantiates" % ipath)
+		check(not scene.is_outdoor, "%s is indoor scene (is_outdoor=false)" % ipath)
+		check(scene.get_node_or_null("Spawns/from_town") is Marker2D, "%s has Spawns/from_town" % ipath)
+		var exit_door: BuildingDoor = scene.get_node_or_null("Interactables/DoorExit")
+		check(exit_door != null and exit_door.is_exit, "%s has exit door back to town" % ipath)
+		var entities: Node2D = scene.get_node_or_null("Entities")
+		if entities:
+			for child in entities.get_children():
+				if child is Npc:
+					check(not child.display_name.is_empty(), "%s in %s has display_name" % [child.name, ipath])
+					check(not child.dialogue_path.is_empty(), "%s in %s has dialogue_path" % [child.name, ipath])
+					check(ResourceLoader.exists(child.dialogue_path), "%s in %s dialogue file exists" % [child.name, ipath])
+		scene.queue_free()
+		await get_tree().process_frame
+
+	# 4. Court NPCs & LootContainer functionality in Mayor's Hall
+	var mh: AreaScene = load("res://scenes/interiors/mayor_hall.tscn").instantiate()
+	root.add_child(mh)
+	await physics_frames(2)
+	var p: Player = mh.get_node("Entities/Player")
+	var mayor: Npc = mh.get_node("Entities/MayorTolle")
+	check(mayor != null, "Mayor Tolle is inside Mayor's Hall")
+	eq(mayor.display_name, "Mayor Maren Tolle", "Mayor Tolle display_name is Mayor Maren Tolle")
+	eq(mayor.dialogue_path, "res://data/dialogue/mayor.json", "Mayor Tolle dialogue_path is mayor.json")
+	check(ResourceLoader.exists(mayor.dialogue_path), "Mayor Tolle dialogue file exists")
+
+	check(mh.get_node("Entities/ChancellorAlden") != null, "Chancellor Alden is inside Mayor's Hall")
+	check(mh.get_node("Entities/GuardVance") != null, "Royal Guard Vance is inside Mayor's Hall")
+
+	# Mayor Tolle is reachable from the central aisle and gives tasks
+	await place(p, Vector2(230, 142))
+	await hold(["move_up"], 8)
+	eq(p._nearest_interactable(), mayor, "Mayor Tolle is reachable and nearest interactable from central aisle")
+
+	# Dialogue opens and gives task to player
+	var dlg: DialogueBox = mh.get_node("DialogueBox")
+	check(dlg != null, "Mayor's Hall has DialogueBox")
+	mayor.interact(p)
+	check(dlg.is_open(), "interacting with Mayor Tolle opens DialogueBox")
+	dlg._choose(0) # "I can work." -> accept node: starts work_to_belong, gives mayor_letter
+	check(Game.state.quests.is_active("work_to_belong"), "Mayor Tolle dialogue starts work_to_belong quest")
+	check(Game.state.count("mayor_letter") >= 1, "Mayor Tolle gives mayor_letter task item")
+	dlg._close()
+	check(not dlg.is_open(), "DialogueBox closes cleanly")
+
+	var chest: LootContainer = mh.get_node("Interactables/MayorChest")
+	check(chest != null, "Mayor's Hall has MayorChest loot container")
+	check(not chest.is_looted(), "chest starts unlooted")
+	eq(chest.prompt, "Search Council Strongbox", "chest prompt shows Search Council Strongbox")
+
+	var prev_coins: int = Game.state.count("coin")
+	chest.interact(p)
+	check(chest.is_looted(), "interacting loots chest and sets flag")
+	eq(Game.state.count("coin"), prev_coins + 18, "looting chest adds 18 coins")
+	eq(chest.prompt, "", "looted chest has empty prompt")
+
+	# Re-interacting does not add more loot
+	chest.interact(p)
+	eq(Game.state.count("coin"), prev_coins + 18, "looted chest cannot be re-looted")
+
+	# 5. Entering and leaving Mayor's Hall without getting stuck
+	# In Mayor's Hall, player at from_town (230, 245) can move freely
+	await place(p, Vector2(230, 245))
+	var hall_start := p.global_position
+	await hold(["move_up"], 15)
+	check(p.global_position.y < hall_start.y - 10.0, "player moves freely inside Mayor's Hall doorway")
+
+	mh.queue_free()
+	await get_tree().process_frame
+
+	# In Wrackmouth, player at from_mayor_hall (150, 185) can move freely in all directions
+	var wm_exit: Node = load("res://scenes/world/wrackmouth.tscn").instantiate()
+	root.add_child(wm_exit)
+	await physics_frames(2)
+	var wm_p: Player = wm_exit.get_node("Entities/Player")
+	var wm_marker: Marker2D = wm_exit.get_node("Spawns/from_mayor_hall")
+	check(wm_marker != null, "wrackmouth has Spawns/from_mayor_hall")
+	await place(wm_p, wm_marker.global_position)
+	var exit_pos := wm_p.global_position
+	await hold(["move_down"], 15)
+	check(wm_p.global_position.y > exit_pos.y + 10.0, "player moves down after exiting Mayor's Hall")
+	await place(wm_p, wm_marker.global_position)
+	await hold(["move_left"], 15)
+	check(wm_p.global_position.x < exit_pos.x - 10.0, "player moves left after exiting Mayor's Hall")
+	await place(wm_p, wm_marker.global_position)
+	await hold(["move_right"], 15)
+	check(wm_p.global_position.x > exit_pos.x + 10.0, "player moves right after exiting Mayor's Hall")
+
+	wm_exit.queue_free()
+	await get_tree().process_frame

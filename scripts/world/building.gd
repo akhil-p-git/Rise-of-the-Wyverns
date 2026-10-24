@@ -28,13 +28,68 @@ extends StaticBody2D
 	set(value):
 		label = value
 		queue_redraw()
+@export var chimney_offsets: PackedVector2Array = []
+@export var window_offsets: PackedVector2Array = []
+
+var _anim_time := 0.0
+var _smoke_sprites: Array[Sprite2D] = []
+var _glow_sprites: Array[Sprite2D] = []
+
+
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
+	_setup_atmosphere()
+
+
+func _setup_atmosphere() -> void:
+	if not window_offsets.is_empty() and ResourceLoader.exists("res://assets/buildings/parts/window_glow.png"):
+		var glow_tex := load("res://assets/buildings/parts/window_glow.png") as Texture2D
+		var add_mat := CanvasItemMaterial.new()
+		add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		for wpos in window_offsets:
+			var g := Sprite2D.new()
+			g.texture = glow_tex
+			g.position = wpos
+			g.scale = Vector2(0.24, 0.24)
+			g.material = add_mat
+			g.modulate = Color(1.0, 0.88, 0.58, 0.68)
+			add_child(g)
+			_glow_sprites.append(g)
+
+	if not chimney_offsets.is_empty() and ResourceLoader.exists("res://assets/buildings/parts/chimney_smoke_sheet.png"):
+		var smoke_tex := load("res://assets/buildings/parts/chimney_smoke_sheet.png") as Texture2D
+		for cpos in chimney_offsets:
+			var s := Sprite2D.new()
+			s.texture = smoke_tex
+			s.hframes = 6
+			s.position = cpos
+			s.scale = Vector2(0.25, 0.25)
+			s.offset = Vector2(0.0, -50.0)
+			s.modulate = Color(0.92, 0.94, 0.98, 0.82)
+			add_child(s)
+			_smoke_sprites.append(s)
+
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint() or (_smoke_sprites.is_empty() and _glow_sprites.is_empty()):
+		return
+	_anim_time += delta
+	for i in _smoke_sprites.size():
+		var s := _smoke_sprites[i]
+		s.frame = int((_anim_time * 5.5) + i * 2.0) % 6
+		s.rotation = sin(_anim_time * 1.6 + i) * 0.04
+	for i in _glow_sprites.size():
+		var g := _glow_sprites[i]
+		var flicker := 0.64 + 0.14 * sin(_anim_time * 2.8 + float(i) * 1.3) + 0.05 * cos(_anim_time * 6.5)
+		g.modulate.a = clampf(flicker, 0.48, 0.86)
 
 
 func _draw() -> void:
 	if texture != null:
-		var tw := float(texture.get_width())
-		var th := float(texture.get_height())
-		draw_texture(texture, Vector2(-tw / 2.0, -th))
+		var tw := float(texture.get_width()) * 0.25
+		var th := float(texture.get_height()) * 0.25
+		draw_texture_rect(texture, Rect2(-tw / 2.0, -th, tw, th), false)
 		return
 	var left := -size.x / 2.0
 	var roof_h := size.y * 0.45

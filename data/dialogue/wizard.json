@@ -1,0 +1,40 @@
+{
+  "entries": [
+    {"if": ["flag:saw_grave"], "node": "grave_omen"},
+    {"if": [], "node": "greet"}
+  ],
+  "nodes": {
+    "greet": {
+      "speaker": "Court Wizard Calder",
+      "text": "The salt-fog carries a foul hum, castaway. The old cairns stir, and ancient wyvern bones upon the beach burn cold under the moon. Walk carefully.",
+      "choices": [
+        {"text": "What are you studying here?", "next": "study"},
+        {"text": "Have you seen wyverns in the skies?", "next": "wyverns"},
+        {"text": "I'll be on my way."}
+      ]
+    },
+    "study": {
+      "speaker": "Court Wizard Calder",
+      "text": "The ley-currents of this coast. Ancient dragons roosted here before man stacked the first stone of Wrackmouth. Something is waking beneath the earth.",
+      "next": "greet"
+    },
+    "wyverns": {
+      "speaker": "Court Wizard Calder",
+      "text": "Not yet. But the scorched farmsteads upon the Crossholm road did not burn by peasant pitch. The Mayor doubts, but I have read the ash.",
+      "next": "greet"
+    },
+    "grave_omen": {
+      "speaker": "Court Wizard Calder",
+      "text": "You saw the cracked cairn stone? That hex-rune was etched with brimstone and dragon marrow. Keep your weapon sharp, survivor.",
+      "choices": [
+        {"text": "The Mayor sent me to investigate.", "next": "investigate"},
+        {"text": "Understood."}
+      ]
+    },
+    "investigate": {
+      "speaker": "Court Wizard Calder",
+      "text": "Carry whatever you unearth to Crossholm. The garrison mages have seen the portents before. Mayor Tolle acts in haste; wisdom lies eastward.",
+      "next": "greet"
+    }
+  }
+}

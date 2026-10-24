@@ -1,0 +1,20 @@
+{
+  "entries": [
+    {"if": [], "node": "greet"}
+  ],
+  "nodes": {
+    "greet": {
+      "speaker": "Chancellor Alden",
+      "text": "Wrackmouth municipal records, salvage manifests, and maritime charters. All claims must be filed in triplicate.",
+      "choices": [
+        {"text": "Any shipwrecks recently?", "next": "wrecks"},
+        {"text": "I'll leave you to your ledgers."}
+      ]
+    },
+    "wrecks": {
+      "speaker": "Chancellor Alden",
+      "text": "Three merchant brigs broken upon the reef this harvest moon alone. The Mayor pays a fair salvage tally for iron and timber.",
+      "next": "greet"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "entries": [
+    {"if": [], "node": "greet"}
+  ],
+  "nodes": {
+    "greet": {
+      "speaker": "Guard Vance",
+      "text": "State your business before the Mayor, castaway. Mind your manners, and keep your hands off the council weapons.",
+      "choices": [
+        {"text": "Is the village safe?", "next": "safety"},
+        {"text": "Understood."}
+      ]
+    },
+    "safety": {
+      "speaker": "Guard Vance",
+      "text": "Safe enough by the hearth. Past the east gate? Keep your fists ready and travel by broad daylight.",
+      "next": "greet"
+    }
+  }
+}

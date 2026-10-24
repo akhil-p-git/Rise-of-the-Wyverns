@@ -1,0 +1,196 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/area_scene.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/floor_wood.png" id="2_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/wall_stone.png" id="3_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/building_door.gd" id="4_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="5_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="7_packedscene"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth.png" id="8_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/bed_wood.png" id="9_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/cupboard.png" id="10_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/rug_woven.png" id="11_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/loot_container.gd" id="12_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/chest.png" id="13_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/pell.png" id="14_texture2d"]
+[ext_resource type="PackedScene" path="res://scenes/npc/npc.tscn" id="15_packedscene"]
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_0"]
+size = Vector2(330, 48)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_1"]
+size = Vector2(16, 230)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_2"]
+size = Vector2(143, 16)
+
+[sub_resource type="CircleShape2D" id="circleshape2d_3"]
+radius = 16
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_4"]
+size = Vector2(44, 18)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_5"]
+size = Vector2(30, 24)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_6"]
+size = Vector2(28, 16)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_7"]
+size = Vector2(20, 12)
+
+[node name="Interior" type="Node2D"]
+script = ExtResource("1_script")
+area_size = Vector2i(330, 230)
+music_cue = "mus_wrackmouth"
+ambience_cues = PackedStringArray("amb_fire")
+is_outdoor = false
+
+[node name="WarmIndoorLight" type="CanvasModulate" parent="."]
+color = Color(1.0, 0.96, 0.88, 1.0)
+
+[node name="Floor" type="TextureRect" parent="."]
+offset_right = 330
+offset_bottom = 230
+texture = ExtResource("2_texture2d")
+stretch_mode = 1
+
+[node name="WallHeader" type="Sprite2D" parent="."]
+position = Vector2(165, 24)
+scale = Vector2(0.644531, 0.5)
+texture = ExtResource("3_texture2d")
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(165, 24)
+shape = SubResource("rectangleshape2d_0")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(8, 115)
+shape = SubResource("rectangleshape2d_1")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(322, 115)
+shape = SubResource("rectangleshape2d_1")
+
+[node name="BottomWallLeft" type="CollisionShape2D" parent="Walls"]
+position = Vector2(71.5, 222)
+shape = SubResource("rectangleshape2d_2")
+
+[node name="BottomWallRight" type="CollisionShape2D" parent="Walls"]
+position = Vector2(258.5, 222)
+shape = SubResource("rectangleshape2d_2")
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="Zones" type="Node2D" parent="."]
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="from_town" type="Marker2D" parent="Spawns"]
+position = Vector2(165, 185)
+
+[node name="DoorExit" type="Area2D" parent="Interactables"]
+position = Vector2(165, 220)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_script")
+building_id = "cottage_rook"
+building_name = "Wrackmouth"
+target_scene = "res://scenes/world/wrackmouth.tscn"
+target_spawn = "from_cottage_rook"
+is_exit = true
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/DoorExit"]
+shape = SubResource("circleshape2d_3")
+
+[node name="Player" parent="Entities" instance=ExtResource("5_packedscene")]
+position = Vector2(165, 185)
+
+[node name="Hud" parent="." instance=ExtResource("6_packedscene")]
+
+[node name="DialogueBox" parent="." instance=ExtResource("7_packedscene")]
+
+[node name="Hearth" type="StaticBody2D" parent="Entities"]
+position = Vector2(90, 70)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Hearth"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("8_texture2d")
+offset = Vector2(0, -40)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/Hearth"]
+position = Vector2(0, -9)
+shape = SubResource("rectangleshape2d_4")
+
+[node name="Bed" type="StaticBody2D" parent="Entities"]
+position = Vector2(55, 145)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Bed"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("9_texture2d")
+offset = Vector2(0, -45)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/Bed"]
+position = Vector2(0, -12)
+shape = SubResource("rectangleshape2d_5")
+
+[node name="Cupboard" type="StaticBody2D" parent="Entities"]
+position = Vector2(230, 64)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Cupboard"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("10_texture2d")
+offset = Vector2(0, -50)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/Cupboard"]
+position = Vector2(0, -8)
+shape = SubResource("rectangleshape2d_6")
+
+[node name="Rug" type="StaticBody2D" parent="Entities"]
+position = Vector2(150, 120)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Rug"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("11_texture2d")
+offset = Vector2(0, 0)
+
+[node name="HerbChest" type="Area2D" parent="Interactables"]
+position = Vector2(275, 76)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("12_script")
+container_id = "rook_herb_chest"
+container_name = "Apothecary Box"
+loot = {"coin": 8, "moonherb": 2}
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/HerbChest"]
+shape = SubResource("circleshape2d_3")
+
+[node name="ChestVisual" type="StaticBody2D" parent="Entities"]
+position = Vector2(275, 76)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/ChestVisual"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("13_texture2d")
+offset = Vector2(0, -20)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/ChestVisual"]
+position = Vector2(0, -6)
+shape = SubResource("rectangleshape2d_7")
+
+[node name="Pell" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(190, 110)
+display_name = "Pell Harrow"
+dialogue_path = "res://data/dialogue/pell.json"
+sprite_sheet = ExtResource("14_texture2d")
+facing_row = 0
+behaviour = "wander"
+wander_radius = 18.0

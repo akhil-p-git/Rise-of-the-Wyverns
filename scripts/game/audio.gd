@@ -230,6 +230,10 @@ func play_sfx(id: String, position: Variant = null, pitch_scale := 1.0) -> void:
 		p.play()
 
 
+func play_ui(id: String) -> void:
+	play_sfx(id)
+
+
 func _get_cue(id: String) -> Dictionary:
 	if cues.has(id):
 		return cues[id]
@@ -275,7 +279,6 @@ func _exit_tree() -> void:
 func _on_node_added(node: Node) -> void:
 	if node is Button:
 		var btn := node as Button
-		btn.focus_entered.connect(_on_btn_hover)
 		btn.mouse_entered.connect(_on_btn_hover)
 		btn.pressed.connect(_on_btn_confirm)
 

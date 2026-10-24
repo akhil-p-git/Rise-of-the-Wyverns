@@ -1,0 +1,216 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/area_scene.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/floor_stone.png" id="2_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/wall_stone.png" id="3_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/building_door.gd" id="4_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="5_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="7_packedscene"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth.png" id="8_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/anvil.png" id="9_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/table_wood.png" id="10_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/barrels.png" id="11_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/loot_container.gd" id="12_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/chest.png" id="13_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/orsa.png" id="14_texture2d"]
+[ext_resource type="PackedScene" path="res://scenes/npc/npc.tscn" id="15_packedscene"]
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_0"]
+size = Vector2(384, 48)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_1"]
+size = Vector2(16, 256)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_2"]
+size = Vector2(170, 16)
+
+[sub_resource type="CircleShape2D" id="circleshape2d_3"]
+radius = 16
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_4"]
+size = Vector2(44, 18)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_5"]
+size = Vector2(18, 14)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_6"]
+size = Vector2(48, 18)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_7"]
+size = Vector2(28, 14)
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_8"]
+size = Vector2(20, 12)
+
+[node name="Interior" type="Node2D"]
+script = ExtResource("1_script")
+area_size = Vector2i(384, 256)
+music_cue = "mus_wrackmouth"
+ambience_cues = PackedStringArray("amb_fire")
+is_outdoor = false
+
+[node name="WarmIndoorLight" type="CanvasModulate" parent="."]
+color = Color(1.0, 0.96, 0.88, 1.0)
+
+[node name="Floor" type="TextureRect" parent="."]
+offset_right = 384
+offset_bottom = 256
+texture = ExtResource("2_texture2d")
+stretch_mode = 1
+
+[node name="WallHeader" type="Sprite2D" parent="."]
+position = Vector2(192, 24)
+scale = Vector2(0.75, 0.5)
+texture = ExtResource("3_texture2d")
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="TopWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(192, 24)
+shape = SubResource("rectangleshape2d_0")
+
+[node name="LeftWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(8, 128)
+shape = SubResource("rectangleshape2d_1")
+
+[node name="RightWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(376, 128)
+shape = SubResource("rectangleshape2d_1")
+
+[node name="BottomWallLeft" type="CollisionShape2D" parent="Walls"]
+position = Vector2(85, 248)
+shape = SubResource("rectangleshape2d_2")
+
+[node name="BottomWallRight" type="CollisionShape2D" parent="Walls"]
+position = Vector2(299, 248)
+shape = SubResource("rectangleshape2d_2")
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="Zones" type="Node2D" parent="."]
+
+[node name="Spawns" type="Node2D" parent="."]
+
+[node name="from_town" type="Marker2D" parent="Spawns"]
+position = Vector2(192, 211)
+
+[node name="DoorExit" type="Area2D" parent="Interactables"]
+position = Vector2(192, 246)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_script")
+building_id = "forge"
+building_name = "Wrackmouth"
+target_scene = "res://scenes/world/wrackmouth.tscn"
+target_spawn = "from_forge"
+is_exit = true
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/DoorExit"]
+shape = SubResource("circleshape2d_3")
+
+[node name="Player" parent="Entities" instance=ExtResource("5_packedscene")]
+position = Vector2(192, 211)
+
+[node name="Hud" parent="." instance=ExtResource("6_packedscene")]
+
+[node name="DialogueBox" parent="." instance=ExtResource("7_packedscene")]
+
+[node name="ForgeHearth" type="StaticBody2D" parent="Entities"]
+position = Vector2(110, 70)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/ForgeHearth"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("8_texture2d")
+offset = Vector2(0, -40)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/ForgeHearth"]
+position = Vector2(0, -9)
+shape = SubResource("rectangleshape2d_4")
+
+[node name="Anvil" type="StaticBody2D" parent="Entities"]
+position = Vector2(170, 110)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Anvil"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("9_texture2d")
+offset = Vector2(0, -25)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/Anvil"]
+position = Vector2(0, -7)
+shape = SubResource("rectangleshape2d_5")
+
+[node name="WorkTable" type="StaticBody2D" parent="Entities"]
+position = Vector2(290, 75)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/WorkTable"]
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("10_texture2d")
+offset = Vector2(0, -31.1111)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/WorkTable"]
+position = Vector2(0, -9)
+shape = SubResource("rectangleshape2d_6")
+
+[node name="Barrels" type="StaticBody2D" parent="Entities"]
+position = Vector2(50, 70)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Barrels"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("11_texture2d")
+offset = Vector2(0, -25)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/Barrels"]
+position = Vector2(0, -7)
+shape = SubResource("rectangleshape2d_7")
+
+[node name="ScrapBin" type="Area2D" parent="Interactables"]
+position = Vector2(340, 80)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("12_script")
+container_id = "forge_scrap_bin"
+container_name = "Iron Scrap Bin"
+loot = {"coin": 12, "iron_scrap": 2}
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/ScrapBin"]
+shape = SubResource("circleshape2d_3")
+
+[node name="ChestVisual" type="StaticBody2D" parent="Entities"]
+position = Vector2(340, 80)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/ChestVisual"]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("13_texture2d")
+offset = Vector2(0, -20)
+
+[node name="Shape" type="CollisionShape2D" parent="Entities/ChestVisual"]
+position = Vector2(0, -6)
+shape = SubResource("rectangleshape2d_8")
+
+[node name="ToolChest" type="Area2D" parent="Interactables"]
+position = Vector2(240, 76)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("12_script")
+container_id = "forge_tool_box"
+container_name = "Tool Chest"
+loot = {"iron_scrap": 2, "coin": 6}
+
+[node name="Reach" type="CollisionShape2D" parent="Interactables/ToolChest"]
+shape = SubResource("circleshape2d_3")
+
+[node name="OrsaKell" parent="Entities" instance=ExtResource("15_packedscene")]
+position = Vector2(190, 110)
+display_name = "Orsa Kell"
+dialogue_path = "res://data/dialogue/orsa.json"
+sprite_sheet = ExtResource("14_texture2d")
+facing_row = 0
+behaviour = "wander"
+wander_radius = 20.0

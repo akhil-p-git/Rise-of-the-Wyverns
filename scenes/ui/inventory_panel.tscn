@@ -1,0 +1,152 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/inventory_panel.gd" id="1_inv"]
+[ext_resource type="Theme" path="res://assets/ui/grim_theme.tres" id="2_theme"]
+[ext_resource type="Texture2D" path="res://assets/hero/hero_sheet.png" id="3_hero"]
+
+[node name="InventoryPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_inv")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.03, 0.62)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -132.0
+offset_right = 220.0
+offset_bottom = 132.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.86, 0.66, 1)
+theme_override_font_sizes/font_size = 15
+text = "Castaway's Satchel"
+
+[node name="CoinLabel" type="Label" parent="Panel/Margin/VBox/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.78, 0.38, 1)
+theme_override_font_sizes/font_size = 12
+text = "Coin Purse: 0"
+
+[node name="CloseButton" type="Button" parent="Panel/Margin/VBox/Header"]
+custom_minimum_size = Vector2(54, 22)
+layout_mode = 2
+text = "Close [I]"
+
+[node name="Divider" type="ColorRect" parent="Panel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+color = Color(0.36, 0.32, 0.28, 0.85)
+
+[node name="Body" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ItemsScroll" type="ScrollContainer" parent="Panel/Margin/VBox/Body"]
+custom_minimum_size = Vector2(215, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemsList" type="VBoxContainer" parent="Panel/Margin/VBox/Body/ItemsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="EmptyLabel" type="Label" parent="Panel/Margin/VBox/Body/ItemsScroll/ItemsList"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.64, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "No items carried."
+autowrap_mode = 3
+
+[node name="DetailBox" type="VBoxContainer" parent="Panel/Margin/VBox/Body"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PortraitFrame" type="Control" parent="Panel/Margin/VBox/Body/DetailBox"]
+custom_minimum_size = Vector2(180, 74)
+layout_mode = 2
+
+[node name="Bg" type="ColorRect" parent="Panel/Margin/VBox/Body/DetailBox/PortraitFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.06, 0.08, 0.85)
+
+[node name="PortraitSprite" type="Sprite2D" parent="Panel/Margin/VBox/Body/DetailBox/PortraitFrame"]
+position = Vector2(36, 40)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_hero")
+hframes = 4
+vframes = 4
+
+[node name="CombatInfo" type="Label" parent="Panel/Margin/VBox/Body/DetailBox/PortraitFrame"]
+layout_mode = 0
+offset_left = 68.0
+offset_top = 8.0
+offset_right = 176.0
+offset_bottom = 68.0
+theme_override_colors/font_color = Color(0.82, 0.78, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "Brawler Stance:
+• LMB: Quick Jab
+• Hold LMB: Power Strike
+• RMB: High Guard"
+autowrap_mode = 3
+
+[node name="DetailTitle" type="Label" parent="Panel/Margin/VBox/Body/DetailBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.88, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+text = "Empty Satchel"
+
+[node name="DetailDesc" type="Label" parent="Panel/Margin/VBox/Body/DetailBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.78, 0.76, 0.72, 1)
+theme_override_font_sizes/font_size = 11
+text = "Nothing but salt-stiffened linen."
+autowrap_mode = 3

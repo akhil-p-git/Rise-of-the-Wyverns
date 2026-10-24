@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Theme" path="res://assets/ui/grim_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="3_inv"]
 
 [sub_resource type="StyleBoxFlat" id="bar_bg"]
 bg_color = Color(0.055, 0.05, 0.07, 0.88)
@@ -30,6 +31,16 @@ offset_right = 108.0
 offset_bottom = 34.0
 theme = ExtResource("2_theme")
 theme_override_constants/separation = 2
+
+[node name="TimeLabel" type="Label" parent="."]
+offset_left = 116.0
+offset_top = 8.0
+offset_right = 320.0
+offset_bottom = 24.0
+theme = ExtResource("2_theme")
+theme_override_colors/font_color = Color(0.92, 0.88, 0.76, 0.95)
+theme_override_font_sizes/font_size = 10
+text = "8:00 AM · Day"
 
 [node name="Health" type="ProgressBar" parent="Bars"]
 custom_minimum_size = Vector2(100, 7)
@@ -98,3 +109,15 @@ theme = ExtResource("2_theme")
 theme_override_font_sizes/font_size = 11
 horizontal_alignment = 2
 autowrap_mode = 3
+
+[node name="HintLabel" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 36.0
+offset_right = 240.0
+offset_bottom = 52.0
+theme = ExtResource("2_theme")
+theme_override_colors/font_color = Color(0.75, 0.72, 0.65, 0.85)
+theme_override_font_sizes/font_size = 9
+text = "[I/Tab] Satchel  •  [LMB] Punch (Hold: Power)  •  [RMB] Block"
+
+[node name="InventoryPanel" parent="." instance=ExtResource("3_inv")]

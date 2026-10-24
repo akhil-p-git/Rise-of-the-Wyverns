@@ -19,6 +19,13 @@
 [sub_resource type="ShaderMaterial" id="water_material"]
 shader = ExtResource("9_water")
 shader_parameter/water_mask = ExtResource("10_mask")
+shader_parameter/art_size = Vector2(1280, 720)
+
+[sub_resource type="RectangleShape2D" id="driftwood_base"]
+size = Vector2(28, 8)
+
+[sub_resource type="RectangleShape2D" id="campfire_base"]
+size = Vector2(16, 8)
 
 [sub_resource type="RectangleShape2D" id="wall_v"]
 size = Vector2(16, 224)
@@ -55,6 +62,7 @@ script = ExtResource("1_beach")
 
 [node name="Ground" type="Sprite2D" parent="."]
 material = SubResource("water_material")
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_ground")
 centered = false
 
@@ -62,6 +70,7 @@ centered = false
 
 [node name="WyvernSkeleton" type="Sprite2D" parent="Decals"]
 position = Vector2(194, 102)
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("4_skeleton")
 
 [node name="Bounds" type="StaticBody2D" parent="."]
@@ -119,6 +128,7 @@ position = Vector2(50, 92)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Wreck"]
 position = Vector2(0, -44)
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("3_wreck")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/Wreck"]
@@ -130,21 +140,36 @@ position = Vector2(138, 108)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Crate"]
 position = Vector2(0, -16)
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("5_crate")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/Crate"]
 position = Vector2(0, -5)
 shape = SubResource("crate_base")
 
-[node name="Driftwood" type="Sprite2D" parent="Entities"]
+[node name="Driftwood" type="StaticBody2D" parent="Entities"]
 position = Vector2(236, 122)
-offset = Vector2(0, -12)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/Driftwood"]
+scale = Vector2(0.25, 0.25)
+offset = Vector2(0, -48)
 texture = ExtResource("14_driftwood")
 
-[node name="CampfireUnlit" type="Sprite2D" parent="Entities"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/Driftwood"]
+position = Vector2(0, -5)
+shape = SubResource("driftwood_base")
+
+[node name="CampfireUnlit" type="StaticBody2D" parent="Entities"]
 position = Vector2(124, 134)
-offset = Vector2(0, -8)
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/CampfireUnlit"]
+scale = Vector2(0.25, 0.25)
+offset = Vector2(0, -32)
 texture = ExtResource("15_campfire")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Entities/CampfireUnlit"]
+position = Vector2(0, -4)
+shape = SubResource("campfire_base")
 
 [node name="Player" parent="Entities" instance=ExtResource("6_player")]
 position = Vector2(150, 100)
@@ -204,6 +229,7 @@ item = "iron_scrap"
 shape = SubResource("reach_scrap")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/IronScrap1"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("13_scrap")
 
 [node name="IronScrap2" type="Area2D" parent="Interactables"]
@@ -220,6 +246,7 @@ item = "iron_scrap"
 shape = SubResource("reach_scrap")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/IronScrap2"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("13_scrap")
 
 [node name="IronScrap3" type="Area2D" parent="Interactables"]
@@ -236,6 +263,7 @@ item = "iron_scrap"
 shape = SubResource("reach_scrap")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/IronScrap3"]
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("13_scrap")
 
 [node name="Zones" type="Node2D" parent="."]
