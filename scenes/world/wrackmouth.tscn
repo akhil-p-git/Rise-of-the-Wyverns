@@ -95,12 +95,15 @@ radius = 15
 radius = 18
 
 [sub_resource type="CircleShape2D" id="circleshape2d_18"]
+radius = 13
+
+[sub_resource type="CircleShape2D" id="circleshape2d_19"]
 radius = 11
 
-[sub_resource type="RectangleShape2D" id="rectangleshape2d_19"]
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_20"]
 size = Vector2(48, 16)
 
-[sub_resource type="RectangleShape2D" id="rectangleshape2d_20"]
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_21"]
 size = Vector2(16, 52)
 
 [node name="Wrackmouth" type="Node2D"]
@@ -490,6 +493,16 @@ behaviour = "play"
 wander_radius = 50
 sprite_sheet = ExtResource("30_texture2d")
 
+[node name="Astrid" parent="Entities" instance=ExtResource("22_packedscene")]
+position = Vector2(360, 180)
+display_name = "Astrid Shore"
+npc_id = ""
+dialogue_path = "res://data/dialogue/villager.json"
+facing_row = 0
+behaviour = "wander"
+wander_radius = 20
+sprite_sheet = ExtResource("27_texture2d")
+
 [node name="PlazaSign" type="Area2D" parent="Interactables"]
 position = Vector2(282, 186)
 collision_layer = 2
@@ -515,7 +528,7 @@ message = "Driftwood and peat burn low in the stone ring, throwing salt-scented 
 shape = SubResource("circleshape2d_17")
 
 [node name="DoorMayorHall" type="Area2D" parent="Interactables"]
-position = Vector2(150, 152)
+position = Vector2(125, 148)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -527,10 +540,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorMayorHall"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorForge" type="Area2D" parent="Interactables"]
-position = Vector2(474, 182)
+position = Vector2(473, 166)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -542,10 +555,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorForge"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorSaltGull" type="Area2D" parent="Interactables"]
-position = Vector2(320, 345)
+position = Vector2(320, 326)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -557,10 +570,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorSaltGull"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorHarrowHouse" type="Area2D" parent="Interactables"]
-position = Vector2(80, 292)
+position = Vector2(88, 286)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -572,10 +585,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorHarrowHouse"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorRookCottage" type="Area2D" parent="Interactables"]
-position = Vector2(205, 302)
+position = Vector2(188, 292)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -587,10 +600,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorRookCottage"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorWeaverCottage" type="Area2D" parent="Interactables"]
-position = Vector2(408, 128)
+position = Vector2(400, 118)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -602,10 +615,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorWeaverCottage"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorTraderShop" type="Area2D" parent="Interactables"]
-position = Vector2(489, 295)
+position = Vector2(486, 284)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -617,10 +630,10 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorTraderShop"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorShutteredHouse" type="Area2D" parent="Interactables"]
-position = Vector2(560, 332)
+position = Vector2(560, 320)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -632,10 +645,10 @@ target_spawn = ""
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorShutteredHouse"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="DoorLanternWatch" type="Area2D" parent="Interactables"]
-position = Vector2(580, 105)
+position = Vector2(568, 78)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -647,7 +660,7 @@ target_spawn = "from_town"
 is_exit = false
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorLanternWatch"]
-shape = SubResource("circleshape2d_17")
+shape = SubResource("circleshape2d_18")
 
 [node name="Moonherb1" type="Area2D" parent="Interactables"]
 position = Vector2(48, 368)
@@ -660,7 +673,7 @@ message = "Pale leaves that hold the dusk longer than the rest of the field. Moo
 item = "moonherb"
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/Moonherb1"]
-shape = SubResource("circleshape2d_18")
+shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb1"]
 scale = Vector2(0.25, 0.25)
@@ -677,7 +690,7 @@ message = "Pale leaves that hold the dusk longer than the rest of the field. Moo
 item = "moonherb"
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/Moonherb2"]
-shape = SubResource("circleshape2d_18")
+shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb2"]
 scale = Vector2(0.25, 0.25)
@@ -694,7 +707,7 @@ message = "Pale leaves that hold the dusk longer than the rest of the field. Moo
 item = "moonherb"
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/Moonherb3"]
-shape = SubResource("circleshape2d_18")
+shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb3"]
 scale = Vector2(0.25, 0.25)
@@ -712,7 +725,7 @@ item = "hex_bone"
 sets_flag = "saw_grave"
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/OpenGrave"]
-shape = SubResource("circleshape2d_18")
+shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/OpenGrave"]
 scale = Vector2(0.25, 0.25)
@@ -727,7 +740,7 @@ target_scene = "res://scenes/world/beach.tscn"
 target_spawn = "from_town"
 
 [node name="Shape" type="CollisionShape2D" parent="Zones/ToBeach"]
-shape = SubResource("rectangleshape2d_19")
+shape = SubResource("rectangleshape2d_20")
 
 [node name="ToRoad" type="Area2D" parent="Zones"]
 position = Vector2(640, 212)
@@ -738,7 +751,7 @@ target_scene = "res://scenes/world/crossholm_road.tscn"
 target_spawn = "from_wrackmouth"
 
 [node name="Shape" type="CollisionShape2D" parent="Zones/ToRoad"]
-shape = SubResource("rectangleshape2d_20")
+shape = SubResource("rectangleshape2d_21")
 
 [node name="Spawns" type="Node2D" parent="."]
 
@@ -749,28 +762,28 @@ position = Vector2(320, 28)
 position = Vector2(612, 212)
 
 [node name="from_mayor_hall" type="Marker2D" parent="Spawns"]
-position = Vector2(150, 185)
+position = Vector2(125, 168)
 
 [node name="from_forge" type="Marker2D" parent="Spawns"]
-position = Vector2(474, 205)
+position = Vector2(473, 186)
 
 [node name="from_salt_gull" type="Marker2D" parent="Spawns"]
-position = Vector2(320, 370)
+position = Vector2(320, 348)
 
 [node name="from_lantern_watch" type="Marker2D" parent="Spawns"]
-position = Vector2(580, 130)
+position = Vector2(568, 98)
 
 [node name="from_cottage_harrow" type="Marker2D" parent="Spawns"]
-position = Vector2(80, 318)
+position = Vector2(88, 306)
 
 [node name="from_cottage_rook" type="Marker2D" parent="Spawns"]
-position = Vector2(205, 326)
+position = Vector2(188, 312)
 
 [node name="from_cottage_weaver" type="Marker2D" parent="Spawns"]
-position = Vector2(408, 152)
+position = Vector2(400, 138)
 
 [node name="from_trader_shop" type="Marker2D" parent="Spawns"]
-position = Vector2(489, 320)
+position = Vector2(486, 304)
 
 [node name="Player" parent="Entities" instance=ExtResource("37_packedscene")]
 position = Vector2(320, 28)

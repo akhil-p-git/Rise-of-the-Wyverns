@@ -59,12 +59,20 @@ var _block_tex: Texture2D
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	add_to_group("player")
+	var female: bool = Game.character != null and Game.character.is_female()
+	if female and ResourceLoader.exists("res://assets/hero/hero_female_sheet.png"):
+		_sprite.texture = load("res://assets/hero/hero_female_sheet.png") as Texture2D
+		if ResourceLoader.exists("res://assets/hero/hero_female_punch_sheet.png"):
+			_punch_tex = load("res://assets/hero/hero_female_punch_sheet.png") as Texture2D
+		if ResourceLoader.exists("res://assets/hero/hero_female_block_sheet.png"):
+			_block_tex = load("res://assets/hero/hero_female_block_sheet.png") as Texture2D
+	else:
+		if ResourceLoader.exists("res://assets/hero/hero_punch_sheet.png"):
+			_punch_tex = load("res://assets/hero/hero_punch_sheet.png") as Texture2D
+		if ResourceLoader.exists("res://assets/hero/hero_block_sheet.png"):
+			_block_tex = load("res://assets/hero/hero_block_sheet.png") as Texture2D
 	_walk_tex = _sprite.texture
-	if ResourceLoader.exists("res://assets/hero/hero_punch_sheet.png"):
-		_punch_tex = load("res://assets/hero/hero_punch_sheet.png") as Texture2D
-	if ResourceLoader.exists("res://assets/hero/hero_block_sheet.png"):
-		_block_tex = load("res://assets/hero/hero_block_sheet.png") as Texture2D
-	if _sprite.texture and _sprite.texture.resource_path == "res://assets/hero/hero_sheet.png" and Game.character:
+	if _sprite.texture and Game.character:
 		_sprite.material = Game.character.make_material()
 
 

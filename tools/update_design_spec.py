@@ -141,9 +141,12 @@ def update_design_spec() -> None:
   - On `hour_passed` a leaving NPC walks to the door and vanishes; an arriving one appears at the door and walks to its post. Travel gives up and snaps to its target after a timeout, so a blocked path never strands anyone.
   - To schedule a new NPC: add its slots, give each place a scene node with the same `npc_id` (the generators derive `npc_id` from the dialogue file name), and add the NPC to the tests.
 - **Kids (`behaviour = "play"`)**: run at `RUN_SPEED`, pick a random spot inside their play radius or run at another kid half the time (tag). Sheets `assets/npc/kid_a..d.png` come from `tools/build_kid_sheets.py` (one base child, four recolours).
-- **Interior furnishing rules (`tools/gen_interior_scenes.py`, `tools/build_interior_art.py`)**:
+- **Interior furnishing rules (`tools/gen_interior_scenes.py`, `tools/build_interior_art.py`, `scenes/interiors/props/`)**:
   - Rooms are sized so the 320x180 camera sees most of one (cottages 240x170). Props are bottom-aligned sprites at `scale = 0.5` with a small footprint collision at the feet; rugs sit at `z_index = -1`, the floor and wall header at `-2`.
   - Every hearth is an unlit stone sprite plus an `AnimatedProp` fire (`hearth_fire_sheet.png`, `z_index = 1`) and halo; candles and hearths use `AreaScene.light_compensation()` so their glow keeps its colour while the room tint darkens at night.
+  - Wall Torches (`torch_wall.png`, `torch_flame_sheet.png`, `torch_glow.png`): wall-mounted iron sconce with 4-frame animated fire at 7 fps and warm pulsing additive light with night compensation.
+  - Beds: three distinct authentic 16-bit pixel-art bedstead assets (`bed_wood` for adult/noble bedrooms with diamond-quilted Nordic pine wool spread and down pillow; `bed_inn` for the Salt Gull with fur pelt throw and velvet quilt; `bed_kid` for rustic cottage cots with cozy patchwork quilt and straw mattress).
+  - Modular Reusable Prop PackedScenes in `scenes/interiors/props/`: `bed_wood.tscn`, `bed_inn.tscn`, `bed_kid.tscn`, `wall_torch.tscn`, `hearth.tscn`, `candle_stand.tscn`, `table_food.tscn`, `table_wood.tscn`, `chair_wood.tscn`, `stool.tscn`, `bench.tscn`, `cupboard.tscn`, `chest.tscn`, `cauldron.tscn`, `shelf_unit.tscn`, `weapon_rack.tscn`, `tool_rack.tscn`.
   - Windows add a `DayLight` floor shaft that fades with `TimeSystem.get_night_factor()`; indoor ambient lerps between `INDOOR_DAY` and `INDOOR_NIGHT`.
 
 ---

@@ -15,6 +15,11 @@
 [ext_resource type="Texture2D" path="res://assets/props/iron_scrap.png" id="13_scrap"]
 [ext_resource type="Texture2D" path="res://assets/props/driftwood.png" id="14_driftwood"]
 [ext_resource type="Texture2D" path="res://assets/props/campfire_unlit.png" id="15_campfire"]
+[ext_resource type="Script" path="res://scripts/world/loot_container.gd" id="16_container"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/barrels.png" id="17_barrels"]
+
+[sub_resource type="CircleShape2D" id="reach_barrels"]
+radius = 16.0
 
 [sub_resource type="ShaderMaterial" id="water_material"]
 shader = ExtResource("9_water")
@@ -246,22 +251,24 @@ shape = SubResource("reach_scrap")
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("13_scrap")
 
-[node name="TamsWhistle" type="Area2D" parent="Interactables"]
-position = Vector2(112, 92)
+[node name="SkeletonBarrels" type="Area2D" parent="Interactables"]
+position = Vector2(216, 104)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-script = ExtResource("11_pickup")
-prompt = "Take whistle"
-message = "A small bone whistle, half buried in wet sand. Somebody small must have dropped it."
-item = "bone_whistle"
+script = ExtResource("16_container")
+container_id = "beach_skeleton_barrels"
+container_name = "Barrels"
+loot = {
+"bone_whistle": 1
+}
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/TamsWhistle"]
-shape = SubResource("reach_scrap")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/SkeletonBarrels"]
+shape = SubResource("reach_barrels")
 
-[node name="Mark" type="Polygon2D" parent="Interactables/TamsWhistle"]
-color = Color(0.93, 0.9, 0.8, 1)
-polygon = PackedVector2Array(0, -4, 3, 0, 0, 4, -3, 0)
+[node name="Sprite2D" type="Sprite2D" parent="Interactables/SkeletonBarrels"]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("17_barrels")
 
 [node name="IronScrap3" type="Area2D" parent="Interactables"]
 position = Vector2(282, 116)

@@ -1,0 +1,17 @@
+{
+  "entries": [{"if": [], "node": "talk"}],
+  "nodes": {
+    "talk": {
+      "speaker": "Astrid Shore",
+      "text": "The fog has a chill that gets into the bone. Keep away from the shuttered cottage at the east edge; nobody has lived there since the wyvern fires.",
+      "choices": [
+        {"text": "Good to know.", "next": "cautious"},
+        {"text": "I can handle myself."}
+      ]
+    },
+    "cautious": {
+      "speaker": "Astrid Shore",
+      "text": "The Mayor keeps the town locked tight after dark. Best you find a stool at the Salt Gull when the bells strike ten."
+    }
+  }
+}

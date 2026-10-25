@@ -121,6 +121,28 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 theme_override_constants/separation = 10
 
+[node name="ModelRow" type="HBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Model"
+
+[node name="Prev" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow"]
+layout_mode = 2
+text = "<"
+
+[node name="Value" type="Label" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Female"
+horizontal_alignment = 1
+
+[node name="Next" type="Button" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow"]
+layout_mode = 2
+text = ">"
+
 [node name="SkinRow" type="HBoxContainer" parent="Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance"]
 layout_mode = 2
 

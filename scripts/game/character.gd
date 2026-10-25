@@ -75,12 +75,19 @@ const DIFFICULTY_SCALES := {
 
 const PALETTE_SHADER := preload("res://shaders/character_palette.gdshader")
 
+const BODY_TYPES := ["Female", "Male"]
+
+@export var body_type := "Female"
 @export var skin_index := 1
 @export var hair_index := 0
 @export var cloth_index := 0
 @export var pronouns := "they/them"
 @export var difficulty := "Normal"
 @export var hardcore := false
+
+
+func is_female() -> bool:
+	return body_type.to_lower() == "female"
 
 
 func skin_color() -> Color:

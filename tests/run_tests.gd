@@ -168,6 +168,20 @@ func test_character_and_menus() -> void:
 	eq(c.pronouns, "they/them", "default pronouns they/them")
 	eq(c.difficulty, "Normal", "default difficulty Normal")
 	eq(c.hardcore, false, "default hardcore false")
+	eq(c.body_type, "Female", "default body_type is Female")
+	check(c.is_female(), "is_female() is true for Female")
+	c.body_type = "Male"
+	check(not c.is_female(), "is_female() is false for Male")
+	c.body_type = "Female"
+
+	# Player instantiates with female sheet when Game.character is female
+	Game.character = c
+	var test_player_scene := load("res://scenes/player/player.tscn") as PackedScene
+	var fp: Player = test_player_scene.instantiate()
+	root.add_child(fp)
+	var fp_sprite: Sprite2D = fp.get_node("Sprite2D")
+	eq(fp_sprite.texture.resource_path, "res://assets/hero/hero_female_sheet.png", "female character loads hero_female_sheet.png")
+	fp.queue_free()
 
 	# Pronoun sets & sentence-start capitalisation
 	var tpl := "{they} staggered ashore. Carry {them} to {their} bed; the pack is {theirs}, and {they} steadied {themself}."
@@ -669,6 +683,8 @@ func test_town_scenes() -> void:
 	var wren: Npc = wm.get_node("Entities/Wren")
 	var player: Player = wm.get_node("Entities/Player")
 	check(guard.sprite_sheet != null, "GuardRorik has custom NPC sprite sheet")
+	var g_tex := load("res://assets/npc/guard.png") as Texture2D
+	check(g_tex != null and g_tex.get_width() == 384 and g_tex.get_height() == 512, "guard.png is high-quality 384x512 4x4 sprite sheet")
 	check(wm.get_node_or_null("Entities/MayorTolle") == null, "Mayor Tolle is inside Mayor's Hall, not outside on street")
 
 	# Seed all NPCs deterministically
@@ -895,6 +911,34 @@ func test_day_night_and_interiors() -> void:
 		scene.queue_free()
 		await get_tree().process_frame
 
+	# Reusable Prop PackedScene Assets verification
+	var prop_scenes := [
+		"res://scenes/interiors/props/bed_wood.tscn",
+		"res://scenes/interiors/props/bed_inn.tscn",
+		"res://scenes/interiors/props/bed_kid.tscn",
+		"res://scenes/interiors/props/wall_torch.tscn",
+		"res://scenes/interiors/props/hearth.tscn",
+		"res://scenes/interiors/props/candle_stand.tscn",
+		"res://scenes/interiors/props/table_food.tscn",
+		"res://scenes/interiors/props/table_wood.tscn",
+		"res://scenes/interiors/props/chair_wood.tscn",
+		"res://scenes/interiors/props/stool.tscn",
+		"res://scenes/interiors/props/bench.tscn",
+		"res://scenes/interiors/props/cupboard.tscn",
+		"res://scenes/interiors/props/chest.tscn",
+		"res://scenes/interiors/props/cauldron.tscn",
+		"res://scenes/interiors/props/shelf_unit.tscn",
+		"res://scenes/interiors/props/weapon_rack.tscn",
+		"res://scenes/interiors/props/tool_rack.tscn",
+	]
+	for ppath in prop_scenes:
+		var pnode: Node = load(ppath).instantiate()
+		check(pnode != null, "reusable prop asset %s instantiates" % ppath)
+		root.add_child(pnode)
+		await physics_frames(1)
+		pnode.queue_free()
+		await get_tree().process_frame
+
 	# 4. Court NPCs & LootContainer functionality in Mayor's Hall
 	var mh: AreaScene = load("res://scenes/interiors/mayor_hall.tscn").instantiate()
 	root.add_child(mh)
@@ -945,6 +989,15 @@ func test_day_night_and_interiors() -> void:
 	var hall_start := p.global_position
 	await hold(["move_up"], 15)
 	check(p.global_position.y < hall_start.y - 10.0, "player moves freely inside Mayor's Hall doorway")
+
+	# Bottom wall stops player from clipping out of the house into the void
+	await place(p, mh.get_node("Spawns/from_town").global_position)
+	await hold(["move_down"], 35)
+	var bottom_bound: float = float(mh.area_size.y) - 10.0
+	check(p.global_position.y <= bottom_bound, "bottom wall stops player from clipping out of the house")
+	var exit_door: BuildingDoor = mh.get_node("Interactables/DoorExit")
+	check(exit_door != null, "Mayor's Hall has visible DoorExit at threshold")
+	check(p.global_position.distance_to(exit_door.global_position) <= 22.0, "player at bottom wall is within reach of DoorExit")
 
 	mh.queue_free()
 	await get_tree().process_frame
@@ -1072,9 +1125,9 @@ func test_schedules() -> void:
 	var beach: Node = load("res://scenes/world/beach.tscn").instantiate()
 	root.add_child(beach)
 	await physics_frames(2)
-	var whistle: Pickup = beach.get_node("Interactables/TamsWhistle")
-	whistle.interact(beach.get_node("Entities/Player"))
-	check(Game.state.count("bone_whistle") == 1, "the whistle is on the beach and can be taken")
+	var barrels: LootContainer = beach.get_node("Interactables/SkeletonBarrels")
+	barrels.interact(beach.get_node("Entities/Player"))
+	check(Game.state.count("bone_whistle") == 1, "the whistle is found in the barrels near the dragon skeleton")
 	beach.free()
 	runner.begin(tree, Game.state)
 	eq(runner.node_id, "return", "Tam thanks the player once they hold the whistle")

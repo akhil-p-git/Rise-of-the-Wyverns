@@ -32,6 +32,9 @@ var _facing_idx := 0
 @onready var _facing_label: Label = $Margin/RootVBox/BodyRow/PreviewPanel/Margin/VBox/FacingLabel
 
 @onready var _step_appearance: VBoxContainer = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance
+@onready var _model_val: Label = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow/Value
+@onready var _model_prev: Button = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow/Prev
+@onready var _model_next: Button = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ModelRow/Next
 @onready var _skin_val: Label = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/SkinRow/Value
 @onready var _hair_val: Label = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/HairRow/Value
 @onready var _cloth_val: Label = $Margin/RootVBox/BodyRow/RightPanel/Margin/StepAppearance/ClothRow/Value
@@ -72,6 +75,8 @@ func _ready() -> void:
 	preview_material = character.make_material()
 	_preview_sprite.material = preview_material
 
+	_model_prev.pressed.connect(func() -> void: _cycle_model(-1))
+	_model_next.pressed.connect(func() -> void: _cycle_model(1))
 	_skin_prev.pressed.connect(func() -> void: _cycle_skin(-1))
 	_skin_next.pressed.connect(func() -> void: _cycle_skin(1))
 	_hair_prev.pressed.connect(func() -> void: _cycle_hair(-1))
@@ -143,6 +148,15 @@ func set_step(idx: int) -> void:
 			_next_btn.grab_focus()
 
 
+func _cycle_model(_delta: int = 1) -> void:
+	character.body_type = "Male" if character.is_female() else "Female"
+	if character.is_female() and character.pronouns == "he/him":
+		character.pronouns = "she/her"
+	elif not character.is_female() and character.pronouns == "she/her":
+		character.pronouns = "he/him"
+	_refresh_ui()
+
+
 func _cycle_skin(delta: int) -> void:
 	character.skin_index = posmod(character.skin_index + delta, Character.SKIN_TONES.size())
 	_refresh_ui()
@@ -180,6 +194,11 @@ func _on_toggle_hardcore() -> void:
 
 func _refresh_ui() -> void:
 	character.apply_to_material(preview_material)
+	_model_val.text = character.body_type
+	var tex_path := "res://assets/hero/hero_female_sheet.png" if character.is_female() else "res://assets/hero/hero_sheet.png"
+	if _preview_sprite.texture == null or _preview_sprite.texture.resource_path != tex_path:
+		_preview_sprite.texture = load(tex_path) as Texture2D
+
 	_skin_val.text = character.skin_name()
 	_hair_val.text = character.hair_name()
 	_cloth_val.text = character.cloth_name()
@@ -200,8 +219,9 @@ func _refresh_ui() -> void:
 	_hardcore_warn.text = "Death ends this life for good."
 
 	_summary_label.text = (
-		"Skin Tone: %s\nHair Colour: %s\nClothing: %s\nPronouns: %s\nDifficulty: %s (%.2fx)\nHardcore: %s"
+		"Model: %s\nSkin Tone: %s\nHair Colour: %s\nClothing: %s\nPronouns: %s\nDifficulty: %s (%.2fx)\nHardcore: %s"
 		% [
+			character.body_type,
 			character.skin_name(),
 			character.hair_name(),
 			character.cloth_name(),

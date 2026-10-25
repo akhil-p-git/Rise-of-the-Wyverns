@@ -34,10 +34,10 @@
   "nodes": {
     "intro": {
       "speaker": "Tam",
-      "text": "You came off the prison ship, didn't you? I went down to the wreck at low tide to look, and I lost my whistle. Da carved it from a gull's wing-bone. If I go home without it he'll skin me.",
+      "text": "You came off the prison ship, didn't you? I went down to the beach at low tide to see the giant dragon skeleton, and I think I dropped my whistle in the old barrels right beside the bones. Da carved it from a gull's wing-bone. If I go home without it he'll skin me.",
       "choices": [
         {
-          "text": "I'll look along the beach.",
+          "text": "I'll check the barrels near the dragon skeleton.",
           "next": "accept"
         },
         {
@@ -47,7 +47,7 @@
     },
     "accept": {
       "speaker": "Tam",
-      "text": "Honest? Thank you! It's small and pale, you'll see it if the sun hits it. Don't let the tide get it first.",
+      "text": "Honest? Thank you! Search the barrels right beside the dragon bones. Don't let the tide get it first.",
       "do": [
         "start:tams_whistle"
       ]

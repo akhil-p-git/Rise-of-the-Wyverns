@@ -1,0 +1,17 @@
+{
+  "entries": [{"if": [], "node": "talk"}],
+  "nodes": {
+    "talk": {
+      "speaker": "Lyra the Weaver",
+      "text": "Every storm brings more wool to spin and more sails to mend. If you need warmth against the salt fog, stay by the hearth.",
+      "choices": [
+        {"text": "Thank you, Lyra.", "next": "warmth"},
+        {"text": "I will."}
+      ]
+    },
+    "warmth": {
+      "speaker": "Lyra the Weaver",
+      "text": "The sea takes what it wills, castaway. But Wrackmouth endures. Look to the beacon tower when the mist rolls in."
+    }
+  }
+}

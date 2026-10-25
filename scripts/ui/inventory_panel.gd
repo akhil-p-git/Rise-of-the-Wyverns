@@ -96,6 +96,9 @@ func refresh() -> void:
 	_coin_label.text = "Coin Purse: %d" % Game.state.count("coin")
 
 	if _portrait != null and Game.character != null:
+		var p_tex := "res://assets/hero/hero_female_sheet.png" if Game.character.is_female() else "res://assets/hero/hero_sheet.png"
+		if _portrait.texture == null or _portrait.texture.resource_path != p_tex:
+			_portrait.texture = load(p_tex) as Texture2D
 		_portrait.material = Game.character.make_material()
 
 	for child in _items_box.get_children():

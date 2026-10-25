@@ -1,0 +1,17 @@
+{
+  "entries": [{"if": [], "node": "talk"}],
+  "nodes": {
+    "talk": {
+      "speaker": "Sela Shore",
+      "text": "I was second mate on the King's Gull before the gale drove us onto the teeth of the reef. The ale here is bitter, but the floor does not heave beneath your feet.",
+      "choices": [
+        {"text": "A blessing in these parts.", "next": "blessing"},
+        {"text": "Drink deep, sailor."}
+      ]
+    },
+    "blessing": {
+      "speaker": "Sela Shore",
+      "text": "Aye. Keep your boots dry and stay clear of the ancient dragon skeleton at low tide. Strange shadows linger near those bones."
+    }
+  }
+}

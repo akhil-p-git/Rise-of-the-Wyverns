@@ -80,7 +80,7 @@
       "stages": [
         {
           "id": "find",
-          "text": "Look for Tam's carved bone whistle along the beach",
+          "text": "Search the barrels near the dragon skeleton on the beach for Tam's whistle",
           "done_when": ["item:bone_whistle"]
         },
         {
