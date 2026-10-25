@@ -23,6 +23,7 @@ func _ready() -> void:
 	await test_day_night_and_interiors()
 	await test_schedules()
 	await test_inn_and_merchant()
+	await test_npc_pauses()
 	await test_room()
 	await test_beach()
 	await test_intro()
@@ -1219,8 +1220,60 @@ func test_inn_and_merchant() -> void:
 	check(Game.state.count("silver_locket") == 0 and Game.state.count("coin") == 40, "the locket is traded for 40 coin")
 	check(Game.state.quests.is_done("elins_locket"), "Elin's Locket is complete")
 
+	# Coin gains pop up briefly instead of sitting on the HUD
+	Game.reset()
+	var toast_room: Node = load("res://scenes/world/test_room.tscn").instantiate()
+	root.add_child(toast_room)
+	await physics_frames(2)
+	var toast_hud: Hud = toast_room.get_node("Hud")
+	eq(toast_hud._toast.modulate.a, 0.0, "no coin popup at the start")
+	Game.state.apply(["give:coin:10"])
+	eq(toast_hud._toast.text, "Gained 10 coin", "receiving coin shows a Gained popup")
+	check(toast_hud._toast.modulate.a > 0.9, "the popup is visible")
+	Game.state.apply(["give:coin:5"])
+	eq(toast_hud._toast.text, "Gained 15 coin", "gains that land together add up")
+	Game.state.take("coin", 3)
+	Game.state.apply(["give:iron_scrap:2"])
+	eq(toast_hud._toast.text, "Gained 15 coin", "spending coin or taking other items does not pop up")
+	check(not toast_hud._tracker.text.contains("coin"), "coin is no longer listed on the HUD")
+	toast_hud._toast_tween.custom_step(Hud.TOAST_SECONDS + Hud.TOAST_FADE_SECONDS + 0.1)
+	eq(toast_hud._toast.modulate.a, 0.0, "the popup fades away")
+	Game.state.apply(["give:coin:7"])
+	eq(toast_hud._toast.text, "Gained 7 coin", "a later gain starts a fresh popup")
+	toast_room.free()
+	Game.reset()
+
 	# Weapon icons exist for the four starting weapons
 	for weapon: String in ["iron_daggers", "iron_sword_shield", "two_handed_sword", "staff"]:
 		check(ResourceLoader.exists("res://assets/ui/items/%s.png" % weapon), "%s has an inventory icon" % weapon)
 	Game.reset()
 	TimeSystem.set_time(12, 0)
+
+
+func test_npc_pauses() -> void:
+	TimeSystem.set_time(12, 0)
+	var town: Node = load("res://scenes/world/wrackmouth.tscn").instantiate()
+	root.add_child(town)
+	await physics_frames(2)
+	for nm: String in ["OrsaKell", "TeagueMarrow"]:
+		var npc: Npc = town.get_node("Entities/" + nm)
+		var last := npc.global_position
+		var still := 0.0
+		var pauses: Array[float] = []
+		var seen_move := false
+		for i in 7200:
+			npc._physics_process(1.0 / 60.0)
+			if npc.global_position.distance_to(last) > 0.001:
+				if seen_move and still > 0.0:
+					pauses.append(still)
+				seen_move = true
+				still = 0.0
+			else:
+				still += 1.0 / 60.0
+			last = npc.global_position
+		check(pauses.size() >= 3, "%s moves several times in two minutes (%d)" % [nm, pauses.size()])
+		var shortest := 999.0
+		for p: float in pauses:
+			shortest = minf(shortest, p)
+		check(shortest >= Npc.IDLE_PAUSE_MIN - 0.1, "%s stands still at least %.0f s between moves (shortest %.2f)" % [nm, Npc.IDLE_PAUSE_MIN, shortest])
+	town.free()

@@ -10,6 +10,11 @@ signal dialogue_requested(npc: Npc)
 const WALK_SPEED := 30.0
 const WALK_FRAME_TIME := 0.18
 const STEP_BOB := 0.0
+## Adults stand still this long (seconds) between strolls or waypoint legs; kids rest a shorter while.
+const IDLE_PAUSE_MIN := 4.0
+const IDLE_PAUSE_MAX := 9.0
+const PLAY_PAUSE_MIN := 1.0
+const PLAY_PAUSE_MAX := 3.0
 const RUN_SPEED := 62.0
 const RUN_FRAME_TIME := 0.1
 const TRAVEL_SPEED := 42.0
@@ -80,7 +85,7 @@ func _ready() -> void:
 	_query.collide_with_areas = false
 	_query.exclude = [_body.get_rid(), get_rid()]
 
-	_wait_timer = rng.randf_range(0.8, 2.4)
+	_wait_timer = rng.randf_range(IDLE_PAUSE_MIN * 0.5, IDLE_PAUSE_MAX * 0.7)
 	_fidget_timer = rng.randf_range(1.8, 3.8)
 
 	if behaviour == "play":
@@ -272,11 +277,11 @@ func _step_move(delta: float) -> void:
 			if _wp_index + _wp_dir >= waypoints.size() or _wp_index + _wp_dir < 0:
 				_wp_dir = -_wp_dir
 			_wp_index = clampi(_wp_index + _wp_dir, 0, waypoints.size() - 1)
-			_wait_timer = rng.randf_range(0.5, 1.2)
+			_wait_timer = rng.randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX)
 		elif behaviour == "play":
-			_wait_timer = rng.randf_range(0.2, 1.3)
+			_wait_timer = rng.randf_range(PLAY_PAUSE_MIN, PLAY_PAUSE_MAX)
 		else:
-			_wait_timer = rng.randf_range(1.5, 5.0)
+			_wait_timer = rng.randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX)
 		_stop_movement()
 		return
 
@@ -287,12 +292,12 @@ func _step_move(delta: float) -> void:
 
 	if behaviour == "wander" and next_pos.distance_to(home_position) > wander_radius:
 		_stop_movement()
-		_wait_timer = rng.randf_range(1.5, 5.0)
+		_wait_timer = rng.randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX)
 		return
 
 	if _is_blocked(next_pos):
 		_stop_movement()
-		_wait_timer = rng.randf_range(0.1, 0.4) if playing else rng.randf_range(1.5, 3.5)
+		_wait_timer = rng.randf_range(0.1, 0.4) if playing else rng.randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX * 0.7)
 		return
 
 	face(next_pos)

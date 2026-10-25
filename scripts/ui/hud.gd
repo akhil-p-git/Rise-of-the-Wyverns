@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Stat bars, the interact prompt, and a short message line.
 
 const MESSAGE_SECONDS := 4.0
+const TOAST_SECONDS := 2.5
+const TOAST_FADE_SECONDS := 0.6
 const InventoryPanelScript = preload("res://scripts/ui/inventory_panel.gd")
 
 @onready var _health: ProgressBar = $Bars/Health
@@ -12,12 +14,16 @@ const InventoryPanelScript = preload("res://scripts/ui/inventory_panel.gd")
 @onready var _message: Label = $Message
 @onready var _message_timer: Timer = $MessageTimer
 @onready var _tracker: Label = $Tracker
+@onready var _toast: Label = $Toast
 @onready var _time_label: Label = get_node_or_null("TimeLabel")
 @onready var _rested_label: Label = get_node_or_null("RestedLabel")
 @onready var inventory: InventoryPanelScript = $InventoryPanel
 @onready var wait_panel: WaitPanel = $WaitPanel
 
 var _player: Player
+var _coin := 0
+var _toast_coin := 0
+var _toast_tween: Tween
 
 
 func _ready() -> void:
@@ -25,6 +31,8 @@ func _ready() -> void:
 	Game.state.quest_changed.connect(_refresh_tracker.unbind(1))
 	Game.state.flag_changed.connect(_refresh_tracker.unbind(1))
 	Game.state.inventory_changed.connect(_refresh_tracker.unbind(1))
+	_coin = Game.state.count("coin")
+	Game.state.inventory_changed.connect(_on_inventory_changed)
 	_refresh_tracker()
 	_update_time()
 	Game.rested_changed.connect(_update_rested)
@@ -91,14 +99,33 @@ func show_message(text: String) -> void:
 	_message_timer.start(MESSAGE_SECONDS)
 
 
-## Active quests with their current objective, then the coin purse.
+func _on_inventory_changed(item: String) -> void:
+	if item != "coin":
+		return
+	var now := Game.state.count("coin")
+	var gained := now - _coin
+	_coin = now
+	if gained > 0:
+		_show_coin_gain(gained)
+
+
+## "Gained 10 coin", fading after a moment. Gains that land while it is still up add together.
+func _show_coin_gain(amount: int) -> void:
+	_toast_coin = _toast_coin + amount if _toast.modulate.a > 0.05 else amount
+	_toast.text = "Gained %d coin" % _toast_coin
+	if _toast_tween != null:
+		_toast_tween.kill()
+	_toast.modulate.a = 1.0
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(TOAST_SECONDS)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, TOAST_FADE_SECONDS)
+
+
+## Active quests with their current objective. Coin is not listed here; gains pop up briefly instead.
 func _refresh_tracker() -> void:
 	var lines: Array[String] = []
 	for id in Game.state.quests.active_ids():
 		lines.append("%s\n%s" % [Game.state.quests.title(id), Game.state.objective(id)])
-	var coin := Game.state.count("coin")
-	if coin > 0:
-		lines.append("%d coin" % coin)
 	_tracker.text = "\n\n".join(lines)
 
 
