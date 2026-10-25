@@ -13,10 +13,12 @@ const MINUTES_PER_DAY := 1440.0
 const TIME_SCALE := 120.0
 
 ## Building ids exempt from the night lock (the inn) and ids that never open (the abandoned cottage).
-const ALWAYS_OPEN: Array[String] = ["salt_gull"]
+const ALWAYS_OPEN: Array[String] = ["salt_gull", "salt_gull_room"]
 const NAILED_SHUT: Array[String] = ["cottage_shuttered"]
 
 var current_minute: float = 8.0 * 60.0 # Starts at 8:00 AM
+## Game minutes since the new game began (never wraps at midnight), for timers such as a rented room.
+var elapsed_minutes := 0.0
 var _last_hour: int = 8
 var _was_night: bool = false
 var paused: bool = false
@@ -34,6 +36,7 @@ func _process(delta: float) -> void:
 
 
 func advance_seconds(delta: float) -> void:
+	elapsed_minutes += delta * (TIME_SCALE / 60.0)
 	current_minute = fposmod(current_minute + delta * (TIME_SCALE / 60.0), MINUTES_PER_DAY)
 	var h := get_hour()
 	if h != _last_hour:

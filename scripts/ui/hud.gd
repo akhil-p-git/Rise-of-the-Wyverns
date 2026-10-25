@@ -13,6 +13,7 @@ const InventoryPanelScript = preload("res://scripts/ui/inventory_panel.gd")
 @onready var _message_timer: Timer = $MessageTimer
 @onready var _tracker: Label = $Tracker
 @onready var _time_label: Label = get_node_or_null("TimeLabel")
+@onready var _rested_label: Label = get_node_or_null("RestedLabel")
 @onready var inventory: InventoryPanelScript = $InventoryPanel
 @onready var wait_panel: WaitPanel = $WaitPanel
 
@@ -26,6 +27,9 @@ func _ready() -> void:
 	Game.state.inventory_changed.connect(_refresh_tracker.unbind(1))
 	_refresh_tracker()
 	_update_time()
+	Game.rested_changed.connect(_update_rested)
+	TimeSystem.hour_passed.connect(_update_rested.unbind(1))
+	_update_rested()
 	TimeSystem.hour_passed.connect(_update_time.unbind(1))
 	TimeSystem.day_phase_changed.connect(_update_time.unbind(1))
 	wait_panel.waited.connect(_on_waited)
@@ -34,6 +38,11 @@ func _ready() -> void:
 func _update_time() -> void:
 	if _time_label != null and TimeSystem != null:
 		_time_label.text = TimeSystem.get_status_string()
+
+
+func _update_rested() -> void:
+	if _rested_label != null:
+		_rested_label.text = "Well Rested (+10% XP)" if Game.is_well_rested() else ""
 
 
 func bind(player: Player) -> void:

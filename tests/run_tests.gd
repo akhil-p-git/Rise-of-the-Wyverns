@@ -22,6 +22,7 @@ func _ready() -> void:
 	await test_town_scenes()
 	await test_day_night_and_interiors()
 	await test_schedules()
+	await test_inn_and_merchant()
 	await test_room()
 	await test_beach()
 	await test_intro()
@@ -595,7 +596,7 @@ func test_logic_and_data() -> void:
 			for cond: String in st.get("done_when", []):
 				_validate_cond(cond, "story.quests.%s.%s" % [qid, st["id"]], items_dict, quests_dict, stage_ids_by_quest)
 
-	var dialogue_files := ["ansa", "bram", "chancellor", "dov", "guard", "isa", "mayor", "orsa", "pell", "tam", "teague", "wizard", "wren"]
+	var dialogue_files := ["ansa", "bram", "chancellor", "dov", "guard", "isa", "mayor", "orsa", "osric", "pell", "tam", "teague", "wizard", "wren"]
 	for dlg_name: String in dialogue_files:
 		var path := "res://data/dialogue/%s.json" % dlg_name
 		var tree := StoryData.load_json(path)
@@ -871,6 +872,8 @@ func test_day_night_and_interiors() -> void:
 		"res://scenes/interiors/cottage_harrow.tscn",
 		"res://scenes/interiors/cottage_rook.tscn",
 		"res://scenes/interiors/cottage_weaver.tscn",
+		"res://scenes/interiors/salt_gull_room.tscn",
+		"res://scenes/interiors/trader_shop.tscn",
 	]
 	for ipath in interior_paths:
 		var scene: AreaScene = load(ipath).instantiate()
@@ -1076,5 +1079,126 @@ func test_schedules() -> void:
 	eq(runner.node_id, "return", "Tam thanks the player once they hold the whistle")
 	check(Game.state.count("bone_whistle") == 0 and Game.state.count("coin") == 10, "the whistle is traded for 10 coin")
 	check(Game.state.quests.is_done("tams_whistle"), "Tam's Whistle is complete")
+	Game.reset()
+	TimeSystem.set_time(12, 0)
+
+
+func test_inn_and_merchant() -> void:
+	Game.reset()
+	TimeSystem.set_time(12, 0)
+
+	# Town: the shop exists, the old outdoor bed is gone
+	var town: Node = load("res://scenes/world/wrackmouth.tscn").instantiate()
+	root.add_child(town)
+	await physics_frames(2)
+	var shop_door: BuildingDoor = town.get_node("Interactables/DoorTraderShop")
+	check(shop_door != null and shop_door.building_id == "trader_shop", "Wrackmouth has the trader's shop door")
+	check(town.get_node_or_null("Spawns/from_trader_shop") is Marker2D, "the town has a from_trader_shop spawn")
+	check(town.get_node_or_null("Interactables/InnBed") == null, "the outdoor bed is replaced by the inn room")
+	shop_door._update_state()
+	eq(shop_door.prompt, "Enter Venn's Goods", "the shop is open at noon")
+	TimeSystem.set_time(23, 0)
+	shop_door._update_state()
+	eq(shop_door.prompt, "Locked", "the shop is shut at night like the houses")
+	TimeSystem.set_time(12, 0)
+	town.free()
+
+	# Inn: renting the room costs 5 coin and lasts 24 hours
+	var inn: Node = load("res://scenes/interiors/salt_gull.tscn").instantiate()
+	root.add_child(inn)
+	await physics_frames(2)
+	var room_door: RoomRentalDoor = inn.get_node("Interactables/RoomDoor")
+	check(inn.get_node_or_null("Spawns/from_salt_gull_room") is Marker2D, "the inn has a spawn for coming back from the room")
+	room_door.target_scene = ""  # stay in this scene for the test
+	eq(room_door.prompt, "Rent a room (5 coin)", "an unrented room shows its price")
+	Game.state.apply(["give:coin:3"])
+	room_door.interact(null)
+	check(not Game.is_room_rented() and Game.state.count("coin") == 3, "too little coin: no room, no charge")
+	Game.state.apply(["give:coin:10"])
+	room_door.interact(null)
+	check(Game.is_room_rented(), "paying rents the room")
+	eq(Game.state.count("coin"), 8, "the room costs exactly 5 coin")
+	eq(room_door.prompt, "Enter your room", "a rented room is entered for free")
+	room_door.interact(null)
+	eq(Game.state.count("coin"), 8, "re-entering a rented room is free")
+	TimeSystem.wait_hours(23)
+	check(Game.is_room_rented(), "the room is still yours after 23 hours")
+	TimeSystem.wait_hours(1)
+	check(not Game.is_room_rented(), "the rental ends after 24 hours")
+	Game.state.apply(["flag:inn_free"])
+	room_door.interact(null)
+	eq(Game.state.count("coin"), 8, "the innkeeper's debt covers the room")
+	inn.free()
+
+	# Sleeping: eight hours pass, vitals refill, +10% XP for eight hours
+	Game.reset()
+	TimeSystem.set_time(22, 0)
+	Game.stats.damage(60.0)
+	Game.stats.use_stamina(50.0)
+	eq(Game.xp_multiplier(), 1.0, "no XP bonus before sleeping")
+	Game.sleep_in_bed()
+	eq(TimeSystem.get_hour(), 6, "sleeping from 10 PM wakes at 6 AM")
+	eq(Game.stats.health, Game.stats.max_health, "sleep restores health")
+	check(Game.is_well_rested(), "sleeping makes the player Well Rested")
+	check(is_equal_approx(Game.xp_multiplier(), 1.1), "Well Rested gives +10% XP")
+	TimeSystem.wait_hours(7)
+	check(Game.is_well_rested(), "still rested after 7 hours")
+	TimeSystem.wait_hours(1)
+	check(not Game.is_well_rested() and Game.xp_multiplier() == 1.0, "the bonus ends after 8 hours")
+	# Resting by waiting (T) does not count as sleeping in a bed
+	Game.reset()
+	TimeSystem.wait_hours(8)
+	Game.stats.restore_all()
+	check(not Game.is_well_rested(), "only a bed grants Well Rested")
+	# A bed that costs coin refuses a poor guest
+	var bed := RestSpot.new()
+	bed.cost = 5
+	var heard := []
+	bed.interacted.connect(func(msg: String) -> void: heard.append(msg))
+	bed.interact(null)
+	check(heard.size() == 1 and not Game.is_well_rested(), "a paid bed refuses a guest with no coin")
+	bed.free()
+
+	# The room scene: a bed that sleeps, and an exit back into the inn
+	var room: Node = load("res://scenes/interiors/salt_gull_room.tscn").instantiate()
+	root.add_child(room)
+	await physics_frames(2)
+	check(room.get_node("Interactables/Bedstead") is RestSpot, "the room has a bed to sleep in")
+	var back: BuildingDoor = room.get_node("Interactables/DoorExit")
+	eq(back.target_scene, "res://scenes/interiors/salt_gull.tscn", "the room's door leads back into the inn")
+	eq(back.prompt, "Exit to the Salt Gull", "the exit names where it leads")
+	room.free()
+
+	# The merchant's quest: ask, can't finish without the locket, pays 40 coin
+	var shop: Node = load("res://scenes/interiors/trader_shop.tscn").instantiate()
+	root.add_child(shop)
+	await physics_frames(2)
+	check(shop.get_node("Entities/OsricVenn") is Npc, "Osric Venn keeps the shop")
+	shop.free()
+	Game.reset()
+	var tree: Dictionary = StoryData.load_json("res://data/dialogue/osric.json")
+	var runner := DialogueRunner.new()
+	runner.begin(tree, Game.state)
+	eq(runner.node_id, "intro", "Osric opens with his grief")
+	runner.advance(0) # "What happened to her?"
+	eq(runner.node_id, "story", "he tells the story")
+	runner.advance()
+	eq(runner.node_id, "ask", "then he asks for the locket")
+	runner.advance(0) # "I'll find it."
+	check(Game.state.quests.is_active("elins_locket"), "accepting starts Elin's Locket")
+	eq(Game.state.quests.stage_id("elins_locket"), "find", "the quest starts at the find stage")
+	runner.advance()
+	runner.begin(tree, Game.state)
+	eq(runner.node_id, "reminder", "without the locket Osric only reminds the player")
+	Game.state.apply(["give:silver_locket"])
+	eq(Game.state.quests.stage_id("elins_locket"), "return", "holding the locket moves the quest on")
+	runner.begin(tree, Game.state)
+	eq(runner.node_id, "return", "Osric takes the locket")
+	check(Game.state.count("silver_locket") == 0 and Game.state.count("coin") == 40, "the locket is traded for 40 coin")
+	check(Game.state.quests.is_done("elins_locket"), "Elin's Locket is complete")
+
+	# Weapon icons exist for the four starting weapons
+	for weapon: String in ["iron_daggers", "iron_sword_shield", "two_handed_sword", "staff"]:
+		check(ResourceLoader.exists("res://assets/ui/items/%s.png" % weapon), "%s has an inventory icon" % weapon)
 	Game.reset()
 	TimeSystem.set_time(12, 0)

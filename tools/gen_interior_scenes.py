@@ -1,5 +1,6 @@
-"""Generates the 7 house interior scenes for Wrackmouth in scenes/interiors/:
-mayor_hall, forge, salt_gull, lantern_watch, cottage_harrow, cottage_rook, cottage_weaver.
+"""Generates the house interior scenes for Wrackmouth in scenes/interiors/:
+mayor_hall, forge, salt_gull (and its rented room salt_gull_room), lantern_watch, cottage_harrow, cottage_rook,
+cottage_weaver, trader_shop.
 
 Props are bottom-aligned sprites (the node sits at the prop's feet) drawn at 0.5 scale from
 assets/interiors/furniture/. Rooms are sized so the 320x180 camera sees most of one.
@@ -253,7 +254,16 @@ def npc(
 
 
 def build_room_base(
-    s: Scene, w: float, h: float, door_x: float, floor_tex: str, wall_tex: str, building_id: str, building_name: str
+    s: Scene,
+    w: float,
+    h: float,
+    door_x: float,
+    floor_tex: str,
+    wall_tex: str,
+    building_id: str,
+    building_name: str,
+    exit_name: str = "Wrackmouth",
+    exit_scene: str = "res://scenes/world/wrackmouth.tscn",
 ) -> None:
     """Root, floor, wall header, perimeter collision, exit door, player, HUD and dialogue."""
     s.node(
@@ -321,8 +331,8 @@ def build_room_base(
         door_x,
         h - 10.0,
         building_id,
-        "Wrackmouth",
-        "res://scenes/world/wrackmouth.tscn",
+        exit_name,
+        exit_scene,
         "from_" + building_id,
         is_exit=True,
         radius=16.0,
@@ -409,8 +419,26 @@ def gen_salt_gull() -> None:
     decor(s, "BottleShelf", "bottle_shelf", 98.0, 44.0)
     rug(s, "FurRug", "fur_rug", 170.0, 168.0)
 
+    decor(s, "RoomDoorArt", "room_door", 170.0, 48.0)
+    s.node(
+        "RoomDoor",
+        "Area2D",
+        "Interactables",
+        position=v(170.0, 60.0),
+        collision_layer="2",
+        collision_mask="0",
+        monitoring="false",
+        script=s.ext("Script", "res://scripts/world/room_rental_door.gd"),
+        building_id='"salt_gull_room"',
+        building_name='"Your Room"',
+        target_scene='"res://scenes/interiors/salt_gull_room.tscn"',
+        target_spawn='"from_town"',
+        rent_cost="5",
+    )
+    s.node("Reach", "CollisionShape2D", "Interactables/RoomDoor", shape=s._sub("CircleShape2D", "radius = 16"))
+    s.node("from_salt_gull_room", "Marker2D", "Spawns", position=v(170.0, 70.0))
     prop(s, "Bar", "counter_bar", 98.0, 100.0, cw=68.0, ch=12.0)
-    prop(s, "Barrels", "barrels", 148.0, 82.0, cw=34.0, ch=10.0)
+    prop(s, "Barrels", "barrels", 140.0, 86.0, cw=34.0, ch=10.0)
     hearth(s, "Hearth", 240.0, 76.0)
     candle(s, "CandleWest", 204.0, 90.0)
     candle(s, "CandleEast", 276.0, 90.0)
@@ -534,6 +562,71 @@ def gen_cottage_weaver() -> None:
     write(s, "cottage_weaver")
 
 
+# =============================================================================
+# 8. The Salt Gull's rented room
+# =============================================================================
+def gen_salt_gull_room() -> None:
+    s = Scene()
+    w, h, dx = 200.0, 150.0, 100.0
+    build_room_base(
+        s,
+        w,
+        h,
+        dx,
+        WOOD_FLOOR,
+        TIMBER_WALL,
+        "salt_gull_room",
+        "Your Room",
+        exit_name="the Salt Gull",
+        exit_scene="res://scenes/interiors/salt_gull.tscn",
+    )
+    window(s, "Window", 150.0)
+    rug(s, "FurRug", "fur_rug", 100.0, 108.0, scale=0.4)
+    hearth(s, "Hearth", 50.0, 76.0)
+    prop(s, "Bed", "bed_wood", 150.0, 104.0, cw=36.0, ch=14.0)
+    s.node(
+        "Bedstead",
+        "Area2D",
+        "Interactables",
+        position=v(150.0, 112.0),
+        collision_layer="2",
+        collision_mask="0",
+        monitoring="false",
+        script=s.ext("Script", "res://scripts/rest_spot.gd"),
+        prompt='"Sleep"',
+    )
+    s.node("Reach", "CollisionShape2D", "Interactables/Bedstead", shape=s._sub("CircleShape2D", "radius = 18"))
+    prop(s, "Table", "table_food", 70.0, 124.0, cw=44.0, ch=10.0)
+    prop(s, "Stool", "stool", 96.0, 132.0, cw=10.0, ch=6.0)
+    chest(s, "TravellerChest", 22.0, 130.0, "inn_room_chest", "Traveller's Chest", {"coin": 6})
+    candle(s, "Candle", 120.0, 84.0)
+    write(s, "salt_gull_room")
+
+
+# =============================================================================
+# 9. Venn's Goods (the trader's shop)
+# =============================================================================
+def gen_trader_shop() -> None:
+    s = Scene()
+    w, h, dx = 260.0, 180.0, 130.0
+    build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "trader_shop", "Venn's Goods")
+    window(s, "WindowWest", 50.0)
+    window(s, "WindowEast", 210.0)
+    decor(s, "BottleShelf", "bottle_shelf", 130.0, 44.0)
+    rug(s, "WovenRug", "rug_woven", 130.0, 148.0, scale=0.6)
+    prop(s, "Counter", "counter_bar", 130.0, 102.0, cw=68.0, ch=12.0)
+    prop(s, "ShelfWest", "shelf_unit", 40.0, 90.0, cw=26.0, ch=8.0)
+    prop(s, "ShelfEast", "shelf_unit", 220.0, 90.0, cw=26.0, ch=8.0)
+    prop(s, "Barrels", "barrels", 38.0, 150.0, cw=34.0, ch=10.0)
+    prop(s, "Sacks", "sacks", 82.0, 154.0, cw=30.0, ch=8.0)
+    prop(s, "SacksEast", "sacks", 222.0, 150.0, cw=30.0, ch=8.0)
+    prop(s, "Table", "table_food", 186.0, 130.0, cw=44.0, ch=10.0)
+    candle(s, "CandleWest", 92.0, 88.0)
+    candle(s, "CandleEast", 168.0, 88.0)
+    npc(s, "OsricVenn", 130.0, 84.0, "Osric Venn", "osric", "merchant", behaviour="wander", wander_radius=12.0)
+    write(s, "trader_shop")
+
+
 def main() -> None:
     gen_mayor_hall()
     gen_forge()
@@ -542,7 +635,9 @@ def main() -> None:
     gen_cottage_harrow()
     gen_cottage_rook()
     gen_cottage_weaver()
-    print(f"generated 7 interior scenes in {INTERIORS_DIR.relative_to(ROOT)}/")
+    gen_salt_gull_room()
+    gen_trader_shop()
+    print(f"generated 9 interior scenes in {INTERIORS_DIR.relative_to(ROOT)}/")
 
 
 if __name__ == "__main__":

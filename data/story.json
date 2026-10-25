@@ -10,7 +10,8 @@
     "iron_daggers": "Iron daggers",
     "iron_sword_shield": "Iron sword and shield",
     "two_handed_sword": "Two-handed sword",
-    "staff": "Staff"
+    "staff": "Staff",
+    "silver_locket": "Elin's locket"
   },
   "derived": {},
   "quests": {
@@ -56,6 +57,21 @@
           "id": "return",
           "text": "Tell Bram what became of Dov",
           "done_when": ["flag:bram_paid"]
+        }
+      ]
+    },
+    "elins_locket": {
+      "title": "Elin's Locket",
+      "stages": [
+        {
+          "id": "find",
+          "text": "Recover Elin's silver locket from the giant rat's lair",
+          "done_when": ["item:silver_locket"]
+        },
+        {
+          "id": "return",
+          "text": "Bring the locket back to Osric Venn",
+          "done_when": ["flag:osric_paid"]
         }
       ]
     },

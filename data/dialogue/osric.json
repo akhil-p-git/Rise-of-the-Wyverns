@@ -1,0 +1,88 @@
+{
+  "entries": [
+    {
+      "if": [
+        "stage:elins_locket=return",
+        "item:silver_locket"
+      ],
+      "node": "return"
+    },
+    {
+      "if": [
+        "active:elins_locket"
+      ],
+      "node": "reminder"
+    },
+    {
+      "if": [
+        "done:elins_locket"
+      ],
+      "node": "after"
+    },
+    {
+      "if": [],
+      "node": "intro"
+    }
+  ],
+  "nodes": {
+    "intro": {
+      "speaker": "Osric Venn",
+      "text": "Forgive the dust. I have not had the heart to open the shutters since the autumn. Venn's Goods was my daughter's idea, you know. She did the sign.",
+      "choices": [
+        {
+          "text": "What happened to her?",
+          "next": "story"
+        },
+        {
+          "text": "I'm sorry for your loss.",
+          "next": "story"
+        },
+        {
+          "text": "Not now."
+        }
+      ]
+    },
+    "story": {
+      "speaker": "Osric Venn",
+      "text": "Elin. Nine summers. A stray went down into the old vaults past the last houses and she went after it. What lives down there is no rat. It took her, and the mayor says there is nothing to be done until someone is paid to go.",
+      "next": "ask"
+    },
+    "ask": {
+      "speaker": "Osric Venn",
+      "text": "She wore a silver locket that was her mother's. I do not ask you to avenge her. I ask you to bring the locket home. Forty coin, and I will not haggle you down.",
+      "choices": [
+        {
+          "text": "I'll find it.",
+          "do": [
+            "start:elins_locket"
+          ],
+          "next": "thanks"
+        },
+        {
+          "text": "I can't promise that."
+        }
+      ]
+    },
+    "thanks": {
+      "speaker": "Osric Venn",
+      "text": "Then you have more courage than the lot of this town. Come back to me when you have it. Whatever state it is in."
+    },
+    "reminder": {
+      "speaker": "Osric Venn",
+      "text": "The locket, from the vaults past the last houses. Silver, on a thin chain. You will know it."
+    },
+    "return": {
+      "speaker": "Osric Venn",
+      "text": "The chain is broken. She would have said it needed mending. Thank you. Here is your forty, and my word that you may ask me for anything I have.",
+      "do": [
+        "take:silver_locket",
+        "give:coin:40",
+        "flag:osric_paid"
+      ]
+    },
+    "after": {
+      "speaker": "Osric Venn",
+      "text": "I have opened the shutters. It is not much, but there is light in the shop again. Come by whenever you are passing."
+    }
+  }
+}

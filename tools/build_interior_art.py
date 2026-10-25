@@ -669,6 +669,18 @@ def build_extras(furn_dir: Path) -> None:
     d.rectangle([76, 10, 98, 16], fill=(200, 188, 160, 255))
     im.save(furn_dir / "desk_scrolls.png")
 
+    # Wooden room door with an iron ring handle and a number plate (40x56)
+    im, d = _canvas(40, 56)
+    _box(d, 2, 2, 37, 54, WOOD_D, WOOD_M, OUTLINE)
+    d.rectangle([5, 5, 34, 54], fill=(84, 58, 38, 255))
+    for px in (12, 20, 28):
+        d.line([(px, 5), (px, 54)], fill=(58, 40, 26, 255))
+    d.rectangle([4, 16, 35, 20], fill=IRON_M)
+    d.rectangle([4, 38, 35, 42], fill=IRON_M)
+    d.ellipse([26, 28, 32, 34], outline=IRON_L, width=2)
+    d.rectangle([14, 8, 25, 13], fill=(190, 150, 60, 255))
+    im.save(furn_dir / "room_door.png")
+
     # Coal bin (48x40) for the forge
     im, d = _canvas(48, 40)
     _shadow(d, 2, 32, 46, 39)

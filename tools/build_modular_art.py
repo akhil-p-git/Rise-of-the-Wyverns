@@ -825,6 +825,26 @@ def build_modular_buildings_and_smoke() -> None:
     )
 
 
+def make_icon_bg() -> Image.Image:
+    """The dark rounded 64x64 frame every inventory item icon sits in."""
+    im = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle(
+        [2, 2, 61, 61],
+        radius=8,
+        fill=(22, 20, 28, 235),
+        outline=(92, 82, 68, 255),
+        width=2,
+    )
+    d.rounded_rectangle(
+        [5, 5, 58, 58],
+        radius=6,
+        outline=(46, 42, 52, 255),
+        width=1,
+    )
+    return im
+
+
 def build_combat_sheets_and_icons() -> None:
     """Builds 4x4 Hero Combat sprite sheets (`hero_punch_sheet.png` and `hero_block_sheet.png`,
     384x512 each) that preserve exact palette-shader compatibility with `hero_sheet.png`,
@@ -1166,24 +1186,6 @@ def build_combat_sheets_and_icons() -> None:
     items_dir = ROOT / "assets" / "ui" / "items"
     items_dir.mkdir(parents=True, exist_ok=True)
     props_dir = ROOT / "assets" / "props"
-
-    def make_icon_bg() -> Image.Image:
-        im = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-        d = ImageDraw.Draw(im)
-        d.rounded_rectangle(
-            [2, 2, 61, 61],
-            radius=8,
-            fill=(22, 20, 28, 235),
-            outline=(92, 82, 68, 255),
-            width=2,
-        )
-        d.rounded_rectangle(
-            [5, 5, 58, 58],
-            radius=6,
-            outline=(46, 42, 52, 255),
-            width=1,
-        )
-        return im
 
     # 1. Coin icon
     ic_coin = make_icon_bg()

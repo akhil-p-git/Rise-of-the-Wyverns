@@ -111,6 +111,15 @@ theme_override_font_sizes/font_size = 11
 horizontal_alignment = 2
 autowrap_mode = 3
 
+[node name="RestedLabel" type="Label" parent="."]
+offset_left = 116.0
+offset_top = 22.0
+offset_right = 320.0
+offset_bottom = 38.0
+theme = ExtResource("2_theme")
+theme_override_colors/font_color = Color(0.62, 0.82, 0.62, 0.95)
+theme_override_font_sizes/font_size = 9
+
 [node name="HintLabel" type="Label" parent="."]
 offset_left = 8.0
 offset_top = 36.0

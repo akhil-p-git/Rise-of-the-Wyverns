@@ -63,12 +63,14 @@
   - All buildings unlock at 6:00 AM.
   - Abandoned / shuttered cottage remains permanently nailed shut.
 - **House Interiors (`scenes/interiors/*.tscn`, `scripts/world/area_scene.gd`)**:
-  - Full walkable interiors for all 7 town buildings (Mayor's Hall, Kell's Forge, The Salt Gull, Lantern Watch Tower, Harrow Cottage, Rook Cottage, Weaver Cottage).
+  - Full walkable interiors for all 8 town buildings (Mayor's Hall, Kell's Forge, The Salt Gull, Lantern Watch Tower, Harrow Cottage, Rook Cottage, Weaver Cottage, Venn's Goods) plus the Salt Gull's rentable room.
   - Warm indoor lighting (`WarmIndoorLight`), crackling hearth ambience (`amb_fire`), timber/stone floors, and furniture.
   - Doorways lead seamlessly back outside to Wrackmouth in front of each respective house via `Spawns/from_<building_id>`.
 - **Persistent Loot Containers (`scripts/world/loot_container.gd`)**:
   - Chests, cupboards, tool bins, and larders provide lore items, salvage, and coin.
   - Container states persist via story flags (`looted_<id>`), preventing duplicate looting.
+- **Inn room and sleep (`scripts/world/room_rental_door.gd`, `scripts/rest_spot.gd`, `Game.sleep_in_bed`)**: the door in the Salt Gull costs 5 coin and rents the room for 24 game hours (`TimeSystem.elapsed_minutes` is the absolute clock; the innkeeper's debt flag `inn_free` waives it). Sleeping in the room's bed passes 8 hours, refills every vital and grants Well Rested for 8 hours: `Game.xp_multiplier()` is 1.1 while it lasts. Every future XP award must multiply by `Game.xp_multiplier()`. Waiting with `T` never grants Well Rested.
+- **Merchant (`trader_shop`)**: Osric Venn keeps Venn's Goods and gives the side quest Elin's Locket. Buying and selling are not built yet.
 - **Waiting (`T`, `scripts/ui/wait_panel.gd`)**: pick 1 to 24 hours; `TimeSystem.wait_hours` advances the clock hour by hour (doors and schedules react on each hour) and `Stats.restore_all` refills health, stamina and mana. The HUD clock shows the hour only and refreshes on `hour_passed`.
 - **Town Schedules (`data/schedules.json`, `scripts/world/npc_schedule.gd`, `scripts/npc.gd`)**:
   - A slot is `{from, to, at}` where `at` is `town` or a building id; slots wrap midnight and each scheduled NPC must cover all 24 hours exactly once (tested).
@@ -90,7 +92,7 @@
 
 ---
 
-## 7. Live Auto-Generated Asset Inventory (108 PNG Assets Verified)
+## 7. Live Auto-Generated Asset Inventory (115 PNG Assets Verified)
 
 ### Hero & Combat Sheets (`assets/hero/` — 3 assets)
 
@@ -100,7 +102,7 @@
 | `assets/hero/hero_punch_sheet.png` | `384×512` px | `96×128` wu |
 | `assets/hero/hero_sheet.png` | `384×512` px | `96×128` wu |
 
-### NPC Sprite Sheets (`assets/npc/` — 14 assets)
+### NPC Sprite Sheets (`assets/npc/` — 15 assets)
 
 | Asset Path | Pixel Dimensions (`4x` Native) | World Footprint (`@ 0.25` scale) |
 | --- | --- | --- |
@@ -113,6 +115,7 @@
 | `assets/npc/kid_c.png` | `384×512` px | `96×128` wu |
 | `assets/npc/kid_d.png` | `384×512` px | `96×128` wu |
 | `assets/npc/mayor.png` | `384×512` px | `96×128` wu |
+| `assets/npc/merchant.png` | `384×512` px | `96×128` wu |
 | `assets/npc/orsa.png` | `384×512` px | `96×128` wu |
 | `assets/npc/pell.png` | `384×512` px | `96×128` wu |
 | `assets/npc/teague.png` | `384×512` px | `96×128` wu |
@@ -130,7 +133,7 @@
 | `assets/buildings/parts/window_dormer.png` | `66×76` px | `16.5×19` wu |
 | `assets/buildings/parts/window_glow.png` | `128×128` px | `32×32` wu |
 
-### Interior Floors, Walls & Furniture (`assets/interiors/` — 40 assets)
+### Interior Floors, Walls & Furniture (`assets/interiors/` — 41 assets)
 
 | Asset Path | Pixel Dimensions (`4x` Native) | World Footprint (`@ 0.25` scale) |
 | --- | --- | --- |
@@ -161,6 +164,7 @@
 | `assets/interiors/furniture/light_shaft.png` | `64×88` px | `16×22` wu |
 | `assets/interiors/furniture/loom.png` | `88×80` px | `22×20` wu |
 | `assets/interiors/furniture/net_rack.png` | `88×80` px | `22×20` wu |
+| `assets/interiors/furniture/room_door.png` | `40×56` px | `10×14` wu |
 | `assets/interiors/furniture/rug_woven.png` | `128×72` px | `32×18` wu |
 | `assets/interiors/furniture/sacks.png` | `64×52` px | `16×13` wu |
 | `assets/interiors/furniture/shelf_unit.png` | `64×96` px | `16×24` wu |
@@ -183,7 +187,7 @@
 | `assets/terrain/dirt_rubble_tile.png` | `256×256` px | `64×64` wu |
 | `assets/terrain/grass_tile.png` | `256×256` px | `64×64` wu |
 
-### Wrackmouth Ground & Buildings (`assets/wrackmouth/` — 9 assets)
+### Wrackmouth Ground & Buildings (`assets/wrackmouth/` — 10 assets)
 
 | Asset Path | Pixel Dimensions (`4x` Native) | World Footprint (`@ 0.25` scale) |
 | --- | --- | --- |
@@ -196,6 +200,7 @@
 | `assets/wrackmouth/lantern_watch.png` | `216×352` px | `54×88` wu |
 | `assets/wrackmouth/mayor_hall.png` | `464×462` px | `116×115.5` wu |
 | `assets/wrackmouth/salt_gull.png` | `496×439` px | `124×109.75` wu |
+| `assets/wrackmouth/shop_trader.png` | `272×279` px | `68×69.75` wu |
 
 ### Crossholm Road Ground & Structures (`assets/crossholm_road/` — 6 assets)
 
@@ -238,15 +243,19 @@
 | `assets/props/rathole.png` | `72×56` px | `18×14` wu |
 | `assets/props/signpost.png` | `72×105` px | `18×26.25` wu |
 
-### Inventory Item Icons (`assets/ui/items/` — 7 assets)
+### Inventory Item Icons (`assets/ui/items/` — 11 assets)
 
 | Asset Path | Pixel Dimensions (`4x` Native) | World Footprint (`@ 0.25` scale) |
 | --- | --- | --- |
 | `assets/ui/items/carters_tally.png` | `64×64` px | `16×16` wu |
 | `assets/ui/items/coin.png` | `64×64` px | `16×16` wu |
 | `assets/ui/items/hex_bone.png` | `64×64` px | `16×16` wu |
+| `assets/ui/items/iron_daggers.png` | `64×64` px | `16×16` wu |
 | `assets/ui/items/iron_scrap.png` | `64×64` px | `16×16` wu |
+| `assets/ui/items/iron_sword_shield.png` | `64×64` px | `16×16` wu |
 | `assets/ui/items/mayor_letter.png` | `64×64` px | `16×16` wu |
 | `assets/ui/items/moonherb.png` | `64×64` px | `16×16` wu |
 | `assets/ui/items/salvage_crate.png` | `64×64` px | `16×16` wu |
+| `assets/ui/items/staff.png` | `64×64` px | `16×16` wu |
+| `assets/ui/items/two_handed_sword.png` | `64×64` px | `16×16` wu |
 

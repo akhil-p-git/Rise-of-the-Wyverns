@@ -20,7 +20,7 @@ func _ready() -> void:
 
 func _update_state() -> void:
 	if is_exit:
-		prompt = "Exit to Wrackmouth"
+		prompt = "Exit to " + building_name
 		return
 	if is_locked():
 		prompt = "Locked"

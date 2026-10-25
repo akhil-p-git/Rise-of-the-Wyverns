@@ -10,6 +10,7 @@ const ITEM_DESCRIPTIONS := {
 	"iron_scrap": "Bent hull-strapping, rivets, and chain links that still ring true on an anvil.",
 	"moonherb": "Pale dusk-holding leaves gathered among the old cairns south-west of Wrackmouth.",
 	"hex_bone": "A scorched bone dug from the cracked cairn. A fresh arcane hex-mark burns in its marrow.",
+	"silver_locket": "A small silver locket on a thin broken chain. A curl of dark hair is pressed inside. It belonged to Osric Venn's daughter.",
 	"bone_whistle": "A small carved gull-bone whistle. It belongs to a child in Wrackmouth.",
 	"iron_daggers": "A matched pair of short iron daggers from the Hall's arms cupboard. Quick work, close in.",
 	"iron_sword_shield": "A plain iron sword and a dented round shield. Old guard issue, well kept.",

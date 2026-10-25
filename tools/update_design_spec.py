@@ -124,12 +124,14 @@ def update_design_spec() -> None:
   - All buildings unlock at 6:00 AM.
   - Abandoned / shuttered cottage remains permanently nailed shut.
 - **House Interiors (`scenes/interiors/*.tscn`, `scripts/world/area_scene.gd`)**:
-  - Full walkable interiors for all 7 town buildings (Mayor\'s Hall, Kell\'s Forge, The Salt Gull, Lantern Watch Tower, Harrow Cottage, Rook Cottage, Weaver Cottage).
+  - Full walkable interiors for all 8 town buildings (Mayor\'s Hall, Kell\'s Forge, The Salt Gull, Lantern Watch Tower, Harrow Cottage, Rook Cottage, Weaver Cottage, Venn\'s Goods) plus the Salt Gull\'s rentable room.
   - Warm indoor lighting (`WarmIndoorLight`), crackling hearth ambience (`amb_fire`), timber/stone floors, and furniture.
   - Doorways lead seamlessly back outside to Wrackmouth in front of each respective house via `Spawns/from_<building_id>`.
 - **Persistent Loot Containers (`scripts/world/loot_container.gd`)**:
   - Chests, cupboards, tool bins, and larders provide lore items, salvage, and coin.
   - Container states persist via story flags (`looted_<id>`), preventing duplicate looting.
+- **Inn room and sleep (`scripts/world/room_rental_door.gd`, `scripts/rest_spot.gd`, `Game.sleep_in_bed`)**: the door in the Salt Gull costs 5 coin and rents the room for 24 game hours (`TimeSystem.elapsed_minutes` is the absolute clock; the innkeeper\'s debt flag `inn_free` waives it). Sleeping in the room\'s bed passes 8 hours, refills every vital and grants Well Rested for 8 hours: `Game.xp_multiplier()` is 1.1 while it lasts. Every future XP award must multiply by `Game.xp_multiplier()`. Waiting with `T` never grants Well Rested.
+- **Merchant (`trader_shop`)**: Osric Venn keeps Venn\'s Goods and gives the side quest Elin\'s Locket. Buying and selling are not built yet.
 - **Waiting (`T`, `scripts/ui/wait_panel.gd`)**: pick 1 to 24 hours; `TimeSystem.wait_hours` advances the clock hour by hour (doors and schedules react on each hour) and `Stats.restore_all` refills health, stamina and mana. The HUD clock shows the hour only and refreshes on `hour_passed`.
 - **Town Schedules (`data/schedules.json`, `scripts/world/npc_schedule.gd`, `scripts/npc.gd`)**:
   - A slot is `{{from, to, at}}` where `at` is `town` or a building id; slots wrap midnight and each scheduled NPC must cover all 24 hours exactly once (tested).

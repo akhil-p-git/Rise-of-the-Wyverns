@@ -6,12 +6,21 @@ const STORY_PATH := "res://data/story.json"
 const SETTINGS_PATH := "user://settings.cfg"
 const THEME_PATH := "res://assets/ui/grim_theme.tres"
 const FADE_SECONDS := 0.35
+const SLEEP_HOURS := 8
+const WELL_RESTED_HOURS := 8
+const WELL_RESTED_XP_BONUS := 0.10
+const ROOM_RENT_HOURS := 24
+
+signal rested_changed
 
 var state: GameState
 var stats := Stats.new()
 var character := Character.new()
 var fullscreen := false
 var vsync := true
+## `TimeSystem.elapsed_minutes` until which the player is Well Rested / holds a rented inn room.
+var rested_until := -1.0
+var room_rented_until := -1.0
 
 var _spawn := ""
 var _changing := false
@@ -47,6 +56,33 @@ func reset() -> void:
 	if character == null:
 		character = Character.new()
 	_spawn = ""
+	rested_until = -1.0
+	room_rented_until = -1.0
+
+
+func is_well_rested() -> bool:
+	return TimeSystem.elapsed_minutes < rested_until
+
+
+func is_room_rented() -> bool:
+	return TimeSystem.elapsed_minutes < room_rented_until
+
+
+## Experience gain multiplier: Well Rested adds 10 percent. Every XP award should go through this.
+func xp_multiplier() -> float:
+	return 1.0 + (WELL_RESTED_XP_BONUS if is_well_rested() else 0.0)
+
+
+## Sleep in a bed: time passes, every vital refills, and the player is Well Rested for a while.
+func sleep_in_bed() -> void:
+	TimeSystem.wait_hours(SLEEP_HOURS)
+	stats.restore_all()
+	rested_until = TimeSystem.elapsed_minutes + WELL_RESTED_HOURS * 60.0
+	rested_changed.emit()
+
+
+func rent_room() -> void:
+	room_rented_until = TimeSystem.elapsed_minutes + ROOM_RENT_HOURS * 60.0
 
 
 func difficulty_damage_scale() -> float:

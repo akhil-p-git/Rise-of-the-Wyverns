@@ -521,6 +521,18 @@ def wrackmouth() -> str:
     )
     building(
         s,
+        "TraderShop",
+        470,
+        292,
+        (60, 42),
+        col(0.47, 0.4, 0.33),
+        col(0.3, 0.26, 0.24),
+        label="Venn's Goods",
+        texture="res://assets/wrackmouth/shop_trader.png",
+        window_offsets=((-15.0, -25.0),),
+    )
+    building(
+        s,
         "ShutteredHouse",
         560,
         330,
@@ -813,6 +825,16 @@ def wrackmouth() -> str:
     )
     door(
         s,
+        "DoorTraderShop",
+        489,
+        295,
+        "trader_shop",
+        "Venn's Goods",
+        "res://scenes/interiors/trader_shop.tscn",
+        "from_town",
+    )
+    door(
+        s,
         "DoorShutteredHouse",
         560,
         332,
@@ -830,15 +852,6 @@ def wrackmouth() -> str:
         "Lantern Watch",
         "res://scenes/interiors/lantern_watch.tscn",
         "from_town",
-    )
-    interactable(
-        s,
-        "InnBed",
-        358,
-        352,
-        "res://scripts/rest_spot.gd",
-        12,
-        prompt='"Rent a bed (5 coin)"',
     )
 
     for i, (x, y) in enumerate(((48, 368), (96, 392), (114, 358)), start=1):
@@ -891,6 +904,7 @@ def wrackmouth() -> str:
             "from_cottage_harrow": (80, 318),
             "from_cottage_rook": (205, 326),
             "from_cottage_weaver": (408, 152),
+            "from_trader_shop": (489, 320),
         },
         (320, 28),
     )
