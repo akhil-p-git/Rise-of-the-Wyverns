@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: tools/screenshot_scene.sh res://scenes/world/wrackmouth.tscn 23 /tmp/night.png [wait]
+# Usage: tools/screenshot_scene.sh res://scenes/world/wrackmouth.tscn 23 /tmp/night.png [wait|sleep]
 # Renders a scene at a given hour on a throwaway copy of the project (like run_tests.sh), so an open
 # editor keeps its .godot cache. The editor API's screenshot routes only capture the editor window.
 # Needs a display; the window is created at the project's 640x360 size scaled up by the stretch mode.

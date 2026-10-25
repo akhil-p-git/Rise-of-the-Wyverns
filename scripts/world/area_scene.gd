@@ -66,6 +66,11 @@ func _process(_delta: float) -> void:
 		_update_indoor_light()
 
 
+## Opens the sleep menu (a bed was used).
+func open_sleep_menu() -> void:
+	_hud.open_sleep()
+
+
 ## The AreaScene that contains `node`, or null.
 static func of(node: Node) -> AreaScene:
 	var n := node.get_parent()

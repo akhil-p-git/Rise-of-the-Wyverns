@@ -1,6 +1,7 @@
 class_name WaitPanel
 extends Control
-## "Wait" menu opened with T: pick 1-24 hours, confirm to skip the clock ahead and refill every vital.
+## "Wait" menu opened with T, or "Sleep" menu opened at a bed: pick 1-24 hours, confirm to skip the clock
+## ahead and refill every vital. Sleeping also leaves the player Well Rested, whatever the length.
 
 ## Emitted when the menu closes: the hours waited, or 0 when cancelled.
 signal waited(hours: int)
@@ -8,6 +9,8 @@ signal waited(hours: int)
 const MIN_HOURS := 1
 const MAX_HOURS := 24
 
+@onready var _title_label: Label = $Panel/Margin/VBox/TitleLabel
+@onready var _hint_label: Label = $Panel/Margin/VBox/HintLabel
 @onready var _now_label: Label = $Panel/Margin/VBox/NowLabel
 @onready var _hours_label: Label = $Panel/Margin/VBox/Row/HoursLabel
 @onready var _less_btn: Button = $Panel/Margin/VBox/Row/LessButton
@@ -16,6 +19,8 @@ const MAX_HOURS := 24
 @onready var _cancel_btn: Button = $Panel/Margin/VBox/Buttons/CancelButton
 
 var hours := MIN_HOURS
+## True when opened at a bed: confirming sleeps (with the Well Rested bonus) instead of waiting.
+var sleeping := false
 
 
 func _ready() -> void:
@@ -30,8 +35,12 @@ func is_open() -> bool:
 	return visible
 
 
-func open() -> void:
+func open(sleep := false) -> void:
+	sleeping = sleep
 	hours = MIN_HOURS
+	_title_label.text = "Sleep" if sleep else "Wait"
+	_wait_btn.text = "Sleep" if sleep else "Wait"
+	_hint_label.text = "Arrows: hours  Enter: %s  Esc: cancel" % ("sleep" if sleep else "wait")
 	_refresh()
 	visible = true
 	Audio.play_ui("ui_confirm")
@@ -46,10 +55,15 @@ func confirm() -> void:
 	if not visible:
 		return
 	visible = false
-	TimeSystem.wait_hours(hours)
-	Game.stats.restore_all()
-	Audio.play_ui("ui_confirm")
-	waited.emit(hours)
+	var slept := hours
+	if sleeping:
+		Audio.play_sfx("rest_fire")
+		await Game.blackout(Game.sleep_in_bed.bind(slept))
+	else:
+		TimeSystem.wait_hours(slept)
+		Game.stats.restore_all()
+		Audio.play_ui("ui_confirm")
+	waited.emit(slept)
 
 
 func cancel() -> void:

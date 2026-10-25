@@ -64,7 +64,7 @@ All enemies, the wyverns included, scale to the player's level, like Skyrim. Sug
 
 > Superseded 2026-10-24: Mayor Tolle now gives a single quest, "The Rat Below" (kill the giant rat in the dungeon past the last houses), with a choice of one starting weapon (two iron daggers, iron sword and shield, two-handed sword, or a staff). The chores below are no longer in the game. The cairn grave, the hex-bone and the missing wyvern bones remain as an optional discovery (`saw_grave`) and are free to reuse when the main thread needs the reveal. The dungeon and its location are not yet designed.
 
-(proposed, 2026-10-24) Osric Venn keeps Venn's Goods, Wrackmouth's shop. His daughter Elin, nine, was killed by the giant rat in the old vaults; he asks the player for her silver locket (side quest "Elin's Locket", 40 coin). Inns rent a room for 5 coin; sleeping in a bed passes eight hours and makes the player Well Rested for eight hours (+10% XP).
+(proposed, 2026-10-24) Osric Venn keeps Venn's Goods, Wrackmouth's shop. His daughter Elin, nine, was killed by the giant rat in the old vaults; he asks the player for her silver locket (side quest "Elin's Locket", 40 coin). Inns rent a room for 5 coin; sleeping in a bed (the player picks 1 to 24 hours) makes the player Well Rested for eight hours after waking (+10% XP).
 
 | Chore | Teaches | Lore it plants |
 | --- | --- | --- |

@@ -6,7 +6,6 @@ const STORY_PATH := "res://data/story.json"
 const SETTINGS_PATH := "user://settings.cfg"
 const THEME_PATH := "res://assets/ui/grim_theme.tres"
 const FADE_SECONDS := 0.35
-const SLEEP_HOURS := 8
 const WELL_RESTED_HOURS := 8
 const WELL_RESTED_XP_BONUS := 0.10
 const ROOM_RENT_HOURS := 24
@@ -73,9 +72,10 @@ func xp_multiplier() -> float:
 	return 1.0 + (WELL_RESTED_XP_BONUS if is_well_rested() else 0.0)
 
 
-## Sleep in a bed: time passes, every vital refills, and the player is Well Rested for a while.
-func sleep_in_bed() -> void:
-	TimeSystem.wait_hours(SLEEP_HOURS)
+## Sleep in a bed for `hours` (1 or 23 alike): time passes, every vital refills, and the player is Well
+## Rested for `WELL_RESTED_HOURS` after waking.
+func sleep_in_bed(hours: int) -> void:
+	TimeSystem.wait_hours(hours)
 	stats.restore_all()
 	rested_until = TimeSystem.elapsed_minutes + WELL_RESTED_HOURS * 60.0
 	rested_changed.emit()

@@ -57,7 +57,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("wait") and _can_wait():
 		get_viewport().set_input_as_handled()
 		_player.input_enabled = false
-		wait_panel.open()
+		wait_panel.open(false)
+
+
+## A bed was used: open the same hour picker in sleep mode.
+func open_sleep() -> void:
+	if _can_wait():
+		_player.input_enabled = false
+		wait_panel.open(true)
 
 
 func _can_wait() -> bool:
@@ -66,8 +73,13 @@ func _can_wait() -> bool:
 
 func _on_waited(hours: int) -> void:
 	_player.input_enabled = true
-	if hours > 0:
-		show_message("You wait %d hour%s, and wake rested. It is %s." % [hours, "" if hours == 1 else "s", TimeSystem.get_time_string()])
+	if hours <= 0:
+		return
+	var span := "%d hour%s" % [hours, "" if hours == 1 else "s"]
+	if wait_panel.sleeping:
+		show_message("You sleep %s and wake well rested (+10%% XP). It is %s." % [span, TimeSystem.get_time_string()])
+	else:
+		show_message("You wait %s, and wake rested. It is %s." % [span, TimeSystem.get_time_string()])
 
 
 func _on_stats_changed(_stat: StringName, stats: Stats) -> void:
