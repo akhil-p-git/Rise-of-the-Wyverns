@@ -1,0 +1,66 @@
+{
+  "entries": [
+    {
+      "if": [
+        "stage:tams_whistle=return",
+        "item:bone_whistle"
+      ],
+      "node": "return"
+    },
+    {
+      "if": [
+        "active:tams_whistle"
+      ],
+      "node": "reminder"
+    },
+    {
+      "if": [
+        "done:tams_whistle"
+      ],
+      "node": "after"
+    },
+    {
+      "if": [],
+      "node": "intro"
+    }
+  ],
+  "nodes": {
+    "intro": {
+      "speaker": "Tam",
+      "text": "You came off the prison ship, didn't you? I went down to the wreck at low tide to look, and I lost my whistle. Da carved it from a gull's wing-bone. If I go home without it he'll skin me.",
+      "choices": [
+        {
+          "text": "I'll look along the beach.",
+          "next": "accept"
+        },
+        {
+          "text": "Not my problem, little one."
+        }
+      ]
+    },
+    "accept": {
+      "speaker": "Tam",
+      "text": "Honest? Thank you! It's small and pale, you'll see it if the sun hits it. Don't let the tide get it first.",
+      "do": [
+        "start:tams_whistle"
+      ]
+    },
+    "reminder": {
+      "speaker": "Tam",
+      "text": "Down on the beach, by the wreck. Small, pale, shaped like a little bone flute. Did you look under the wet sand?"
+    },
+    "return": {
+      "speaker": "Tam",
+      "text": "My whistle! It still works! Here, Da gave me this for helping a stranger once. Take it. And don't tell him I went to the wreck.",
+      "do": [
+        "take:bone_whistle",
+        "give:coin:10",
+        "flag:tam_paid"
+      ]
+    },
+    "after": {
+      "speaker": "Tam",
+      "text": "I'm keeping it on a string now. Want to hear? It sounds just like a gull with the hiccups."
+    }
+  }
+}

@@ -69,6 +69,17 @@
 - **Persistent Loot Containers (`scripts/world/loot_container.gd`)**:
   - Chests, cupboards, tool bins, and larders provide lore items, salvage, and coin.
   - Container states persist via story flags (`looted_<id>`), preventing duplicate looting.
+- **Waiting (`T`, `scripts/ui/wait_panel.gd`)**: pick 1 to 24 hours; `TimeSystem.wait_hours` advances the clock hour by hour (doors and schedules react on each hour) and `Stats.restore_all` refills health, stamina and mana. The HUD clock shows the hour only and refreshes on `hour_passed`.
+- **Town Schedules (`data/schedules.json`, `scripts/world/npc_schedule.gd`, `scripts/npc.gd`)**:
+  - A slot is `{from, to, at}` where `at` is `town` or a building id; slots wrap midnight and each scheduled NPC must cover all 24 hours exactly once (tested).
+  - An NPC is active only in the scene its slot names, at the position and behaviour that scene authored for it. `AreaScene.place_id` names the scene (`town` for Wrackmouth, the building id for an interior). NPCs with no entry are always present.
+  - On `hour_passed` a leaving NPC walks to the door and vanishes; an arriving one appears at the door and walks to its post. Travel gives up and snaps to its target after a timeout, so a blocked path never strands anyone.
+  - To schedule a new NPC: add its slots, give each place a scene node with the same `npc_id` (the generators derive `npc_id` from the dialogue file name), and add the NPC to the tests.
+- **Kids (`behaviour = "play"`)**: run at `RUN_SPEED`, pick a random spot inside their play radius or run at another kid half the time (tag). Sheets `assets/npc/kid_a..d.png` come from `tools/build_kid_sheets.py` (one base child, four recolours).
+- **Interior furnishing rules (`tools/gen_interior_scenes.py`, `tools/build_interior_art.py`)**:
+  - Rooms are sized so the 320x180 camera sees most of one (cottages 240x170). Props are bottom-aligned sprites at `scale = 0.5` with a small footprint collision at the feet; rugs sit at `z_index = -1`, the floor and wall header at `-2`.
+  - Every hearth is an unlit stone sprite plus an `AnimatedProp` fire (`hearth_fire_sheet.png`, `z_index = 1`) and halo; candles and hearths use `AreaScene.light_compensation()` so their glow keeps its colour while the room tint darkens at night.
+  - Windows add a `DayLight` floor shaft that fades with `TimeSystem.get_night_factor()`; indoor ambient lerps between `INDOOR_DAY` and `INDOOR_NIGHT`.
 
 ---
 
@@ -79,7 +90,7 @@
 
 ---
 
-## 7. Live Auto-Generated Asset Inventory (79 PNG Assets Verified)
+## 7. Live Auto-Generated Asset Inventory (108 PNG Assets Verified)
 
 ### Hero & Combat Sheets (`assets/hero/` — 3 assets)
 
@@ -89,7 +100,7 @@
 | `assets/hero/hero_punch_sheet.png` | `384×512` px | `96×128` wu |
 | `assets/hero/hero_sheet.png` | `384×512` px | `96×128` wu |
 
-### NPC Sprite Sheets (`assets/npc/` — 10 assets)
+### NPC Sprite Sheets (`assets/npc/` — 14 assets)
 
 | Asset Path | Pixel Dimensions (`4x` Native) | World Footprint (`@ 0.25` scale) |
 | --- | --- | --- |
@@ -97,6 +108,10 @@
 | `assets/npc/bram.png` | `384×512` px | `96×128` wu |
 | `assets/npc/dov.png` | `384×512` px | `96×128` wu |
 | `assets/npc/guard.png` | `384×512` px | `96×128` wu |
+| `assets/npc/kid_a.png` | `384×512` px | `96×128` wu |
+| `assets/npc/kid_b.png` | `384×512` px | `96×128` wu |
+| `assets/npc/kid_c.png` | `384×512` px | `96×128` wu |
+| `assets/npc/kid_d.png` | `384×512` px | `96×128` wu |
 | `assets/npc/mayor.png` | `384×512` px | `96×128` wu |
 | `assets/npc/orsa.png` | `384×512` px | `96×128` wu |
 | `assets/npc/pell.png` | `384×512` px | `96×128` wu |
@@ -115,23 +130,48 @@
 | `assets/buildings/parts/window_dormer.png` | `66×76` px | `16.5×19` wu |
 | `assets/buildings/parts/window_glow.png` | `128×128` px | `32×32` wu |
 
-### Interior Floors, Walls & Furniture (`assets/interiors/` — 15 assets)
+### Interior Floors, Walls & Furniture (`assets/interiors/` — 40 assets)
 
 | Asset Path | Pixel Dimensions (`4x` Native) | World Footprint (`@ 0.25` scale) |
 | --- | --- | --- |
 | `assets/interiors/floor_stone.png` | `128×128` px | `32×32` wu |
 | `assets/interiors/floor_wood.png` | `128×128` px | `32×32` wu |
 | `assets/interiors/furniture/anvil.png` | `56×64` px | `14×16` wu |
+| `assets/interiors/furniture/banner.png` | `32×80` px | `8×20` wu |
 | `assets/interiors/furniture/barrels.png` | `80×64` px | `20×16` wu |
+| `assets/interiors/furniture/bed_kid.png` | `64×84` px | `16×21` wu |
 | `assets/interiors/furniture/bed_wood.png` | `88×104` px | `22×26` wu |
+| `assets/interiors/furniture/bench.png` | `96×32` px | `24×8` wu |
+| `assets/interiors/furniture/bottle_shelf.png` | `128×64` px | `32×16` wu |
+| `assets/interiors/furniture/candle_glow.png` | `64×64` px | `16×16` wu |
+| `assets/interiors/furniture/candle_stand.png` | `16×40` px | `4×10` wu |
+| `assets/interiors/furniture/cauldron.png` | `40×44` px | `10×11` wu |
 | `assets/interiors/furniture/chair_wood.png` | `48×64` px | `12×16` wu |
 | `assets/interiors/furniture/chest.png` | `64×52` px | `16×13` wu |
+| `assets/interiors/furniture/coal_bin.png` | `48×40` px | `12×10` wu |
 | `assets/interiors/furniture/counter_bar.png` | `144×56` px | `36×14` wu |
 | `assets/interiors/furniture/cupboard.png` | `80×112` px | `20×28` wu |
+| `assets/interiors/furniture/desk_scrolls.png` | `112×60` px | `28×15` wu |
+| `assets/interiors/furniture/fur_rug.png` | `112×72` px | `28×18` wu |
+| `assets/interiors/furniture/grindstone.png` | `48×56` px | `12×14` wu |
 | `assets/interiors/furniture/hearth.png` | `96×88` px | `24×22` wu |
+| `assets/interiors/furniture/hearth_fire_sheet.png` | `176×40` px | `44×10` wu |
+| `assets/interiors/furniture/hearth_glow.png` | `192×192` px | `48×48` wu |
+| `assets/interiors/furniture/herb_bunches.png` | `56×40` px | `14×10` wu |
+| `assets/interiors/furniture/light_shaft.png` | `64×88` px | `16×22` wu |
 | `assets/interiors/furniture/loom.png` | `88×80` px | `22×20` wu |
+| `assets/interiors/furniture/net_rack.png` | `88×80` px | `22×20` wu |
 | `assets/interiors/furniture/rug_woven.png` | `128×72` px | `32×18` wu |
+| `assets/interiors/furniture/sacks.png` | `64×52` px | `16×13` wu |
+| `assets/interiors/furniture/shelf_unit.png` | `64×96` px | `16×24` wu |
+| `assets/interiors/furniture/spinning_wheel.png` | `56×64` px | `14×16` wu |
+| `assets/interiors/furniture/stool.png` | `24×28` px | `6×7` wu |
+| `assets/interiors/furniture/table_food.png` | `112×64` px | `28×16` wu |
 | `assets/interiors/furniture/table_wood.png` | `112×64` px | `28×16` wu |
+| `assets/interiors/furniture/tool_rack.png` | `72×72` px | `18×18` wu |
+| `assets/interiors/furniture/trough.png` | `64×36` px | `16×9` wu |
+| `assets/interiors/furniture/weapon_rack.png` | `72×80` px | `18×20` wu |
+| `assets/interiors/furniture/window_wall.png` | `40×52` px | `10×13` wu |
 | `assets/interiors/wall_stone.png` | `512×96` px | `128×24` wu |
 | `assets/interiors/wall_timber.png` | `512×96` px | `128×24` wu |
 

@@ -1,0 +1,37 @@
+{
+  "entries": [
+    {
+      "if": [
+        "flag:saw_grave"
+      ],
+      "node": "grave"
+    },
+    {
+      "if": [],
+      "node": "hello"
+    }
+  ],
+  "nodes": {
+    "hello": {
+      "speaker": "Isa",
+      "text": "Tam says you can hold your breath longer than anyone. Can you? I can count to forty. Nan says that's long enough to drown in.",
+      "choices": [
+        {
+          "text": "Forty is plenty.",
+          "next": "plenty"
+        },
+        {
+          "text": "Go and play."
+        }
+      ]
+    },
+    "plenty": {
+      "speaker": "Isa",
+      "text": "That's what I told her! She said wait until the tide comes in. It doesn't ask permission, she says."
+    },
+    "grave": {
+      "speaker": "Isa",
+      "text": "Tam says the big bones are gone. I say the sea took them back. Do you think wyverns like salt?"
+    }
+  }
+}

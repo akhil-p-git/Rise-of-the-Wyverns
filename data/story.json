@@ -6,7 +6,8 @@
     "moonherb": "Moonherb",
     "hex_bone": "Hex-marked bone",
     "mayor_letter": "Mayor's letter",
-    "carters_tally": "Dov's tally stick"
+    "carters_tally": "Dov's tally stick",
+    "bone_whistle": "Tam's whistle"
   },
   "derived": {
     "rats_cleared": ["flag:rathole_1", "flag:rathole_2", "flag:rathole_3"],
@@ -65,6 +66,21 @@
           "id": "return",
           "text": "Tell Bram what became of Dov",
           "done_when": ["flag:bram_paid"]
+        }
+      ]
+    },
+    "tams_whistle": {
+      "title": "Tam's Whistle",
+      "stages": [
+        {
+          "id": "find",
+          "text": "Look for Tam's carved bone whistle along the beach",
+          "done_when": ["item:bone_whistle"]
+        },
+        {
+          "id": "return",
+          "text": "Bring the whistle back to Tam",
+          "done_when": ["flag:tam_paid"]
         }
       ]
     }

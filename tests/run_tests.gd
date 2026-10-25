@@ -11,6 +11,9 @@ var root: Window:
 
 func _ready() -> void:
 	await get_tree().process_frame
+	# Tests set the clock themselves; real time must not push NPCs onto their evening schedule mid-run.
+	TimeSystem.paused = true
+	TimeSystem.set_time(12, 0)
 	test_stats()
 	test_settings_and_theme()
 	test_audio()
@@ -18,6 +21,7 @@ func _ready() -> void:
 	test_logic_and_data()
 	await test_town_scenes()
 	await test_day_night_and_interiors()
+	await test_schedules()
 	await test_room()
 	await test_beach()
 	await test_intro()
@@ -533,7 +537,7 @@ func test_logic_and_data() -> void:
 			for cond: String in st.get("done_when", []):
 				_validate_cond(cond, "story.quests.%s.%s" % [qid, st["id"]], items_dict, quests_dict, stage_ids_by_quest)
 
-	var dialogue_files := ["ansa", "bram", "chancellor", "dov", "guard", "mayor", "orsa", "pell", "teague", "wizard", "wren"]
+	var dialogue_files := ["ansa", "bram", "chancellor", "dov", "guard", "isa", "mayor", "orsa", "pell", "tam", "teague", "wizard", "wren"]
 	for dlg_name: String in dialogue_files:
 		var path := "res://data/dialogue/%s.json" % dlg_name
 		var tree := StoryData.load_json(path)
@@ -844,7 +848,7 @@ func test_day_night_and_interiors() -> void:
 	check(mh.get_node("Entities/GuardVance") != null, "Royal Guard Vance is inside Mayor's Hall")
 
 	# Mayor Tolle is reachable from the central aisle and gives tasks
-	await place(p, Vector2(230, 142))
+	await place(p, Vector2(170, 138))
 	await hold(["move_up"], 8)
 	eq(p._nearest_interactable(), mayor, "Mayor Tolle is reachable and nearest interactable from central aisle")
 
@@ -875,8 +879,8 @@ func test_day_night_and_interiors() -> void:
 	eq(Game.state.count("coin"), prev_coins + 18, "looted chest cannot be re-looted")
 
 	# 5. Entering and leaving Mayor's Hall without getting stuck
-	# In Mayor's Hall, player at from_town (230, 245) can move freely
-	await place(p, Vector2(230, 245))
+	# In Mayor's Hall, the player at the from_town marker can move freely
+	await place(p, mh.get_node("Spawns/from_town").global_position)
 	var hall_start := p.global_position
 	await hold(["move_up"], 15)
 	check(p.global_position.y < hall_start.y - 10.0, "player moves freely inside Mayor's Hall doorway")
@@ -904,3 +908,116 @@ func test_day_night_and_interiors() -> void:
 
 	wm_exit.queue_free()
 	await get_tree().process_frame
+
+
+func test_schedules() -> void:
+	# Data: every scheduled NPC covers 24 hours once and names real places with a matching NPC node there.
+	for id: String in NpcSchedule.npc_ids():
+		check(NpcSchedule.covers_whole_day(id), "%s schedule covers every hour exactly once" % id)
+	eq(NpcSchedule.place_at("orsa", 12), "town", "Orsa is in the yard at noon")
+	eq(NpcSchedule.place_at("orsa", 23), "forge", "Orsa sleeps at the forge (slot wraps midnight)")
+	eq(NpcSchedule.place_at("orsa", 8), "forge", "Orsa is still at the forge at 8 AM")
+	eq(NpcSchedule.place_at("nobody", 12), "", "unscheduled NPCs have no place")
+
+	var town: Node = load("res://scenes/world/wrackmouth.tscn").instantiate()
+	root.add_child(town)
+	var interior_npcs := {}
+	for id: String in NpcSchedule.npc_ids():
+		var places := {}
+		for hour in 24:
+			places[NpcSchedule.place_at(id, hour)] = true
+		for place: String in places:
+			var scene: Node = town if place == "town" else load("res://scenes/interiors/%s.tscn" % place).instantiate()
+			var found := false
+			for npc: Node in scene.find_children("*", "Npc", true, false):
+				found = found or npc.npc_id == id
+			check(found, "%s has an NPC node in %s" % [id, place])
+			if scene != town:
+				scene.free()
+	town.free()
+	interior_npcs.clear()
+
+	# Town at noon: the kids and Orsa are out, Bram is in the inn.
+	TimeSystem.set_time(12, 0)
+	town = load("res://scenes/world/wrackmouth.tscn").instantiate()
+	root.add_child(town)
+	await physics_frames(2)
+	var orsa: Npc = town.get_node("Entities/OrsaKell")
+	var bram: Npc = town.get_node("Entities/BramQuillon")
+	var tam: Npc = town.get_node("Entities/Tam")
+	check(orsa.present and tam.present, "Orsa and Tam are in town at noon")
+	check(not bram.present, "Bram is inside the inn at noon")
+	check(bram.collision_layer == 0 and not bram.visible, "an absent NPC is hidden and cannot be talked to")
+
+	# Kids run: Tam covers ground and stays inside his play radius
+	var start := tam.global_position
+	var farthest := 0.0
+	var inside := true
+	for i in 900:
+		tam._physics_process(1.0 / 60.0)
+		farthest = maxf(farthest, tam.global_position.distance_to(start))
+		inside = inside and tam.global_position.distance_to(tam.home_position) <= tam.wander_radius + 0.5
+	check(farthest > 15.0, "Tam runs around (moved %.1f)" % farthest)
+	check(inside, "Tam stays inside his play radius")
+
+	# 17:00: Orsa heads for the inn (via her door), then vanishes from town
+	TimeSystem.set_time(16, 0)
+	TimeSystem.set_time(17, 0)
+	check(orsa._travelling and orsa._travel_leaving, "Orsa starts walking away at 17:00")
+	for i in 1800:
+		orsa._physics_process(1.0 / 60.0)
+		if not orsa.present:
+			break
+	check(not orsa.present, "Orsa leaves the town scene once she reaches the door")
+
+	# 19:00: kids go home; 8 AM Bram comes out of the inn and walks to his post
+	TimeSystem.set_time(18, 0)
+	TimeSystem.set_time(19, 0)
+	for i in 1800:
+		tam._physics_process(1.0 / 60.0)
+		if not tam.present:
+			break
+	check(not tam.present, "Tam goes home at 19:00")
+	TimeSystem.set_time(7, 0)
+	TimeSystem.set_time(8, 0)
+	check(bram.present and bram._travelling, "Bram steps out of the inn at 8 AM")
+	var door := bram.global_position
+	for i in 1800:
+		bram._physics_process(1.0 / 60.0)
+		if not bram._travelling:
+			break
+	check(not bram._travelling, "Bram finishes walking to his post")
+	check(bram.global_position.distance_to(bram.home_position) < 3.0, "Bram ends at his post (door was %s)" % door)
+	town.free()
+
+	# Loading an interior mid-day: occupants appear only if the schedule says so
+	TimeSystem.set_time(12, 0)
+	var forge: Node = load("res://scenes/interiors/forge.tscn").instantiate()
+	root.add_child(forge)
+	await physics_frames(2)
+	check(not forge.get_node("Entities/OrsaKell").present, "Orsa is not in the forge at noon")
+	TimeSystem.set_time(21, 0)
+	check(forge.get_node("Entities/OrsaKell").present, "Orsa walks back into the forge at 21:00")
+	forge.free()
+
+	# Tam's quest: ask, find the whistle on the beach, return it for coin
+	Game.reset()
+	var runner := DialogueRunner.new()
+	var tree: Dictionary = StoryData.load_json("res://data/dialogue/tam.json")
+	runner.begin(tree, Game.state)
+	eq(runner.node_id, "intro", "Tam opens with his problem")
+	runner.advance(0)
+	check(Game.state.quests.is_active("tams_whistle"), "accepting starts Tam's Whistle")
+	var beach: Node = load("res://scenes/world/beach.tscn").instantiate()
+	root.add_child(beach)
+	await physics_frames(2)
+	var whistle: Pickup = beach.get_node("Interactables/TamsWhistle")
+	whistle.interact(beach.get_node("Entities/Player"))
+	check(Game.state.count("bone_whistle") == 1, "the whistle is on the beach and can be taken")
+	beach.free()
+	runner.begin(tree, Game.state)
+	eq(runner.node_id, "return", "Tam thanks the player once they hold the whistle")
+	check(Game.state.count("bone_whistle") == 0 and Game.state.count("coin") == 10, "the whistle is traded for 10 coin")
+	check(Game.state.quests.is_done("tams_whistle"), "Tam's Whistle is complete")
+	Game.reset()
+	TimeSystem.set_time(12, 0)

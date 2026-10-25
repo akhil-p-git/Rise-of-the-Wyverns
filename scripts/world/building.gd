@@ -34,6 +34,7 @@ const GLOW_COLOR := Color(1.0, 0.88, 0.58, 1.0)
 @export var window_offsets: PackedVector2Array = []
 
 var _anim_time := 0.0
+var _area: AreaScene
 var _smoke_sprites: Array[Sprite2D] = []
 var _glow_sprites: Array[Sprite2D] = []
 
@@ -41,6 +42,7 @@ var _glow_sprites: Array[Sprite2D] = []
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
+	_area = AreaScene.of(self)
 	_setup_atmosphere()
 
 
@@ -73,7 +75,7 @@ func _setup_atmosphere() -> void:
 
 
 func _process(delta: float) -> void:
-	if Engine.is_editor_hint() or (_smoke_sprites.is_empty() and _glow_sprites.is_empty()):
+	if Engine.is_editor_hint() or _area == null or (_smoke_sprites.is_empty() and _glow_sprites.is_empty()):
 		return
 	_anim_time += delta
 	for i in _smoke_sprites.size():
@@ -85,7 +87,7 @@ func _process(delta: float) -> void:
 		var flicker := 0.64 + 0.14 * sin(_anim_time * 2.8 + float(i) * 1.3) + 0.05 * cos(_anim_time * 6.5)
 		# The CanvasModulate darkens everything at night, so the glow grows and brightens to read as light.
 		var night := TimeSystem.get_night_factor()
-		g.modulate = GLOW_COLOR * TimeSystem.get_light_compensation()
+		g.modulate = GLOW_COLOR * _area.light_compensation()
 		g.modulate.a = clampf(flicker * lerpf(0.55, 1.35, night), 0.3, 1.0)
 		g.scale = Vector2(0.24, 0.24) * lerpf(1.0, 1.7, night)
 

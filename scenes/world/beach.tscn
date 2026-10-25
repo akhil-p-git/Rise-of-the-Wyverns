@@ -249,6 +249,25 @@ shape = SubResource("reach_scrap")
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("13_scrap")
 
+[node name="TamsWhistle" type="Area2D" parent="Interactables"]
+position = Vector2(112, 92)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_pickup")
+prompt = "Take whistle"
+message = "A small bone whistle, half buried in wet sand. Tam's, surely."
+item = "bone_whistle"
+requires = PackedStringArray("active:tams_whistle")
+locked_message = "Something small and pale glints in the wet sand, but it is only a shell."
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/TamsWhistle"]
+shape = SubResource("reach_scrap")
+
+[node name="Mark" type="Polygon2D" parent="Interactables/TamsWhistle"]
+color = Color(0.93, 0.9, 0.8, 1)
+polygon = PackedVector2Array(0, -4, 3, 0, 0, 4, -3, 0)
+
 [node name="IronScrap3" type="Area2D" parent="Interactables"]
 position = Vector2(282, 116)
 collision_layer = 2

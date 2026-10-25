@@ -6,6 +6,7 @@ arrives, edit the generated scenes in the Godot editor instead and stop running 
 Run: python3 tools/gen_town_scenes.py
 """
 
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,6 +59,10 @@ class Scene:
         out.extend(self.sub_lines)
         out.extend(self.nodes)
         return "\n".join(out)
+
+
+# NPCs with an entry in data/schedules.json get their dialogue name as `npc_id`.
+SCHEDULED = set(json.loads((ROOT / "data" / "schedules.json").read_text()))
 
 
 def v(x: float, y: float) -> str:
@@ -302,6 +307,7 @@ def npc(
     props = {
         "position": v(x, y),
         "display_name": f'"{display}"',
+        "npc_id": f'"{dialogue}"' if dialogue in SCHEDULED else '""',
         "dialogue_path": f'"res://data/dialogue/{dialogue}.json"',
         "facing_row": str(row),
         "behaviour": f'"{behaviour}"',
@@ -340,6 +346,7 @@ def frame(
     ground_texture: str = "",
     music_cue: str = "mus_wrackmouth",
     ambience_cues: tuple[str, ...] = ("amb_wind", "amb_gulls"),
+    place_id: str = "",
 ) -> None:
     w, h = size
     amb_str = "PackedStringArray(" + ", ".join(f'"{c}"' for c in ambience_cues) + ")"
@@ -352,6 +359,7 @@ def frame(
         area_size=f"Vector2i({w}, {h})",
         music_cue=f'"{music_cue}"',
         ambience_cues=amb_str,
+        place_id=f'"{place_id}"',
     )
     if ground_texture:
         s.node(
@@ -429,6 +437,7 @@ def wrackmouth() -> str:
         "res://assets/wrackmouth/ground.png",
         music_cue="mus_wrackmouth",
         ambience_cues=("amb_wind", "amb_gulls", "amb_fire"),
+        place_id="town",
     )
     # North gate to the beach and the east road are the two ways out.
     borders(s, W, H, {"North": (296, 344), "East": (186, 238)})
@@ -696,8 +705,32 @@ def wrackmouth() -> str:
         "wren",
         col(1.0, 0.8, 0.8),
         sheet="wren",
-        behaviour="wander",
-        wander_radius=28,
+        behaviour="play",
+        wander_radius=55,
+    )
+    npc(
+        s,
+        "Tam",
+        345,
+        238,
+        "Tam",
+        "tam",
+        col(1.0, 1.0, 1.0),
+        sheet="kid_a",
+        behaviour="play",
+        wander_radius=55,
+    )
+    npc(
+        s,
+        "Isa",
+        292,
+        200,
+        "Isa",
+        "isa",
+        col(1.0, 1.0, 1.0),
+        sheet="kid_b",
+        behaviour="play",
+        wander_radius=50,
     )
 
     sign(

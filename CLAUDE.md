@@ -19,6 +19,7 @@ The addon in `addons/godot_mcp_enhanced` serves JSON over `POST http://127.0.0.1
 ## Rules
 - Story, world, factions, skills and character creation are decided in `docs/lore.md`; follow it and do not invent lore it marks (open). The third resource bar is `mana` (never "Magicka").
 - Raw Gemini images live in `assets/source/gemini/{hero,intro,beach,creatures,ui}` (JPEG, ignored by Godot). Build game assets from them with `tools/pixelize.py` and `tools/build_hero_sheet.py` (its input names match `hero/`) (31 raw files, about 45 MB, git-ignored on purpose: keep a copy outside the repo).
+- NPC daily schedules live in `data/schedules.json` (rules and how to add one: `docs/DESIGN_SPEC.md` section 5); kids use `behaviour = "play"`.
 - Every asset goes in `ASSETS.md` with source and license before use.
 - AI-generated art is concept or placeholder only; it may not be copyrightable and Steam requires disclosure.
 - Editor-only addons are removed from exports.

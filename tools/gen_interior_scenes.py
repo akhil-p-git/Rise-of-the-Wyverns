@@ -1,11 +1,8 @@
 """Generates the 7 house interior scenes for Wrackmouth in scenes/interiors/:
-- mayor_hall.tscn
-- forge.tscn
-- salt_gull.tscn
-- lantern_watch.tscn
-- cottage_harrow.tscn
-- cottage_rook.tscn
-- cottage_weaver.tscn
+mayor_hall, forge, salt_gull, lantern_watch, cottage_harrow, cottage_rook, cottage_weaver.
+
+Props are bottom-aligned sprites (the node sits at the prop's feet) drawn at 0.5 scale from
+assets/interiors/furniture/. Rooms are sized so the 320x180 camera sees most of one.
 
 Run: python3 tools/gen_interior_scenes.py
 """
@@ -15,17 +12,30 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+from PIL import Image
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-from gen_town_scenes import Scene, v, interactable
+from gen_town_scenes import SCHEDULED, Scene, v, interactable
 
 INTERIORS_DIR = ROOT / "scenes" / "interiors"
 INTERIORS_DIR.mkdir(parents=True, exist_ok=True)
+FURNITURE = "res://assets/interiors/furniture/"
 
 PLAYER_SCENE = "res://scenes/player/player.tscn"
 HUD_SCENE = "res://scenes/ui/hud.tscn"
 DLG_SCENE = "res://scenes/ui/dialogue_box.tscn"
 NPC_SCENE = "res://scenes/npc/npc.tscn"
+
+WOOD_FLOOR = "res://assets/interiors/floor_wood.png"
+STONE_FLOOR = "res://assets/interiors/floor_stone.png"
+TIMBER_WALL = "res://assets/interiors/wall_timber.png"
+STONE_WALL = "res://assets/interiors/wall_stone.png"
+
+
+def tex_size(name: str) -> tuple[int, int]:
+    with Image.open(ROOT / "assets" / "interiors" / "furniture" / f"{name}.png") as im:
+        return im.size
 
 
 def door(
@@ -65,8 +75,7 @@ def loot_container(
     loot: dict[str, int],
     radius: float = 16.0,
 ) -> None:
-    loot_pairs = ", ".join(f'"{k}": {v}' for k, v in loot.items())
-    loot_str = f"{{{loot_pairs}}}"
+    loot_pairs = ", ".join(f'"{k}": {n}' for k, n in loot.items())
     interactable(
         s,
         name,
@@ -76,39 +85,143 @@ def loot_container(
         radius,
         container_id=f'"{container_id}"',
         container_name=f'"{container_name}"',
-        loot=loot_str,
+        loot=f"{{{loot_pairs}}}",
     )
 
 
-def furn_prop(
+def prop(
     s: Scene,
     name: str,
+    tex: str,
     x: float,
     y: float,
-    tex: str,
-    cw: float,
-    ch: float,
-    col_y: float = -6.0,
-    offset_y: float = -12.0,
-    prop_scale: float = 0.5,
+    cw: float | None = None,
+    ch: float = 8.0,
+    scale: float = 0.5,
+    solid: bool = True,
 ) -> None:
-    """A Y-sorted solid furniture object with proportional scale."""
+    """A Y-sorted prop whose feet are at (x, y); solid props block a cw x ch footprint at the feet."""
+    w, h = tex_size(tex)
     s.node(name, "StaticBody2D", "Entities", position=v(x, y))
     s.node(
         "Sprite2D",
         "Sprite2D",
         f"Entities/{name}",
-        scale=v(prop_scale, prop_scale),
-        texture=s.ext("Texture2D", tex),
-        offset=v(0, offset_y / prop_scale),
+        scale=v(scale, scale),
+        texture=s.ext("Texture2D", FURNITURE + tex + ".png"),
+        offset=v(0, -h / 2.0),
+    )
+    if solid:
+        s.node(
+            "Shape",
+            "CollisionShape2D",
+            f"Entities/{name}",
+            position=v(0.0, -ch / 2.0),
+            shape=s.rect(cw if cw is not None else w * scale * 0.8, ch),
+        )
+
+
+def decor(s: Scene, name: str, tex: str, x: float, y: float, scale: float = 0.5, z: int = 0) -> None:
+    """Non-solid picture on the wall or floor (windows, banners, rugs), feet at (x, y)."""
+    _, h = tex_size(tex)
+    props = {
+        "position": v(x, y),
+        "scale": v(scale, scale),
+        "texture": s.ext("Texture2D", FURNITURE + tex + ".png"),
+        "offset": v(0, -h / 2.0),
+    }
+    if z:
+        props["z_index"] = str(z)
+    s.node(name, "Sprite2D", ".", **props)
+
+
+def window(s: Scene, name: str, x: float) -> None:
+    decor(s, name, "window_wall", x, 40.0)
+    s.node(
+        name + "Light",
+        "Sprite2D",
+        ".",
+        script=s.ext("Script", "res://scripts/world/day_light.gd"),
+        position=v(x, 76.0),
+        scale=v(0.5, 0.5),
+        texture=s.ext("Texture2D", FURNITURE + "light_shaft.png"),
+        z_index="1",
+    )
+
+
+def animated(
+    s: Scene,
+    name: str,
+    x: float,
+    y: float,
+    sheet: str,
+    frames: int,
+    frame_h: float,
+    glow: str,
+    glow_scale: tuple[float, float],
+    glow_offset: tuple[float, float],
+    scale: float = 0.5,
+    fps: float = 7.0,
+    shape: tuple[float, float] | None = None,
+    z_index: int = 0,
+) -> None:
+    """A prop with an animated sprite sheet and a pulsing additive halo (see animated_prop.gd)."""
+    extra = {"z_index": str(z_index)} if z_index else {}
+    s.node(
+        name,
+        "StaticBody2D",
+        "Entities",
+        position=v(x, y),
+        script=s.ext("Script", "res://scripts/world/animated_prop.gd"),
+        fps=f"{fps:g}",
+        glow_texture=s.ext("Texture2D", FURNITURE + glow + ".png"),
+        glow_scale=v(*glow_scale),
+        glow_offset=v(*glow_offset),
+        **extra,
     )
     s.node(
-        "Shape",
-        "CollisionShape2D",
+        "Sprite2D",
+        "Sprite2D",
         f"Entities/{name}",
-        position=v(0.0, col_y),
-        shape=s.rect(cw, ch),
+        scale=v(scale, scale),
+        texture=s.ext("Texture2D", FURNITURE + sheet + ".png"),
+        offset=v(0, -frame_h / 2.0),
+        hframes=str(frames),
     )
+    if shape:
+        s.node("Shape", "CollisionShape2D", f"Entities/{name}", position=v(0, -shape[1] / 2.0), shape=s.rect(*shape))
+
+
+def hearth(s: Scene, name: str, x: float, y: float, scale: float = 0.5) -> None:
+    """A stone hearth with live flames and a warm halo; (x, y) is the hearth's feet."""
+    w, h = tex_size("hearth")
+    prop(s, name, "hearth", x, y, cw=w * scale * 0.8, ch=10.0, scale=scale)
+    # The fire sits in the opening (texture px 48, 78); z_index 1 draws it over the stonework it sits behind.
+    animated(
+        s,
+        name + "Fire",
+        x,
+        y - (h - 78) * scale + 0.5,
+        "hearth_fire_sheet",
+        4,
+        40.0,
+        "hearth_glow",
+        (0.55 * scale / 0.5, 0.4 * scale / 0.5),
+        (0.0, -10.0 * scale / 0.5),
+        scale=scale,
+        z_index=1,
+    )
+
+
+def candle(s: Scene, name: str, x: float, y: float) -> None:
+    animated(
+        s, name, x, y, "candle_stand", 1, 40.0, "candle_glow", (0.55, 0.55), (0.0, -17.0), fps=1.0, shape=(6.0, 5.0)
+    )
+
+
+def chest(s: Scene, name: str, x: float, y: float, container_id: str, container_name: str, loot: dict[str, int]) -> None:
+    prop(s, name + "Visual", "chest", x, y, cw=26.0, ch=9.0, scale=0.5)
+    loot_container(s, name, x, y - 5.0, container_id, container_name, loot)
 
 
 def npc(
@@ -117,37 +230,32 @@ def npc(
     x: float,
     y: float,
     display_name: str,
-    dialogue_path: str,
-    sprite_sheet_res: str,
+    dialogue: str,
+    sheet: str,
     facing_row: int = 0,
     behaviour: str = "stationary",
     wander_radius: float = 0.0,
 ) -> None:
-    """Instances an interactive NPC with correct Npc export properties."""
+    """Instances an interactive NPC; scheduled NPCs get their dialogue name as `npc_id`."""
     s.instance(
         name,
         "Entities",
         NPC_SCENE,
         position=v(x, y),
         display_name=f'"{display_name}"',
-        dialogue_path=f'"{dialogue_path}"',
-        sprite_sheet=s.ext("Texture2D", sprite_sheet_res),
+        npc_id=f'"{dialogue}"' if dialogue in SCHEDULED else '""',
+        dialogue_path=f'"res://data/dialogue/{dialogue}.json"',
+        sprite_sheet=s.ext("Texture2D", f"res://assets/npc/{sheet}.png"),
         facing_row=str(facing_row),
         behaviour=f'"{behaviour}"',
-        wander_radius=str(wander_radius),
+        wander_radius=f"{wander_radius:g}",
     )
 
 
 def build_room_base(
-    s: Scene,
-    w: float,
-    h: float,
-    door_x: float,
-    floor_tex: str,
-    wall_tex: str,
-    building_id: str,
+    s: Scene, w: float, h: float, door_x: float, floor_tex: str, wall_tex: str, building_id: str, building_name: str
 ) -> None:
-    """Constructs the base room walls, tiled floor, door threshold, player, hud, and dialogue."""
+    """Root, floor, wall header, perimeter collision, exit door, player, HUD and dialogue."""
     s.node(
         "Interior",
         "Node2D",
@@ -157,18 +265,12 @@ def build_room_base(
         music_cue='"mus_wrackmouth"',
         ambience_cues='PackedStringArray("amb_fire")',
         is_outdoor="false",
+        place_id=f'"{building_id}"',
     )
+    # Ambient tint; area_scene.gd fades it between a bright day and a dark night every frame.
+    s.node("WarmIndoorLight", "CanvasModulate", ".", color="Color(1.0, 0.96, 0.88, 1.0)")
 
-    # Cozy warm indoor ambient light
-    s.node(
-        "WarmIndoorLight",
-        "CanvasModulate",
-        ".",
-        color="Color(1.0, 0.96, 0.88, 1.0)",
-    )
-
-    # Tiled Floor (TextureRect with STRETCH_TILE). The tile is 4x density art, so the rect is
-    # laid out in texture pixels and scaled down 0.25 to world units.
+    # The floor tile is 4x density art: lay the rect out in texture pixels and scale it down 0.25.
     s.node(
         "Floor",
         "TextureRect",
@@ -178,77 +280,41 @@ def build_room_base(
         scale=v(0.25, 0.25),
         texture=s.ext("Texture2D", floor_tex),
         stretch_mode="1",
+        z_index="-2",
     )
-
-    # Timber / Stone Wall Header
-    wall_scale_x = w / 512.0
     s.node(
         "WallHeader",
         "Sprite2D",
         ".",
         position=v(w / 2.0, 24.0),
-        scale=v(wall_scale_x, 0.5),
+        scale=v(w / 512.0, 0.5),
         texture=s.ext("Texture2D", wall_tex),
+        z_index="-2",
     )
 
-    # Perimeter Wall Collisions
     s.node("Walls", "StaticBody2D", ".")
-
-    # Top wall
-    s.node(
-        "TopWall",
-        "CollisionShape2D",
-        "Walls",
-        position=v(w / 2.0, 24.0),
-        shape=s.rect(w, 48.0),
-    )
-    # Left wall
-    s.node(
-        "LeftWall",
-        "CollisionShape2D",
-        "Walls",
-        position=v(8.0, h / 2.0),
-        shape=s.rect(16.0, h),
-    )
-    # Right wall
-    s.node(
-        "RightWall",
-        "CollisionShape2D",
-        "Walls",
-        position=v(w - 8.0, h / 2.0),
-        shape=s.rect(16.0, h),
-    )
-    # Bottom wall left of door
-    bw_l = max(0.0, door_x - 22.0)
-    if bw_l > 0.0:
-        s.node(
-            "BottomWallLeft",
-            "CollisionShape2D",
-            "Walls",
-            position=v(bw_l / 2.0, h - 8.0),
-            shape=s.rect(bw_l, 16.0),
-        )
-    # Bottom wall right of door
-    bw_r = max(0.0, w - (door_x + 22.0))
-    if bw_r > 0.0:
+    s.node("TopWall", "CollisionShape2D", "Walls", position=v(w / 2.0, 24.0), shape=s.rect(w, 48.0))
+    s.node("LeftWall", "CollisionShape2D", "Walls", position=v(8.0, h / 2.0), shape=s.rect(16.0, h))
+    s.node("RightWall", "CollisionShape2D", "Walls", position=v(w - 8.0, h / 2.0), shape=s.rect(16.0, h))
+    gap = 22.0
+    left = max(0.0, door_x - gap)
+    if left > 0.0:
+        s.node("BottomWallLeft", "CollisionShape2D", "Walls", position=v(left / 2.0, h - 8.0), shape=s.rect(left, 16.0))
+    right = max(0.0, w - (door_x + gap))
+    if right > 0.0:
         s.node(
             "BottomWallRight",
             "CollisionShape2D",
             "Walls",
-            position=v(door_x + 22.0 + bw_r / 2.0, h - 8.0),
-            shape=s.rect(bw_r, 16.0),
+            position=v(door_x + gap + right / 2.0, h - 8.0),
+            shape=s.rect(right, 16.0),
         )
 
-    # Groups
     s.node("Entities", "Node2D", ".", y_sort_enabled="true")
     s.node("Interactables", "Node2D", ".")
     s.node("Zones", "Node2D", ".")
     s.node("Spawns", "Node2D", ".")
-
-    # Spawns: from_town marker inside door threshold
     s.node("from_town", "Marker2D", "Spawns", position=v(door_x, h - 45.0))
-
-    # Exit door leading back to Wrackmouth
     door(
         s,
         "DoorExit",
@@ -261,190 +327,53 @@ def build_room_base(
         is_exit=True,
         radius=16.0,
     )
-
-    # Player instance
     s.instance("Player", "Entities", PLAYER_SCENE, position=v(door_x, h - 45.0))
-
-    # HUD & Dialogue
     s.instance("Hud", ".", HUD_SCENE)
     s.instance("DialogueBox", ".", DLG_SCENE)
 
 
+def rug(s: Scene, name: str, tex: str, x: float, y: float, scale: float = 0.5) -> None:
+    decor(s, name, tex, x, y, scale=scale, z=-1)
+
+
+def write(s: Scene, building_id: str) -> None:
+    (INTERIORS_DIR / f"{building_id}.tscn").write_text(s.render())
+
+
 # =============================================================================
-# 1. Mayor's Hall (Wrackmouth Great Longhouse)
+# 1. Mayor's Hall
 # =============================================================================
 def gen_mayor_hall() -> None:
     s = Scene()
-    w, h = 460, 290
-    door_x = 230.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_wood.png",
-        "res://assets/interiors/wall_timber.png",
-        "mayor_hall",
-    )
+    w, h, dx = 340.0, 230.0, 170.0
+    build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "mayor_hall", "Mayor's Hall")
+    window(s, "WindowWest", 55.0)
+    window(s, "WindowEast", 285.0)
+    decor(s, "BannerWest", "banner", 112.0, 46.0)
+    decor(s, "BannerEast", "banner", 228.0, 46.0)
+    rug(s, "AisleRug", "rug_woven", 170.0, 170.0, scale=0.7)
+    rug(s, "FurRug", "fur_rug", 170.0, 112.0)
 
-    # Central woven hall runner leading from entrance toward council dais
-    s.node("AisleRug", "StaticBody2D", "Entities", position=v(230.0, 165.0))
-    s.node(
-        "Sprite2D",
-        "Sprite2D",
-        "Entities/AisleRug",
-        scale=v(0.5, 0.7),
-        texture=s.ext("Texture2D", "res://assets/interiors/furniture/rug_woven.png"),
-        offset=v(0, 0),
-    )
+    hearth(s, "Hearth", 170.0, 74.0)
+    candle(s, "CandleWest", 128.0, 86.0)
+    candle(s, "CandleEast", 212.0, 86.0)
+    prop(s, "MayorChair", "chair_wood", 170.0, 92.0, cw=18.0, ch=8.0)
+    prop(s, "RecordsDesk", "desk_scrolls", 98.0, 108.0, cw=50.0, ch=10.0)
+    prop(s, "RecordsStool", "stool", 98.0, 94.0, cw=10.0, ch=6.0)
+    prop(s, "Cupboard", "cupboard", 48.0, 92.0, cw=32.0, ch=10.0)
+    loot_container(s, "MayorDesk", 48.0, 88.0, "mayor_hall_cupboard", "Records Cupboard", {"coin": 8, "mayor_letter": 1})
+    chest(s, "MayorChest", 300.0, 98.0, "mayor_hall_chest", "Council Strongbox", {"coin": 18})
+    prop(s, "WeaponRack", "weapon_rack", 296.0, 140.0, cw=30.0, ch=8.0)
+    prop(s, "TableWest", "table_food", 95.0, 176.0, cw=44.0, ch=10.0)
+    prop(s, "TableEast", "table_food", 245.0, 176.0, cw=44.0, ch=10.0)
+    for nm, sx in (("StoolA", 66.0), ("StoolB", 124.0), ("StoolC", 216.0), ("StoolD", 274.0)):
+        prop(s, nm, "stool", sx, 182.0, cw=10.0, ch=6.0)
+    prop(s, "Sacks", "sacks", 36.0, 150.0, cw=30.0, ch=8.0)
 
-    # Stately Carved Dais Chair behind Mayor Tolle
-    furn_prop(
-        s,
-        "MayorChair",
-        230.0,
-        80.0,
-        "res://assets/interiors/furniture/chair_wood.png",
-        18.0,
-        14.0,
-        col_y=-6.0,
-        offset_y=-12.0,
-        prop_scale=0.45,
-    )
-
-    # Grand Stone Fireplace Hearth on North-East Wall
-    furn_prop(
-        s,
-        "GreatHearth",
-        380.0,
-        74.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-
-    # Long Oak Great Council Table (Right Side of Hall, out of center aisle)
-    furn_prop(
-        s,
-        "CouncilTable",
-        340.0,
-        150.0,
-        "res://assets/interiors/furniture/table_wood.png",
-        50.0,
-        20.0,
-        col_y=-10.0,
-        offset_y=-14.0,
-        prop_scale=0.5,
-    )
-
-    # Municipal Records Cupboard (Left Wall)
-    furn_prop(
-        s,
-        "RecordsCupboard",
-        70.0,
-        64.0,
-        "res://assets/interiors/furniture/cupboard.png",
-        28.0,
-        16.0,
-        col_y=-8.0,
-        offset_y=-20.0,
-        prop_scale=0.4,
-    )
-
-    # Chancellor's Records Desk (Left Nook)
-    furn_prop(
-        s,
-        "ChancellorDesk",
-        95.0,
-        120.0,
-        "res://assets/interiors/furniture/table_wood.png",
-        40.0,
-        18.0,
-        col_y=-8.0,
-        offset_y=-12.0,
-        prop_scale=0.4,
-    )
-
-    # Loot Containers
-    loot_container(
-        s,
-        "MayorChest",
-        50.0,
-        100.0,
-        "mayor_hall_chest",
-        "Council Strongbox",
-        {"coin": 18},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        50.0,
-        100.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    loot_container(
-        s,
-        "MayorDesk",
-        70.0,
-        78.0,
-        "mayor_hall_cupboard",
-        "Records Cupboard",
-        {"coin": 8, "mayor_letter": 1},
-    )
-
-    # --- NPCs ---
-    # 1. Mayor Maren Tolle at the council dais (CENTER, DIRECTLY REACHABLE FROM ENTRANCE)
-    npc(
-        s,
-        "MayorTolle",
-        230.0,
-        115.0,
-        display_name="Mayor Maren Tolle",
-        dialogue_path="res://data/dialogue/mayor.json",
-        sprite_sheet_res="res://assets/npc/mayor.png",
-        facing_row=0,
-        behaviour="stationary",
-        wander_radius=0.0,
-    )
-
-    # 2. Chancellor Alden at the Records Desk (Left Side)
-    npc(
-        s,
-        "ChancellorAlden",
-        115.0,
-        130.0,
-        display_name="Chancellor Alden",
-        dialogue_path="res://data/dialogue/chancellor.json",
-        sprite_sheet_res="res://assets/npc/ansa.png",
-        facing_row=0,
-        behaviour="stationary",
-        wander_radius=0.0,
-    )
-
-    # 3. Guard Vance near the Hall Entrance
-    npc(
-        s,
-        "GuardVance",
-        165.0,
-        235.0,
-        display_name="Guard Vance",
-        dialogue_path="res://data/dialogue/guard.json",
-        sprite_sheet_res="res://assets/npc/guard.png",
-        facing_row=3,
-        behaviour="stationary",
-        wander_radius=0.0,
-    )
-
-    (INTERIORS_DIR / "mayor_hall.tscn").write_text(s.render())
+    npc(s, "MayorTolle", 170.0, 108.0, "Mayor Maren Tolle", "mayor", "mayor")
+    npc(s, "ChancellorAlden", 130.0, 122.0, "Chancellor Alden", "chancellor", "ansa")
+    npc(s, "GuardVance", 124.0, 200.0, "Guard Vance", "guard", "guard", facing_row=3)
+    write(s, "mayor_hall")
 
 
 # =============================================================================
@@ -452,119 +381,20 @@ def gen_mayor_hall() -> None:
 # =============================================================================
 def gen_forge() -> None:
     s = Scene()
-    w, h = 384, 256
-    door_x = 192.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_stone.png",
-        "res://assets/interiors/wall_stone.png",
-        "forge",
-    )
-
-    # Glowing Forge Hearth
-    furn_prop(
-        s,
-        "ForgeHearth",
-        110.0,
-        70.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-    # Anvil on Stump
-    furn_prop(
-        s,
-        "Anvil",
-        170.0,
-        110.0,
-        "res://assets/interiors/furniture/anvil.png",
-        18.0,
-        14.0,
-        col_y=-7.0,
-        offset_y=-10.0,
-        prop_scale=0.4,
-    )
-    # Heavy workbench table
-    furn_prop(
-        s,
-        "WorkTable",
-        290.0,
-        75.0,
-        "res://assets/interiors/furniture/table_wood.png",
-        48.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-14.0,
-        prop_scale=0.45,
-    )
-    # Barrels
-    furn_prop(
-        s,
-        "Barrels",
-        50.0,
-        70.0,
-        "res://assets/interiors/furniture/barrels.png",
-        28.0,
-        14.0,
-        col_y=-7.0,
-        offset_y=-10.0,
-        prop_scale=0.4,
-    )
-
-    # Loot Containers
-    loot_container(
-        s,
-        "ScrapBin",
-        340.0,
-        80.0,
-        "forge_scrap_bin",
-        "Iron Scrap Bin",
-        {"coin": 12, "iron_scrap": 2},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        340.0,
-        80.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    loot_container(
-        s,
-        "ToolChest",
-        240.0,
-        76.0,
-        "forge_tool_box",
-        "Tool Chest",
-        {"iron_scrap": 2, "coin": 6},
-    )
-
-    # Blacksmith Orsa Kell
-    npc(
-        s,
-        "OrsaKell",
-        190.0,
-        110.0,
-        display_name="Orsa Kell",
-        dialogue_path="res://data/dialogue/orsa.json",
-        sprite_sheet_res="res://assets/npc/orsa.png",
-        facing_row=0,
-        behaviour="wander",
-        wander_radius=20.0,
-    )
-
-    (INTERIORS_DIR / "forge.tscn").write_text(s.render())
+    w, h, dx = 300.0, 190.0, 150.0
+    build_room_base(s, w, h, dx, STONE_FLOOR, STONE_WALL, "forge", "Kell's Forge")
+    window(s, "WindowWest", 70.0)
+    hearth(s, "ForgeHearth", 205.0, 78.0, scale=0.75)
+    prop(s, "ToolRack", "tool_rack", 78.0, 80.0, cw=32.0, ch=8.0)
+    prop(s, "Anvil", "anvil", 150.0, 118.0, cw=22.0, ch=8.0)
+    prop(s, "Grindstone", "grindstone", 258.0, 128.0, cw=18.0, ch=8.0)
+    prop(s, "CoalBin", "coal_bin", 262.0, 100.0, cw=22.0, ch=8.0)
+    prop(s, "Trough", "trough", 96.0, 138.0, cw=30.0, ch=8.0)
+    prop(s, "Barrels", "barrels", 34.0, 150.0, cw=34.0, ch=10.0)
+    chest(s, "ScrapBin", 36.0, 104.0, "forge_scrap_bin", "Iron Scrap Bin", {"coin": 12, "iron_scrap": 2})
+    chest(s, "ToolChest", 262.0, 160.0, "forge_tool_box", "Tool Chest", {"iron_scrap": 2, "coin": 6})
+    npc(s, "OrsaKell", 185.0, 134.0, "Orsa Kell", "orsa", "orsa", behaviour="wander", wander_radius=14.0)
+    write(s, "forge")
 
 
 # =============================================================================
@@ -572,142 +402,38 @@ def gen_forge() -> None:
 # =============================================================================
 def gen_salt_gull() -> None:
     s = Scene()
-    w, h = 460, 280
-    door_x = 230.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_wood.png",
-        "res://assets/interiors/wall_timber.png",
-        "salt_gull",
-    )
+    w, h, dx = 340.0, 230.0, 170.0
+    build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "salt_gull", "The Salt Gull")
+    window(s, "WindowWest", 40.0)
+    window(s, "WindowEast", 300.0)
+    decor(s, "BottleShelf", "bottle_shelf", 98.0, 44.0)
+    rug(s, "FurRug", "fur_rug", 170.0, 168.0)
 
-    # Long Bar Counter
-    furn_prop(
-        s,
-        "BarCounter",
-        140.0,
-        96.0,
-        "res://assets/interiors/furniture/counter_bar.png",
-        68.0,
-        16.0,
-        col_y=-8.0,
-        offset_y=-12.0,
-        prop_scale=0.5,
-    )
-    # Kegs & Barrels behind bar
-    furn_prop(
-        s,
-        "AleBarrels",
-        90.0,
-        58.0,
-        "res://assets/interiors/furniture/barrels.png",
-        28.0,
-        14.0,
-        col_y=-7.0,
-        offset_y=-10.0,
-        prop_scale=0.4,
-    )
-    # Large Roaring Tavern Hearth
-    furn_prop(
-        s,
-        "TavernHearth",
-        360.0,
-        74.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-    # Tavern Dining Table
-    furn_prop(
-        s,
-        "DiningTable",
-        300.0,
-        160.0,
-        "res://assets/interiors/furniture/table_wood.png",
-        50.0,
-        20.0,
-        col_y=-10.0,
-        offset_y=-14.0,
-        prop_scale=0.5,
-    )
-    # Guest bed in side alcove
-    furn_prop(
-        s,
-        "InnBed",
-        60.0,
-        190.0,
-        "res://assets/interiors/furniture/bed_wood.png",
-        30.0,
-        24.0,
-        col_y=-12.0,
-        offset_y=-18.0,
-        prop_scale=0.4,
-    )
-    # Rug in dining area
-    s.node("Rug", "StaticBody2D", "Entities", position=v(300.0, 162.0))
+    prop(s, "Bar", "counter_bar", 98.0, 100.0, cw=68.0, ch=12.0)
+    prop(s, "Barrels", "barrels", 148.0, 82.0, cw=34.0, ch=10.0)
+    hearth(s, "Hearth", 240.0, 76.0)
+    candle(s, "CandleWest", 204.0, 90.0)
+    candle(s, "CandleEast", 276.0, 90.0)
+    prop(s, "GuestBed", "bed_wood", 302.0, 112.0, cw=36.0, ch=14.0)
+    prop(s, "TableNear", "table_food", 232.0, 150.0, cw=44.0, ch=10.0)
+    prop(s, "TableFar", "table_food", 110.0, 170.0, cw=44.0, ch=10.0)
+    for nm, sx, sy in (("StoolA", 205.0, 158.0), ("StoolB", 258.0, 158.0), ("StoolC", 82.0, 178.0), ("StoolD", 138.0, 178.0)):
+        prop(s, nm, "stool", sx, sy, cw=10.0, ch=6.0)
+    prop(s, "Bench", "bench", 300.0, 182.0, cw=44.0, ch=8.0)
+    chest(s, "PantryChest", 40.0, 124.0, "inn_pantry_chest", "Tavern Larder", {"coin": 14, "salvage_crate": 1})
+    loot_container(s, "PatronPouch", 300.0, 170.0, "inn_patron_pouch", "Dropped Coin Purse", {"coin": 9})
     s.node(
-        "Sprite2D",
-        "Sprite2D",
-        "Entities/Rug",
-        scale=v(0.5, 0.5),
-        texture=s.ext("Texture2D", "res://assets/interiors/furniture/rug_woven.png"),
-        offset=v(0, 0),
+        "Mark",
+        "Polygon2D",
+        "Interactables/PatronPouch",
+        color="Color(0.8, 0.65, 0.25, 1)",
+        polygon="PackedVector2Array(0, -4, 3, 0, 0, 4, -3, 0)",
     )
 
-    # Loot Containers
-    loot_container(
-        s,
-        "PantryChest",
-        410.0,
-        76.0,
-        "inn_pantry_chest",
-        "Tavern Larder",
-        {"coin": 14, "salvage_crate": 1},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        410.0,
-        76.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    loot_container(
-        s,
-        "PatronPouch",
-        260.0,
-        170.0,
-        "inn_patron_pouch",
-        "Dropped Coin Purse",
-        {"coin": 9},
-    )
-
-    # Innkeeper Bram Quillon behind the counter (easily reachable across bar)
-    npc(
-        s,
-        "BramQuillon",
-        140.0,
-        78.0,
-        display_name="Bram Quillon",
-        dialogue_path="res://data/dialogue/bram.json",
-        sprite_sheet_res="res://assets/npc/bram.png",
-        facing_row=0,
-        behaviour="stationary",
-        wander_radius=0.0,
-    )
-
-    (INTERIORS_DIR / "salt_gull.tscn").write_text(s.render())
+    npc(s, "BramQuillon", 98.0, 80.0, "Bram Quillon", "bram", "bram", behaviour="wander", wander_radius=14.0)
+    npc(s, "OrsaKell", 232.0, 168.0, "Orsa Kell", "orsa", "orsa", facing_row=1)
+    npc(s, "Pell", 112.0, 190.0, "Pell Harrow", "pell", "pell", facing_row=1)
+    write(s, "salt_gull")
 
 
 # =============================================================================
@@ -715,300 +441,74 @@ def gen_salt_gull() -> None:
 # =============================================================================
 def gen_lantern_watch() -> None:
     s = Scene()
-    w, h = 320, 240
-    door_x = 160.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_stone.png",
-        "res://assets/interiors/wall_stone.png",
-        "lantern_watch",
-    )
-
-    # Watchtower Hearth
-    furn_prop(
-        s,
-        "WatchHearth",
-        90.0,
-        70.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-    # Watchman's Desk
-    furn_prop(
-        s,
-        "WatchDesk",
-        230.0,
-        75.0,
-        "res://assets/interiors/furniture/table_wood.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-14.0,
-        prop_scale=0.45,
-    )
-    # Narrow Watch Cot
-    furn_prop(
-        s,
-        "WatchCot",
-        50.0,
-        150.0,
-        "res://assets/interiors/furniture/bed_wood.png",
-        30.0,
-        24.0,
-        col_y=-12.0,
-        offset_y=-18.0,
-        prop_scale=0.4,
-    )
-
-    # Loot Container: Watch Locker
-    loot_container(
-        s,
-        "WatchLocker",
-        280.0,
-        78.0,
-        "lantern_watch_locker",
-        "Watchman Locker",
-        {"coin": 10, "salvage_crate": 1},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        280.0,
-        78.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    # Watchman Teague Marrow
-    npc(
-        s,
-        "TeagueMarrow",
-        210.0,
-        110.0,
-        display_name="Teague Marrow",
-        dialogue_path="res://data/dialogue/teague.json",
-        sprite_sheet_res="res://assets/npc/teague.png",
-        facing_row=0,
-        behaviour="wander",
-        wander_radius=18.0,
-    )
-
-    (INTERIORS_DIR / "lantern_watch.tscn").write_text(s.render())
+    w, h, dx = 260.0, 200.0, 130.0
+    build_room_base(s, w, h, dx, STONE_FLOOR, STONE_WALL, "lantern_watch", "Lantern Watch")
+    window(s, "WindowWest", 50.0)
+    window(s, "WindowEast", 210.0)
+    hearth(s, "Hearth", 130.0, 76.0)
+    candle(s, "CandleWest", 92.0, 90.0)
+    candle(s, "CandleEast", 168.0, 90.0)
+    prop(s, "WeaponRackWest", "weapon_rack", 52.0, 98.0, cw=30.0, ch=8.0)
+    prop(s, "WeaponRackEast", "weapon_rack", 208.0, 98.0, cw=30.0, ch=8.0)
+    prop(s, "BunkWest", "bed_wood", 44.0, 156.0, cw=36.0, ch=14.0)
+    prop(s, "BunkEast", "bed_wood", 216.0, 156.0, cw=36.0, ch=14.0)
+    prop(s, "Table", "table_food", 130.0, 128.0, cw=44.0, ch=10.0)
+    prop(s, "StoolA", "stool", 104.0, 136.0, cw=10.0, ch=6.0)
+    prop(s, "StoolB", "stool", 156.0, 136.0, cw=10.0, ch=6.0)
+    chest(s, "WatchLocker", 238.0, 78.0, "lantern_watch_locker", "Watchman Locker", {"coin": 10, "salvage_crate": 1})
+    npc(s, "TeagueMarrow", 90.0, 170.0, "Teague Marrow", "teague", "teague", behaviour="wander", wander_radius=14.0)
+    write(s, "lantern_watch")
 
 
 # =============================================================================
-# 5. Harrow Cottage (Fisherman's Hut)
+# 5. Harrow Cottage (the fisher Pell's home)
 # =============================================================================
 def gen_cottage_harrow() -> None:
     s = Scene()
-    w, h = 340, 240
-    door_x = 170.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_wood.png",
-        "res://assets/interiors/wall_timber.png",
-        "cottage_harrow",
-    )
-
-    # Hearth
-    furn_prop(
-        s,
-        "Hearth",
-        90.0,
-        70.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-    # Fisher's Cot
-    furn_prop(
-        s,
-        "Bed",
-        60.0,
-        150.0,
-        "res://assets/interiors/furniture/bed_wood.png",
-        30.0,
-        24.0,
-        col_y=-12.0,
-        offset_y=-18.0,
-        prop_scale=0.4,
-    )
-    # Fish-salting Table
-    furn_prop(
-        s,
-        "Table",
-        240.0,
-        75.0,
-        "res://assets/interiors/furniture/table_wood.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-14.0,
-        prop_scale=0.45,
-    )
-
-    # Loot Container: Fish Creel
-    loot_container(
-        s,
-        "FishCreel",
-        285.0,
-        78.0,
-        "harrow_creel",
-        "Fisher Creel",
-        {"coin": 7, "iron_scrap": 1},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        285.0,
-        78.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    # Fisher Ansa NPC
-    npc(
-        s,
-        "Ansa",
-        210.0,
-        110.0,
-        display_name="Ansa Rook",
-        dialogue_path="res://data/dialogue/ansa.json",
-        sprite_sheet_res="res://assets/npc/ansa.png",
-        facing_row=0,
-        behaviour="wander",
-        wander_radius=18.0,
-    )
-
-    (INTERIORS_DIR / "cottage_harrow.tscn").write_text(s.render())
+    w, h, dx = 240.0, 170.0, 120.0
+    build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "cottage_harrow", "Harrow Cottage")
+    window(s, "WindowWest", 60.0)
+    decor(s, "Herbs", "herb_bunches", 150.0, 40.0)
+    rug(s, "FurRug", "fur_rug", 120.0, 136.0, scale=0.4)
+    hearth(s, "Hearth", 200.0, 76.0)
+    prop(s, "Cauldron", "cauldron", 160.0, 96.0, cw=16.0, ch=8.0)
+    prop(s, "NetRack", "net_rack", 112.0, 72.0, cw=40.0, ch=8.0)
+    prop(s, "Bed", "bed_wood", 40.0, 112.0, cw=36.0, ch=14.0)
+    prop(s, "Cot", "bed_kid", 214.0, 142.0, cw=28.0, ch=12.0)
+    prop(s, "Table", "table_food", 168.0, 134.0, cw=44.0, ch=10.0)
+    prop(s, "StoolA", "stool", 142.0, 142.0, cw=10.0, ch=6.0)
+    prop(s, "Barrels", "barrels", 44.0, 150.0, cw=34.0, ch=10.0)
+    chest(s, "FishCreel", 84.0, 150.0, "harrow_creel", "Fisher Creel", {"coin": 7, "iron_scrap": 1})
+    candle(s, "Candle", 82.0, 84.0)
+    npc(s, "Pell", 100.0, 108.0, "Pell Harrow", "pell", "pell", behaviour="wander", wander_radius=14.0)
+    npc(s, "Tam", 150.0, 112.0, "Tam", "tam", "kid_a", behaviour="wander", wander_radius=22.0)
+    write(s, "cottage_harrow")
 
 
 # =============================================================================
-# 6. Rook Cottage (Widow Rook's Home)
+# 6. Rook Cottage (the widow Ansa's home, an apothecary corner)
 # =============================================================================
 def gen_cottage_rook() -> None:
     s = Scene()
-    w, h = 330, 230
-    door_x = 165.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_wood.png",
-        "res://assets/interiors/wall_stone.png",
-        "cottage_rook",
-    )
-
-    # Hearth
-    furn_prop(
-        s,
-        "Hearth",
-        90.0,
-        70.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-    # Bed
-    furn_prop(
-        s,
-        "Bed",
-        55.0,
-        145.0,
-        "res://assets/interiors/furniture/bed_wood.png",
-        30.0,
-        24.0,
-        col_y=-12.0,
-        offset_y=-18.0,
-        prop_scale=0.4,
-    )
-    # Herb dresser / cupboard
-    furn_prop(
-        s,
-        "Cupboard",
-        230.0,
-        64.0,
-        "res://assets/interiors/furniture/cupboard.png",
-        28.0,
-        16.0,
-        col_y=-8.0,
-        offset_y=-20.0,
-        prop_scale=0.4,
-    )
-    # Hearth rug
-    s.node("Rug", "StaticBody2D", "Entities", position=v(150.0, 120.0))
-    s.node(
-        "Sprite2D",
-        "Sprite2D",
-        "Entities/Rug",
-        scale=v(0.4, 0.4),
-        texture=s.ext("Texture2D", "res://assets/interiors/furniture/rug_woven.png"),
-        offset=v(0, 0),
-    )
-
-    # Loot Container: Herbalist Basket
-    loot_container(
-        s,
-        "HerbChest",
-        275.0,
-        76.0,
-        "rook_herb_chest",
-        "Apothecary Box",
-        {"coin": 8, "moonherb": 2},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        275.0,
-        76.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    # Pell NPC
-    npc(
-        s,
-        "Pell",
-        190.0,
-        110.0,
-        display_name="Pell Harrow",
-        dialogue_path="res://data/dialogue/pell.json",
-        sprite_sheet_res="res://assets/npc/pell.png",
-        facing_row=0,
-        behaviour="wander",
-        wander_radius=18.0,
-    )
-
-    (INTERIORS_DIR / "cottage_rook.tscn").write_text(s.render())
+    w, h, dx = 240.0, 170.0, 120.0
+    build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "cottage_rook", "Rook Cottage")
+    window(s, "WindowEast", 180.0)
+    decor(s, "HerbsWest", "herb_bunches", 104.0, 40.0)
+    decor(s, "HerbsMid", "herb_bunches", 150.0, 40.0)
+    rug(s, "FurRug", "fur_rug", 120.0, 136.0, scale=0.4)
+    hearth(s, "Hearth", 56.0, 76.0)
+    prop(s, "Cauldron", "cauldron", 96.0, 96.0, cw=16.0, ch=8.0)
+    prop(s, "Shelf", "shelf_unit", 206.0, 82.0, cw=26.0, ch=8.0)
+    prop(s, "Bed", "bed_wood", 206.0, 138.0, cw=36.0, ch=14.0)
+    prop(s, "Cot", "bed_kid", 160.0, 146.0, cw=28.0, ch=12.0)
+    prop(s, "Table", "table_food", 58.0, 140.0, cw=44.0, ch=10.0)
+    prop(s, "StoolA", "stool", 34.0, 148.0, cw=10.0, ch=6.0)
+    prop(s, "StoolB", "stool", 82.0, 148.0, cw=10.0, ch=6.0)
+    chest(s, "HerbChest", 164.0, 100.0, "rook_herb_chest", "Apothecary Box", {"coin": 8, "moonherb": 2})
+    candle(s, "Candle", 128.0, 90.0)
+    npc(s, "Ansa", 120.0, 104.0, "Ansa Rook", "ansa", "ansa", behaviour="wander", wander_radius=14.0)
+    npc(s, "Isa", 150.0, 124.0, "Isa", "isa", "kid_b", behaviour="wander", wander_radius=20.0)
+    write(s, "cottage_rook")
 
 
 # =============================================================================
@@ -1016,96 +516,22 @@ def gen_cottage_rook() -> None:
 # =============================================================================
 def gen_cottage_weaver() -> None:
     s = Scene()
-    w, h = 340, 240
-    door_x = 170.0
-    build_room_base(
-        s,
-        w,
-        h,
-        door_x,
-        "res://assets/interiors/floor_wood.png",
-        "res://assets/interiors/wall_timber.png",
-        "cottage_weaver",
-    )
-
-    # Loom
-    furn_prop(
-        s,
-        "Loom",
-        235.0,
-        72.0,
-        "res://assets/interiors/furniture/loom.png",
-        30.0,
-        16.0,
-        col_y=-8.0,
-        offset_y=-14.0,
-        prop_scale=0.45,
-    )
-    # Stone Hearth
-    furn_prop(
-        s,
-        "Hearth",
-        90.0,
-        70.0,
-        "res://assets/interiors/furniture/hearth.png",
-        44.0,
-        18.0,
-        col_y=-9.0,
-        offset_y=-20.0,
-        prop_scale=0.5,
-    )
-    # Bed
-    furn_prop(
-        s,
-        "Bed",
-        55.0,
-        145.0,
-        "res://assets/interiors/furniture/bed_wood.png",
-        30.0,
-        24.0,
-        col_y=-12.0,
-        offset_y=-18.0,
-        prop_scale=0.4,
-    )
-
-    # Loot Container: Weaver Chest
-    loot_container(
-        s,
-        "WeaverChest",
-        290.0,
-        78.0,
-        "weaver_chest",
-        "Cloth Chest",
-        {"coin": 9, "moonherb": 1},
-    )
-    furn_prop(
-        s,
-        "ChestVisual",
-        290.0,
-        78.0,
-        "res://assets/interiors/furniture/chest.png",
-        20.0,
-        12.0,
-        col_y=-6.0,
-        offset_y=-8.0,
-        prop_scale=0.4,
-    )
-
-    # Weaver Wren NPC
-    npc(
-        s,
-        "Wren",
-        190.0,
-        105.0,
-        display_name="Wren",
-        dialogue_path="res://data/dialogue/wren.json",
-        sprite_sheet_res="res://assets/npc/wren.png",
-        facing_row=0,
-        behaviour="wander",
-        wander_radius=18.0,
-    )
-
-    (INTERIORS_DIR / "cottage_weaver.tscn").write_text(s.render())
+    w, h, dx = 240.0, 170.0, 120.0
+    build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "cottage_weaver", "Weaver's Cottage")
+    window(s, "WindowWest", 50.0)
+    window(s, "WindowMid", 118.0)
+    rug(s, "FurRug", "fur_rug", 120.0, 136.0, scale=0.4)
+    hearth(s, "Hearth", 196.0, 76.0)
+    prop(s, "Loom", "loom", 62.0, 100.0, cw=40.0, ch=8.0)
+    prop(s, "SpinningWheel", "spinning_wheel", 112.0, 96.0, cw=22.0, ch=8.0)
+    prop(s, "Bed", "bed_wood", 206.0, 140.0, cw=36.0, ch=14.0)
+    prop(s, "Cot", "bed_kid", 162.0, 146.0, cw=28.0, ch=12.0)
+    prop(s, "Sacks", "sacks", 80.0, 152.0, cw=30.0, ch=8.0)
+    prop(s, "Stool", "stool", 62.0, 118.0, cw=10.0, ch=6.0)
+    chest(s, "WeaverChest", 36.0, 150.0, "weaver_chest", "Cloth Chest", {"coin": 9, "moonherb": 1})
+    candle(s, "Candle", 150.0, 90.0)
+    npc(s, "Wren", 130.0, 128.0, "Wren", "wren", "wren", behaviour="wander", wander_radius=18.0)
+    write(s, "cottage_weaver")
 
 
 def main() -> None:
@@ -1116,7 +542,7 @@ def main() -> None:
     gen_cottage_harrow()
     gen_cottage_rook()
     gen_cottage_weaver()
-    print("generated 7 interior scenes in scenes/interiors/")
+    print(f"generated 7 interior scenes in {INTERIORS_DIR.relative_to(ROOT)}/")
 
 
 if __name__ == "__main__":

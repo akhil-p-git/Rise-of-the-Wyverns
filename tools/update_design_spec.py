@@ -130,6 +130,17 @@ def update_design_spec() -> None:
 - **Persistent Loot Containers (`scripts/world/loot_container.gd`)**:
   - Chests, cupboards, tool bins, and larders provide lore items, salvage, and coin.
   - Container states persist via story flags (`looted_<id>`), preventing duplicate looting.
+- **Waiting (`T`, `scripts/ui/wait_panel.gd`)**: pick 1 to 24 hours; `TimeSystem.wait_hours` advances the clock hour by hour (doors and schedules react on each hour) and `Stats.restore_all` refills health, stamina and mana. The HUD clock shows the hour only and refreshes on `hour_passed`.
+- **Town Schedules (`data/schedules.json`, `scripts/world/npc_schedule.gd`, `scripts/npc.gd`)**:
+  - A slot is `{{from, to, at}}` where `at` is `town` or a building id; slots wrap midnight and each scheduled NPC must cover all 24 hours exactly once (tested).
+  - An NPC is active only in the scene its slot names, at the position and behaviour that scene authored for it. `AreaScene.place_id` names the scene (`town` for Wrackmouth, the building id for an interior). NPCs with no entry are always present.
+  - On `hour_passed` a leaving NPC walks to the door and vanishes; an arriving one appears at the door and walks to its post. Travel gives up and snaps to its target after a timeout, so a blocked path never strands anyone.
+  - To schedule a new NPC: add its slots, give each place a scene node with the same `npc_id` (the generators derive `npc_id` from the dialogue file name), and add the NPC to the tests.
+- **Kids (`behaviour = "play"`)**: run at `RUN_SPEED`, pick a random spot inside their play radius or run at another kid half the time (tag). Sheets `assets/npc/kid_a..d.png` come from `tools/build_kid_sheets.py` (one base child, four recolours).
+- **Interior furnishing rules (`tools/gen_interior_scenes.py`, `tools/build_interior_art.py`)**:
+  - Rooms are sized so the 320x180 camera sees most of one (cottages 240x170). Props are bottom-aligned sprites at `scale = 0.5` with a small footprint collision at the feet; rugs sit at `z_index = -1`, the floor and wall header at `-2`.
+  - Every hearth is an unlit stone sprite plus an `AnimatedProp` fire (`hearth_fire_sheet.png`, `z_index = 1`) and halo; candles and hearths use `AreaScene.light_compensation()` so their glow keeps its colour while the room tint darkens at night.
+  - Windows add a `DayLight` floor shaft that fades with `TimeSystem.get_night_factor()`; indoor ambient lerps between `INDOOR_DAY` and `INDOOR_NIGHT`.
 
 ---
 

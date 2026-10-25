@@ -109,13 +109,6 @@ func get_night_factor() -> float:
 	return 1.0 - smoothstep(5.0, 7.0, h)
 
 
-## Multiplier that cancels the ambient tint, for light sprites that must keep their own colour at night
-## (the outdoor CanvasModulate would otherwise darken a window glow along with the walls around it).
-func get_light_compensation() -> Color:
-	var amb := get_ambient_color()
-	return Color(1.0 / amb.r, 1.0 / amb.g, 1.0 / amb.b, 1.0)
-
-
 func get_ambient_color() -> Color:
 	var h := current_minute / 60.0
 	if h < 4.5:
