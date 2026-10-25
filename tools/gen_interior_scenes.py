@@ -216,8 +216,34 @@ def hearth(s: Scene, name: str, x: float, y: float, scale: float = 0.5) -> None:
 
 def candle(s: Scene, name: str, x: float, y: float) -> None:
     animated(
-        s, name, x, y, "candle_stand", 1, 40.0, "candle_glow", (0.55, 0.55), (0.0, -17.0), fps=1.0, shape=(6.0, 5.0)
+        s, name, x, y, "candle_stand", 1, 44.0, "candle_glow", (0.55, 0.55), (0.0, -17.0), fps=1.0, shape=(6.0, 5.0)
     )
+
+
+def torch(s: Scene, name: str, x: float, y: float = 42.0) -> None:
+    """A wall-mounted iron torch with animated flame and soft amber light."""
+    decor(s, name + "Bracket", "torch_wall", x, y, scale=0.5, z=-1)
+    animated(
+        s,
+        name + "Flame",
+        x,
+        y - 10.0,
+        "torch_flame_sheet",
+        4,
+        32.0,
+        "torch_glow",
+        (0.5, 0.5),
+        (0.0, -6.0),
+        scale=0.5,
+        fps=7.0,
+        z_index=1,
+    )
+
+
+def bed(s: Scene, name: str, x: float, y: float, kind: str = "wood", cw: float = 36.0, ch: float = 14.0) -> None:
+    """A bedstead asset ('wood', 'inn', or 'kid')."""
+    tex = f"bed_{kind}" if not kind.startswith("bed_") else kind
+    prop(s, name, tex, x, y, cw=cw, ch=ch, scale=0.5)
 
 
 def chest(s: Scene, name: str, x: float, y: float, container_id: str, container_name: str, loot: dict[str, int]) -> None:
@@ -277,10 +303,8 @@ def build_room_base(
         is_outdoor="false",
         place_id=f'"{building_id}"',
     )
-    # Ambient tint; area_scene.gd fades it between a bright day and a dark night every frame.
     s.node("WarmIndoorLight", "CanvasModulate", ".", color="Color(1.0, 0.96, 0.88, 1.0)")
 
-    # The floor tile is 4x density art: lay the rect out in texture pixels and scale it down 0.25.
     s.node(
         "Floor",
         "TextureRect",
@@ -306,19 +330,17 @@ def build_room_base(
     s.node("TopWall", "CollisionShape2D", "Walls", position=v(w / 2.0, 24.0), shape=s.rect(w, 48.0))
     s.node("LeftWall", "CollisionShape2D", "Walls", position=v(8.0, h / 2.0), shape=s.rect(16.0, h))
     s.node("RightWall", "CollisionShape2D", "Walls", position=v(w - 8.0, h / 2.0), shape=s.rect(16.0, h))
-    gap = 22.0
-    left = max(0.0, door_x - gap)
-    if left > 0.0:
-        s.node("BottomWallLeft", "CollisionShape2D", "Walls", position=v(left / 2.0, h - 8.0), shape=s.rect(left, 16.0))
-    right = max(0.0, w - (door_x + gap))
-    if right > 0.0:
-        s.node(
-            "BottomWallRight",
-            "CollisionShape2D",
-            "Walls",
-            position=v(door_x + gap + right / 2.0, h - 8.0),
-            shape=s.rect(right, 16.0),
-        )
+    s.node("BottomWall", "CollisionShape2D", "Walls", position=v(w / 2.0, h - 6.0), shape=s.rect(w, 12.0))
+
+    s.node(
+        "DoorThreshold",
+        "Sprite2D",
+        ".",
+        position=v(door_x, h - 8.0),
+        scale=v(0.5, 0.5),
+        texture=s.ext("Texture2D", "res://assets/interiors/furniture/interior_door_threshold.png"),
+        z_index="-1",
+    )
 
     s.node("Entities", "Node2D", ".", y_sort_enabled="true")
     s.node("Interactables", "Node2D", ".")
@@ -329,13 +351,13 @@ def build_room_base(
         s,
         "DoorExit",
         door_x,
-        h - 10.0,
+        h - 16.0,
         building_id,
         exit_name,
         exit_scene,
         "from_" + building_id,
         is_exit=True,
-        radius=16.0,
+        radius=18.0,
     )
     s.instance("Player", "Entities", PLAYER_SCENE, position=v(door_x, h - 45.0))
     s.instance("Hud", ".", HUD_SCENE)
@@ -359,6 +381,13 @@ def gen_mayor_hall() -> None:
     build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "mayor_hall", "Mayor's Hall")
     window(s, "WindowWest", 55.0)
     window(s, "WindowEast", 285.0)
+
+    # Wall Torches with animated fire & soft amber glow
+    torch(s, "TorchFarWest", 35.0, 42.0)
+    torch(s, "TorchWest", 105.0, 42.0)
+    torch(s, "TorchEast", 235.0, 42.0)
+    torch(s, "TorchFarEast", 305.0, 42.0)
+
     decor(s, "BannerWest", "banner", 112.0, 46.0)
     decor(s, "BannerEast", "banner", 228.0, 46.0)
     rug(s, "AisleRug", "rug_woven", 170.0, 170.0, scale=0.7)
@@ -394,6 +423,12 @@ def gen_forge() -> None:
     w, h, dx = 300.0, 190.0, 150.0
     build_room_base(s, w, h, dx, STONE_FLOOR, STONE_WALL, "forge", "Kell's Forge")
     window(s, "WindowWest", 70.0)
+
+    # Wall Torches with warm amber fire
+    torch(s, "TorchWest", 40.0, 42.0)
+    torch(s, "TorchMid", 120.0, 42.0)
+    torch(s, "TorchEast", 260.0, 42.0)
+
     hearth(s, "ForgeHearth", 205.0, 78.0, scale=0.75)
     prop(s, "ToolRack", "tool_rack", 78.0, 80.0, cw=32.0, ch=8.0)
     prop(s, "Anvil", "anvil", 150.0, 118.0, cw=22.0, ch=8.0)
@@ -416,6 +451,13 @@ def gen_salt_gull() -> None:
     build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "salt_gull", "The Salt Gull")
     window(s, "WindowWest", 40.0)
     window(s, "WindowEast", 300.0)
+
+    # Wall Torches around tavern hall
+    torch(s, "TorchBarWest", 45.0, 42.0)
+    torch(s, "TorchBarMid", 135.0, 42.0)
+    torch(s, "TorchHearthEast", 205.0, 42.0)
+    torch(s, "TorchEast", 305.0, 42.0)
+
     decor(s, "BottleShelf", "bottle_shelf", 98.0, 44.0)
     rug(s, "FurRug", "fur_rug", 170.0, 168.0)
 
@@ -442,7 +484,10 @@ def gen_salt_gull() -> None:
     hearth(s, "Hearth", 240.0, 76.0)
     candle(s, "CandleWest", 204.0, 90.0)
     candle(s, "CandleEast", 276.0, 90.0)
-    prop(s, "GuestBed", "bed_wood", 302.0, 112.0, cw=36.0, ch=14.0)
+
+    # Upgraded Inn bed with fur throw
+    bed(s, "GuestBed", 302.0, 112.0, "inn", cw=36.0, ch=14.0)
+
     prop(s, "TableNear", "table_food", 232.0, 150.0, cw=44.0, ch=10.0)
     prop(s, "TableFar", "table_food", 110.0, 170.0, cw=44.0, ch=10.0)
     for nm, sx, sy in (("StoolA", 205.0, 158.0), ("StoolB", 258.0, 158.0), ("StoolC", 82.0, 178.0), ("StoolD", 138.0, 178.0)):
@@ -461,6 +506,7 @@ def gen_salt_gull() -> None:
     npc(s, "BramQuillon", 98.0, 80.0, "Bram Quillon", "bram", "bram", behaviour="wander", wander_radius=14.0)
     npc(s, "OrsaKell", 232.0, 168.0, "Orsa Kell", "orsa", "orsa", facing_row=1)
     npc(s, "Pell", 112.0, 190.0, "Pell Harrow", "pell", "pell", facing_row=1)
+    npc(s, "Sela", 175.0, 180.0, "Sela Shore", "sela", "orsa")
     write(s, "salt_gull")
 
 
@@ -473,13 +519,22 @@ def gen_lantern_watch() -> None:
     build_room_base(s, w, h, dx, STONE_FLOOR, STONE_WALL, "lantern_watch", "Lantern Watch")
     window(s, "WindowWest", 50.0)
     window(s, "WindowEast", 210.0)
+
+    # Wall Torches on stone walls
+    torch(s, "TorchWest", 35.0, 42.0)
+    torch(s, "TorchMid", 130.0, 42.0)
+    torch(s, "TorchEast", 225.0, 42.0)
+
     hearth(s, "Hearth", 130.0, 76.0)
     candle(s, "CandleWest", 92.0, 90.0)
     candle(s, "CandleEast", 168.0, 90.0)
     prop(s, "WeaponRackWest", "weapon_rack", 52.0, 98.0, cw=30.0, ch=8.0)
     prop(s, "WeaponRackEast", "weapon_rack", 208.0, 98.0, cw=30.0, ch=8.0)
-    prop(s, "BunkWest", "bed_wood", 44.0, 156.0, cw=36.0, ch=14.0)
-    prop(s, "BunkEast", "bed_wood", 216.0, 156.0, cw=36.0, ch=14.0)
+
+    # Upgraded watch bunks
+    bed(s, "BunkWest", 44.0, 156.0, "wood", cw=36.0, ch=14.0)
+    bed(s, "BunkEast", 216.0, 156.0, "wood", cw=36.0, ch=14.0)
+
     prop(s, "Table", "table_food", 130.0, 128.0, cw=44.0, ch=10.0)
     prop(s, "StoolA", "stool", 104.0, 136.0, cw=10.0, ch=6.0)
     prop(s, "StoolB", "stool", 156.0, 136.0, cw=10.0, ch=6.0)
@@ -496,13 +551,21 @@ def gen_cottage_harrow() -> None:
     w, h, dx = 240.0, 170.0, 120.0
     build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "cottage_harrow", "Harrow Cottage")
     window(s, "WindowWest", 60.0)
+
+    # Wall Torches
+    torch(s, "TorchWest", 35.0, 42.0)
+    torch(s, "TorchEast", 185.0, 42.0)
+
     decor(s, "Herbs", "herb_bunches", 150.0, 40.0)
     rug(s, "FurRug", "fur_rug", 120.0, 136.0, scale=0.4)
     hearth(s, "Hearth", 200.0, 76.0)
     prop(s, "Cauldron", "cauldron", 160.0, 96.0, cw=16.0, ch=8.0)
     prop(s, "NetRack", "net_rack", 112.0, 72.0, cw=40.0, ch=8.0)
-    prop(s, "Bed", "bed_wood", 40.0, 112.0, cw=36.0, ch=14.0)
-    prop(s, "Cot", "bed_kid", 214.0, 142.0, cw=28.0, ch=12.0)
+
+    # Upgraded adult timber bed & child's cot
+    bed(s, "Bed", 40.0, 112.0, "wood", cw=36.0, ch=14.0)
+    bed(s, "Cot", 214.0, 142.0, "kid", cw=28.0, ch=12.0)
+
     prop(s, "Table", "table_food", 168.0, 134.0, cw=44.0, ch=10.0)
     prop(s, "StoolA", "stool", 142.0, 142.0, cw=10.0, ch=6.0)
     prop(s, "Barrels", "barrels", 44.0, 150.0, cw=34.0, ch=10.0)
@@ -521,14 +584,22 @@ def gen_cottage_rook() -> None:
     w, h, dx = 240.0, 170.0, 120.0
     build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "cottage_rook", "Rook Cottage")
     window(s, "WindowEast", 180.0)
+
+    # Wall Torches
+    torch(s, "TorchWest", 30.0, 42.0)
+    torch(s, "TorchEast", 210.0, 42.0)
+
     decor(s, "HerbsWest", "herb_bunches", 104.0, 40.0)
     decor(s, "HerbsMid", "herb_bunches", 150.0, 40.0)
     rug(s, "FurRug", "fur_rug", 120.0, 136.0, scale=0.4)
     hearth(s, "Hearth", 56.0, 76.0)
     prop(s, "Cauldron", "cauldron", 96.0, 96.0, cw=16.0, ch=8.0)
     prop(s, "Shelf", "shelf_unit", 206.0, 82.0, cw=26.0, ch=8.0)
-    prop(s, "Bed", "bed_wood", 206.0, 138.0, cw=36.0, ch=14.0)
-    prop(s, "Cot", "bed_kid", 160.0, 146.0, cw=28.0, ch=12.0)
+
+    # Upgraded beds
+    bed(s, "Bed", 206.0, 138.0, "wood", cw=36.0, ch=14.0)
+    bed(s, "Cot", 160.0, 146.0, "kid", cw=28.0, ch=12.0)
+
     prop(s, "Table", "table_food", 58.0, 140.0, cw=44.0, ch=10.0)
     prop(s, "StoolA", "stool", 34.0, 148.0, cw=10.0, ch=6.0)
     prop(s, "StoolB", "stool", 82.0, 148.0, cw=10.0, ch=6.0)
@@ -548,17 +619,26 @@ def gen_cottage_weaver() -> None:
     build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "cottage_weaver", "Weaver's Cottage")
     window(s, "WindowWest", 50.0)
     window(s, "WindowMid", 118.0)
+
+    # Wall Torches
+    torch(s, "TorchWest", 30.0, 42.0)
+    torch(s, "TorchEast", 210.0, 42.0)
+
     rug(s, "FurRug", "fur_rug", 120.0, 136.0, scale=0.4)
     hearth(s, "Hearth", 196.0, 76.0)
     prop(s, "Loom", "loom", 62.0, 100.0, cw=40.0, ch=8.0)
     prop(s, "SpinningWheel", "spinning_wheel", 112.0, 96.0, cw=22.0, ch=8.0)
-    prop(s, "Bed", "bed_wood", 206.0, 140.0, cw=36.0, ch=14.0)
-    prop(s, "Cot", "bed_kid", 162.0, 146.0, cw=28.0, ch=12.0)
+
+    # Upgraded beds
+    bed(s, "Bed", 206.0, 140.0, "wood", cw=36.0, ch=14.0)
+    bed(s, "Cot", 162.0, 146.0, "kid", cw=28.0, ch=12.0)
+
     prop(s, "Sacks", "sacks", 80.0, 152.0, cw=30.0, ch=8.0)
     prop(s, "Stool", "stool", 62.0, 118.0, cw=10.0, ch=6.0)
     chest(s, "WeaverChest", 36.0, 150.0, "weaver_chest", "Cloth Chest", {"coin": 9, "moonherb": 1})
     candle(s, "Candle", 150.0, 90.0)
     npc(s, "Wren", 130.0, 128.0, "Wren", "wren", "wren", behaviour="wander", wander_radius=18.0)
+    npc(s, "Lyra", 175.0, 112.0, "Lyra the Weaver", "lyra", "wren")
     write(s, "cottage_weaver")
 
 
@@ -581,9 +661,17 @@ def gen_salt_gull_room() -> None:
         exit_scene="res://scenes/interiors/salt_gull.tscn",
     )
     window(s, "Window", 150.0)
+
+    # Wall Torches
+    torch(s, "TorchWest", 30.0, 42.0)
+    torch(s, "TorchEast", 170.0, 42.0)
+
     rug(s, "FurRug", "fur_rug", 100.0, 108.0, scale=0.4)
     hearth(s, "Hearth", 50.0, 76.0)
-    prop(s, "Bed", "bed_wood", 150.0, 104.0, cw=36.0, ch=14.0)
+
+    # Upgraded inn bed with fur throw
+    bed(s, "Bed", 150.0, 104.0, "inn", cw=36.0, ch=14.0)
+
     s.node(
         "Bedstead",
         "Area2D",
@@ -612,6 +700,12 @@ def gen_trader_shop() -> None:
     build_room_base(s, w, h, dx, WOOD_FLOOR, TIMBER_WALL, "trader_shop", "Venn's Goods")
     window(s, "WindowWest", 50.0)
     window(s, "WindowEast", 210.0)
+
+    # Wall Torches
+    torch(s, "TorchWest", 30.0, 42.0)
+    torch(s, "TorchMid", 130.0, 42.0)
+    torch(s, "TorchEast", 230.0, 42.0)
+
     decor(s, "BottleShelf", "bottle_shelf", 130.0, 44.0)
     rug(s, "WovenRug", "rug_woven", 130.0, 148.0, scale=0.6)
     prop(s, "Counter", "counter_bar", 130.0, 102.0, cw=68.0, ch=12.0)

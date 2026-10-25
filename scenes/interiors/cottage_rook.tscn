@@ -3,32 +3,36 @@
 [ext_resource type="Script" path="res://scripts/world/area_scene.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/interiors/floor_wood.png" id="2_texture2d"]
 [ext_resource type="Texture2D" path="res://assets/interiors/wall_timber.png" id="3_texture2d"]
-[ext_resource type="Script" path="res://scripts/world/building_door.gd" id="4_script"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="5_packedscene"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_packedscene"]
-[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="7_packedscene"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/window_wall.png" id="8_texture2d"]
-[ext_resource type="Script" path="res://scripts/world/day_light.gd" id="9_script"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/light_shaft.png" id="10_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/herb_bunches.png" id="11_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/fur_rug.png" id="12_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth.png" id="13_texture2d"]
-[ext_resource type="Script" path="res://scripts/world/animated_prop.gd" id="14_script"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth_glow.png" id="15_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth_fire_sheet.png" id="16_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/cauldron.png" id="17_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/shelf_unit.png" id="18_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/bed_wood.png" id="19_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/bed_kid.png" id="20_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/table_food.png" id="21_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/stool.png" id="22_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/chest.png" id="23_texture2d"]
-[ext_resource type="Script" path="res://scripts/world/loot_container.gd" id="24_script"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/candle_glow.png" id="25_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/interiors/furniture/candle_stand.png" id="26_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/npc/ansa.png" id="27_texture2d"]
-[ext_resource type="PackedScene" path="res://scenes/npc/npc.tscn" id="28_packedscene"]
-[ext_resource type="Texture2D" path="res://assets/npc/kid_b.png" id="29_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/interior_door_threshold.png" id="4_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/building_door.gd" id="5_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="6_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="7_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="8_packedscene"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/window_wall.png" id="9_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/day_light.gd" id="10_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/light_shaft.png" id="11_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/torch_wall.png" id="12_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/animated_prop.gd" id="13_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/torch_glow.png" id="14_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/torch_flame_sheet.png" id="15_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/herb_bunches.png" id="16_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/fur_rug.png" id="17_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth.png" id="18_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth_glow.png" id="19_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/hearth_fire_sheet.png" id="20_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/cauldron.png" id="21_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/shelf_unit.png" id="22_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/bed_wood.png" id="23_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/bed_kid.png" id="24_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/table_food.png" id="25_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/stool.png" id="26_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/chest.png" id="27_texture2d"]
+[ext_resource type="Script" path="res://scripts/world/loot_container.gd" id="28_script"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/candle_glow.png" id="29_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/interiors/furniture/candle_stand.png" id="30_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/npc/ansa.png" id="31_texture2d"]
+[ext_resource type="PackedScene" path="res://scenes/npc/npc.tscn" id="32_packedscene"]
+[ext_resource type="Texture2D" path="res://assets/npc/kid_b.png" id="33_texture2d"]
 
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_0"]
 size = Vector2(240, 48)
@@ -37,10 +41,10 @@ size = Vector2(240, 48)
 size = Vector2(16, 170)
 
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_2"]
-size = Vector2(98, 16)
+size = Vector2(240, 12)
 
 [sub_resource type="CircleShape2D" id="circleshape2d_3"]
-radius = 16
+radius = 18
 
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_4"]
 size = Vector2(38.4, 10)
@@ -66,7 +70,10 @@ size = Vector2(10, 6)
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_11"]
 size = Vector2(26, 9)
 
-[sub_resource type="RectangleShape2D" id="rectangleshape2d_12"]
+[sub_resource type="CircleShape2D" id="circleshape2d_12"]
+radius = 16
+
+[sub_resource type="RectangleShape2D" id="rectangleshape2d_13"]
 size = Vector2(6, 5)
 
 [node name="Interior" type="Node2D"]
@@ -108,13 +115,15 @@ shape = SubResource("rectangleshape2d_1")
 position = Vector2(232, 85)
 shape = SubResource("rectangleshape2d_1")
 
-[node name="BottomWallLeft" type="CollisionShape2D" parent="Walls"]
-position = Vector2(49, 162)
+[node name="BottomWall" type="CollisionShape2D" parent="Walls"]
+position = Vector2(120, 164)
 shape = SubResource("rectangleshape2d_2")
 
-[node name="BottomWallRight" type="CollisionShape2D" parent="Walls"]
-position = Vector2(191, 162)
-shape = SubResource("rectangleshape2d_2")
+[node name="DoorThreshold" type="Sprite2D" parent="."]
+position = Vector2(120, 162)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("4_texture2d")
+z_index = -1
 
 [node name="Entities" type="Node2D" parent="."]
 y_sort_enabled = true
@@ -129,11 +138,11 @@ y_sort_enabled = true
 position = Vector2(120, 125)
 
 [node name="DoorExit" type="Area2D" parent="Interactables"]
-position = Vector2(120, 160)
+position = Vector2(120, 154)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-script = ExtResource("4_script")
+script = ExtResource("5_script")
 building_id = "cottage_rook"
 building_name = "Wrackmouth"
 target_scene = "res://scenes/world/wrackmouth.tscn"
@@ -143,42 +152,86 @@ is_exit = true
 [node name="Reach" type="CollisionShape2D" parent="Interactables/DoorExit"]
 shape = SubResource("circleshape2d_3")
 
-[node name="Player" parent="Entities" instance=ExtResource("5_packedscene")]
+[node name="Player" parent="Entities" instance=ExtResource("6_packedscene")]
 position = Vector2(120, 125)
 
-[node name="Hud" parent="." instance=ExtResource("6_packedscene")]
+[node name="Hud" parent="." instance=ExtResource("7_packedscene")]
 
-[node name="DialogueBox" parent="." instance=ExtResource("7_packedscene")]
+[node name="DialogueBox" parent="." instance=ExtResource("8_packedscene")]
 
 [node name="WindowEast" type="Sprite2D" parent="."]
 position = Vector2(180, 40)
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("8_texture2d")
+texture = ExtResource("9_texture2d")
 offset = Vector2(0, -26)
 
 [node name="WindowEastLight" type="Sprite2D" parent="."]
-script = ExtResource("9_script")
+script = ExtResource("10_script")
 position = Vector2(180, 76)
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("10_texture2d")
+texture = ExtResource("11_texture2d")
 z_index = 1
+
+[node name="TorchWestBracket" type="Sprite2D" parent="."]
+position = Vector2(30, 42)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("12_texture2d")
+offset = Vector2(0, -22)
+z_index = -1
+
+[node name="TorchWestFlame" type="StaticBody2D" parent="Entities"]
+position = Vector2(30, 32)
+script = ExtResource("13_script")
+fps = 7
+glow_texture = ExtResource("14_texture2d")
+glow_scale = Vector2(0.5, 0.5)
+glow_offset = Vector2(0, -6)
+z_index = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/TorchWestFlame"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("15_texture2d")
+offset = Vector2(0, -16)
+hframes = 4
+
+[node name="TorchEastBracket" type="Sprite2D" parent="."]
+position = Vector2(210, 42)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("12_texture2d")
+offset = Vector2(0, -22)
+z_index = -1
+
+[node name="TorchEastFlame" type="StaticBody2D" parent="Entities"]
+position = Vector2(210, 32)
+script = ExtResource("13_script")
+fps = 7
+glow_texture = ExtResource("14_texture2d")
+glow_scale = Vector2(0.5, 0.5)
+glow_offset = Vector2(0, -6)
+z_index = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="Entities/TorchEastFlame"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("15_texture2d")
+offset = Vector2(0, -16)
+hframes = 4
 
 [node name="HerbsWest" type="Sprite2D" parent="."]
 position = Vector2(104, 40)
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("11_texture2d")
+texture = ExtResource("16_texture2d")
 offset = Vector2(0, -20)
 
 [node name="HerbsMid" type="Sprite2D" parent="."]
 position = Vector2(150, 40)
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("11_texture2d")
+texture = ExtResource("16_texture2d")
 offset = Vector2(0, -20)
 
 [node name="FurRug" type="Sprite2D" parent="."]
 position = Vector2(120, 136)
 scale = Vector2(0.4, 0.4)
-texture = ExtResource("12_texture2d")
+texture = ExtResource("17_texture2d")
 offset = Vector2(0, -36)
 z_index = -1
 
@@ -187,7 +240,7 @@ position = Vector2(56, 76)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Hearth"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("13_texture2d")
+texture = ExtResource("18_texture2d")
 offset = Vector2(0, -44)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Hearth"]
@@ -196,16 +249,16 @@ shape = SubResource("rectangleshape2d_4")
 
 [node name="HearthFire" type="StaticBody2D" parent="Entities"]
 position = Vector2(56, 71.5)
-script = ExtResource("14_script")
+script = ExtResource("13_script")
 fps = 7
-glow_texture = ExtResource("15_texture2d")
+glow_texture = ExtResource("19_texture2d")
 glow_scale = Vector2(0.55, 0.4)
 glow_offset = Vector2(0, -10)
 z_index = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/HearthFire"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("16_texture2d")
+texture = ExtResource("20_texture2d")
 offset = Vector2(0, -20)
 hframes = 4
 
@@ -214,7 +267,7 @@ position = Vector2(96, 96)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Cauldron"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("17_texture2d")
+texture = ExtResource("21_texture2d")
 offset = Vector2(0, -22)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Cauldron"]
@@ -226,7 +279,7 @@ position = Vector2(206, 82)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Shelf"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("18_texture2d")
+texture = ExtResource("22_texture2d")
 offset = Vector2(0, -48)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Shelf"]
@@ -238,8 +291,8 @@ position = Vector2(206, 138)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Bed"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("19_texture2d")
-offset = Vector2(0, -52)
+texture = ExtResource("23_texture2d")
+offset = Vector2(0, -58)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Bed"]
 position = Vector2(0, -7)
@@ -250,7 +303,7 @@ position = Vector2(160, 146)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Cot"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("20_texture2d")
+texture = ExtResource("24_texture2d")
 offset = Vector2(0, -42)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Cot"]
@@ -262,7 +315,7 @@ position = Vector2(58, 140)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Table"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("21_texture2d")
+texture = ExtResource("25_texture2d")
 offset = Vector2(0, -32)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Table"]
@@ -274,7 +327,7 @@ position = Vector2(34, 148)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/StoolA"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("22_texture2d")
+texture = ExtResource("26_texture2d")
 offset = Vector2(0, -14)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/StoolA"]
@@ -286,7 +339,7 @@ position = Vector2(82, 148)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/StoolB"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("22_texture2d")
+texture = ExtResource("26_texture2d")
 offset = Vector2(0, -14)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/StoolB"]
@@ -298,7 +351,7 @@ position = Vector2(164, 100)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/HerbChestVisual"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("23_texture2d")
+texture = ExtResource("27_texture2d")
 offset = Vector2(0, -26)
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/HerbChestVisual"]
@@ -310,48 +363,48 @@ position = Vector2(164, 95)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-script = ExtResource("24_script")
+script = ExtResource("28_script")
 container_id = "rook_herb_chest"
 container_name = "Apothecary Box"
 loot = {"coin": 8, "moonherb": 2}
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/HerbChest"]
-shape = SubResource("circleshape2d_3")
+shape = SubResource("circleshape2d_12")
 
 [node name="Candle" type="StaticBody2D" parent="Entities"]
 position = Vector2(128, 90)
-script = ExtResource("14_script")
+script = ExtResource("13_script")
 fps = 1
-glow_texture = ExtResource("25_texture2d")
+glow_texture = ExtResource("29_texture2d")
 glow_scale = Vector2(0.55, 0.55)
 glow_offset = Vector2(0, -17)
 
 [node name="Sprite2D" type="Sprite2D" parent="Entities/Candle"]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("26_texture2d")
-offset = Vector2(0, -20)
+texture = ExtResource("30_texture2d")
+offset = Vector2(0, -22)
 hframes = 1
 
 [node name="Shape" type="CollisionShape2D" parent="Entities/Candle"]
 position = Vector2(0, -2.5)
-shape = SubResource("rectangleshape2d_12")
+shape = SubResource("rectangleshape2d_13")
 
-[node name="Ansa" parent="Entities" instance=ExtResource("28_packedscene")]
+[node name="Ansa" parent="Entities" instance=ExtResource("32_packedscene")]
 position = Vector2(120, 104)
 display_name = "Ansa Rook"
 npc_id = "ansa"
 dialogue_path = "res://data/dialogue/ansa.json"
-sprite_sheet = ExtResource("27_texture2d")
+sprite_sheet = ExtResource("31_texture2d")
 facing_row = 0
 behaviour = "wander"
 wander_radius = 14
 
-[node name="Isa" parent="Entities" instance=ExtResource("28_packedscene")]
+[node name="Isa" parent="Entities" instance=ExtResource("32_packedscene")]
 position = Vector2(150, 124)
 display_name = "Isa"
 npc_id = "isa"
 dialogue_path = "res://data/dialogue/isa.json"
-sprite_sheet = ExtResource("29_texture2d")
+sprite_sheet = ExtResource("33_texture2d")
 facing_row = 0
 behaviour = "wander"
 wander_radius = 20
