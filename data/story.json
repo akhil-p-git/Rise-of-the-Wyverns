@@ -5,37 +5,27 @@
     "iron_scrap": "Iron scrap",
     "moonherb": "Moonherb",
     "hex_bone": "Hex-marked bone",
-    "mayor_letter": "Mayor's letter",
     "carters_tally": "Dov's tally stick",
-    "bone_whistle": "Tam's whistle"
+    "bone_whistle": "Tam's whistle",
+    "iron_daggers": "Iron daggers",
+    "iron_sword_shield": "Iron sword and shield",
+    "two_handed_sword": "Two-handed sword",
+    "staff": "Staff"
   },
-  "derived": {
-    "rats_cleared": ["flag:rathole_1", "flag:rathole_2", "flag:rathole_3"],
-    "cairns_done": ["flag:saw_grave", "item:moonherb>=3"]
-  },
+  "derived": {},
   "quests": {
-    "work_to_belong": {
-      "title": "Work to Belong",
+    "giant_rat": {
+      "title": "The Rat Below",
       "stages": [
         {
-          "id": "chores",
-          "text": "Do the mayor's chores: a salvage crate for Orsa, the rat holes behind the Hall, a letter for the Lantern Watch",
-          "done_when": ["flag:chore_crate", "flag:rats_cleared", "flag:chore_message"]
-        },
-        {
-          "id": "cairns",
-          "text": "Gather three moonherb at the old cairns, south-west of the village",
-          "done_when": ["flag:cairns_done"]
+          "id": "hunt",
+          "text": "Kill the giant rat in the dungeon past the last houses",
+          "done_when": ["flag:giant_rat_slain"]
         },
         {
           "id": "report",
-          "text": "Take the moonherb back to Mayor Tolle",
-          "done_when": ["flag:reported_mayor"]
-        },
-        {
-          "id": "road",
-          "text": "Carry the hex-marked bone to Crossholm by the east road",
-          "done_when": ["flag:reached_crossholm"]
+          "text": "Tell Mayor Tolle the giant rat is dead",
+          "done_when": ["flag:rat_reported"]
         }
       ]
     },

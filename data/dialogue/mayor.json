@@ -1,21 +1,51 @@
 {
   "entries": [
-    {"if": ["done:work_to_belong"], "node": "after"},
-    {"if": ["stage:work_to_belong=road"], "node": "road_reminder"},
-    {"if": ["stage:work_to_belong=report", "item:hex_bone"], "node": "report"},
-    {"if": ["stage:work_to_belong=cairns", "!flag:cairns_assigned"], "node": "assign_cairns"},
-    {"if": ["stage:work_to_belong=cairns"], "node": "cairns_reminder"},
-    {"if": ["stage:work_to_belong=chores"], "node": "chores_reminder"},
-    {"if": [], "node": "first"}
+    {
+      "if": [
+        "done:giant_rat"
+      ],
+      "node": "after"
+    },
+    {
+      "if": [
+        "stage:giant_rat=report"
+      ],
+      "node": "report"
+    },
+    {
+      "if": [
+        "stage:giant_rat=hunt",
+        "!flag:weapon_chosen"
+      ],
+      "node": "weapons"
+    },
+    {
+      "if": [
+        "stage:giant_rat=hunt"
+      ],
+      "node": "hunt_reminder"
+    },
+    {
+      "if": [],
+      "node": "first"
+    }
   ],
   "nodes": {
     "first": {
       "speaker": "Mayor Tolle",
       "text": "So. The sea gave one back. We have not had that in a long time.",
       "choices": [
-        {"text": "I can work.", "next": "accept"},
-        {"text": "Where am I?", "next": "where"},
-        {"text": "Not now."}
+        {
+          "text": "I can work.",
+          "next": "accept"
+        },
+        {
+          "text": "Where am I?",
+          "next": "where"
+        },
+        {
+          "text": "Not now."
+        }
       ]
     },
     "where": {
@@ -27,61 +57,76 @@
       "speaker": "Mayor Tolle",
       "text": "We are short of hands. I cannot feed a stranger for nothing, and I will not turn one out. Work, if you want to belong here.",
       "choices": [
-        {"text": "I'll work.", "next": "accept"},
-        {"text": "Not now."}
+        {
+          "text": "I'll work.",
+          "next": "accept"
+        },
+        {
+          "text": "Not now."
+        }
       ]
     },
     "accept": {
       "speaker": "Mayor Tolle",
-      "text": "Three things, then. Orsa Kell at the forge wants salvage from your own wreck: there is a crate on the shore, north of here. There are rats in my cellar, and the holes are behind the Hall. And take this letter up to Teague at the Lantern Watch, on the headland.",
-      "do": ["start:work_to_belong", "give:mayor_letter"],
-      "next": "accept_end"
+      "text": "There is a rat in the old vaults past the last houses. A giant one. It has taken three dogs and a calf this month, and I will not send my own people down to it. Kill it, and I will count you one of ours.",
+      "do": [
+        "start:giant_rat"
+      ],
+      "next": "weapons"
     },
-    "accept_end": {
+    "weapons": {
       "speaker": "Mayor Tolle",
-      "text": "Nobody here will thank you for it. That is not the same as nobody noticing."
+      "text": "You will not do it bare-handed. The Hall keeps old arms in the cupboard. Take one, and choose well; you will not be given a second.",
+      "choices": [
+        {
+          "text": "The two iron daggers.",
+          "do": [
+            "give:iron_daggers",
+            "flag:weapon_chosen"
+          ],
+          "next": "armed"
+        },
+        {
+          "text": "The iron sword and shield.",
+          "do": [
+            "give:iron_sword_shield",
+            "flag:weapon_chosen"
+          ],
+          "next": "armed"
+        },
+        {
+          "text": "The two-handed sword.",
+          "do": [
+            "give:two_handed_sword",
+            "flag:weapon_chosen"
+          ],
+          "next": "armed"
+        },
+        {
+          "text": "The staff.",
+          "do": [
+            "give:staff",
+            "flag:weapon_chosen"
+          ],
+          "next": "armed"
+        }
+      ]
     },
-    "chores_reminder": {
+    "armed": {
       "speaker": "Mayor Tolle",
-      "text": "The crate for Orsa, the rat holes behind the Hall, the letter for Teague. Come back when they are done."
+      "text": "Good. Nobody here will thank you for it. That is not the same as nobody noticing."
     },
-    "assign_cairns": {
+    "hunt_reminder": {
       "speaker": "Mayor Tolle",
-      "text": "The rats have gone quiet and Teague has his letter. Ten coin; you have earned it.",
-      "do": ["give:coin:10", "flag:cairns_assigned"],
-      "next": "assign_cairns2"
-    },
-    "assign_cairns2": {
-      "speaker": "Mayor Tolle",
-      "text": "One more. Moonherb grows at the old cairns, south-west past the last houses. I need three sprigs for the fever that comes with autumn. Go before dusk. I would not walk there after."
-    },
-    "cairns_reminder": {
-      "speaker": "Mayor Tolle",
-      "text": "Three sprigs of moonherb from the cairns, south-west of the last houses. Before dusk."
+      "text": "The rat, in the old vaults past the last houses. Come back when it is dead."
     },
     "report": {
       "speaker": "Mayor Tolle",
-      "text": "Moonherb, good. And what is that in your hand?",
-      "do": ["take:moonherb:3", "give:coin:15", "flag:reported_mayor"],
-      "next": "report2"
-    },
-    "report2": {
-      "speaker": "You",
-      "text": "It was in a grave at the cairns. The grave was dug open from below. This mark was burned into the lid.",
-      "next": "report3"
-    },
-    "report3": {
-      "speaker": "Mayor Tolle",
-      "text": "I do not know that mark. I know the kind of person who makes them, and it is not a name I say before dark. Pell came in at dawn swearing the shore was clean as a plate: the old bones are gone. I thought he was drunk.",
-      "next": "report4"
-    },
-    "report4": {
-      "speaker": "Mayor Tolle",
-      "text": "Take it to the garrison at Crossholm, by the east road. Tell the captain what you found and where. I would not keep that under my roof. Fifteen coin for the road. Go carefully."
-    },
-    "road_reminder": {
-      "speaker": "Mayor Tolle",
-      "text": "East road to Crossholm. Give the bone to the garrison captain, and tell them everything."
+      "text": "Dead? Then the dogs can sleep. Twenty-five coin, and my thanks, which is rarer.",
+      "do": [
+        "give:coin:25",
+        "flag:rat_reported"
+      ]
     },
     "after": {
       "speaker": "Mayor Tolle",

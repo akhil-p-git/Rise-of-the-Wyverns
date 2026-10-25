@@ -2,6 +2,13 @@
   "entries": [
     {
       "if": [
+        "item:bone_whistle",
+        "!started:tams_whistle"
+      ],
+      "node": "early"
+    },
+    {
+      "if": [
         "stage:tams_whistle=return",
         "item:bone_whistle"
       ],
@@ -61,6 +68,29 @@
     "after": {
       "speaker": "Tam",
       "text": "I'm keeping it on a string now. Want to hear? It sounds just like a gull with the hiccups."
+    },
+    "early": {
+      "speaker": "Tam",
+      "text": "Hey, you came off the prison ship, didn't you? Wait. Is that a bone whistle in your hand?",
+      "choices": [
+        {
+          "text": "Oh, you mean this whistle?",
+          "next": "early_return"
+        },
+        {
+          "text": "It's just a shell."
+        }
+      ]
+    },
+    "early_return": {
+      "speaker": "Tam",
+      "text": "That's mine! I lost it at the wreck and Da will skin me if he finds out. You found it already? Here, he gave me this for helping a stranger once. Take it. And don't tell him I went to the wreck.",
+      "do": [
+        "start:tams_whistle",
+        "give:coin:10",
+        "flag:tam_paid",
+        "take:bone_whistle"
+      ]
     }
   }
 }

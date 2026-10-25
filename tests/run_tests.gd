@@ -444,7 +444,7 @@ func test_beach() -> void:
 	check(to_town != null and to_town.target_scene == "res://scenes/world/wrackmouth.tscn", "beach has exit to Wrackmouth")
 	check(beach.get_node_or_null("Spawns/from_town") is Marker2D, "beach has Spawns/from_town marker")
 	var crate_sign: Node = beach.get_node_or_null("Interactables/CrateSign")
-	check(crate_sign != null and crate_sign.get("item") == "salvage_crate", "beach crate is salvage_crate pickup")
+	check(crate_sign != null and not crate_sign is Pickup, "beach crate is an examine point, not a pickup")
 	check(beach.get_node_or_null("Interactables/IronScrap1") != null and beach.get_node("Interactables/IronScrap1").get("item") == "iron_scrap", "beach has IronScrap1 pickup")
 	check(beach.get_node_or_null("Interactables/IronScrap2") != null and beach.get_node("Interactables/IronScrap2").get("item") == "iron_scrap", "beach has IronScrap2 pickup")
 	check(beach.get_node_or_null("Interactables/IronScrap3") != null and beach.get_node("Interactables/IronScrap3").get("item") == "iron_scrap", "beach has IronScrap3 pickup")
@@ -467,18 +467,32 @@ func test_beach() -> void:
 func test_logic_and_data() -> void:
 	var story := StoryData.load_json("res://data/story.json")
 	check(not story.is_empty(), "story.json loads")
-	var state := GameState.new(story)
 
-	# Flags and derived flags
-	check(not state.has_flag("rathole_1"), "flag initially unset")
-	state.set_flag("rathole_1")
-	check(state.has_flag("rathole_1"), "flag set")
-	check(not state.has_flag("rats_cleared"), "derived flag false when partial")
-	state.apply(["flag:rathole_2", "flag:rathole_3"])
-	check(state.has_flag("rats_cleared"), "derived flag true when all parts hold")
-	state.apply(["clear:rathole_3"])
-	check(not state.has_flag("rats_cleared"), "derived flag false after clearing component")
-	state.set_flag("rathole_3")
+	# Flags and derived flags (generic mechanics, on a small fixture rather than the shipped story)
+	var fixture := {
+		"items": {"coin": "Coin", "herb": "Herb"},
+		"derived": {"all_chores": ["flag:chore_a", "flag:chore_b", "flag:chore_c"]},
+		"quests": {
+			"errands": {
+				"title": "Errands",
+				"stages": [
+					{"id": "chores", "text": "Do the chores", "done_when": ["flag:chore_a", "flag:chore_b", "flag:chore_c"]},
+					{"id": "gather", "text": "Gather herbs", "done_when": ["item:herb>=3"]},
+					{"id": "report", "text": "Report back", "done_when": ["flag:reported"]},
+				],
+			},
+		},
+	}
+	var state := GameState.new(fixture)
+	check(not state.has_flag("chore_a"), "flag initially unset")
+	state.set_flag("chore_a")
+	check(state.has_flag("chore_a"), "flag set")
+	check(not state.has_flag("all_chores"), "derived flag false when partial")
+	state.apply(["flag:chore_b", "flag:chore_c"])
+	check(state.has_flag("all_chores"), "derived flag true when all parts hold")
+	state.apply(["clear:chore_c"])
+	check(not state.has_flag("all_chores"), "derived flag false after clearing component")
+	state.set_flag("chore_c")
 
 	# Items
 	eq(state.count("coin"), 0, "coin starts at 0")
@@ -490,20 +504,21 @@ func test_logic_and_data() -> void:
 	eq(state.count("coin"), 10, "take subtracts count")
 
 	# QuestLog progression
-	state.apply(["start:work_to_belong"])
-	check(state.quests.is_active("work_to_belong"), "work_to_belong is active")
-	eq(state.quests.stage_id("work_to_belong"), "chores", "starts at chores stage")
-	check(state.objective("work_to_belong").ends_with("(1/3)"), "chores objective tracks 1/3")
-	state.apply(["flag:chore_crate", "flag:chore_message"])
-	eq(state.quests.stage_id("work_to_belong"), "cairns", "advances to cairns stage")
-	state.apply(["give:moonherb:3", "flag:saw_grave"])
-	eq(state.quests.stage_id("work_to_belong"), "report", "advances to report stage")
-	state.apply(["flag:reported_mayor"])
-	eq(state.quests.stage_id("work_to_belong"), "road", "advances to road stage")
-	state.apply(["flag:reached_crossholm"])
-	check(state.quests.is_done("work_to_belong"), "work_to_belong completes")
+	state.apply(["start:errands"])
+	check(state.quests.is_active("errands"), "errands is active")
+	eq(state.quests.stage_id("errands"), "gather", "chores already done, so it starts at the gather stage")
+	state.apply(["give:herb:2"])
+	check(state.objective("errands").ends_with("Gather herbs"), "single-part objective has no progress suffix")
+	state.apply(["give:herb:1"])
+	eq(state.quests.stage_id("errands"), "report", "advances to report stage")
+	state.apply(["flag:reported"])
+	check(state.quests.is_done("errands"), "errands completes")
 
-	# DialogueRunner
+	var multi := GameState.new(fixture)
+	multi.apply(["start:errands", "flag:chore_a"])
+	check(multi.objective("errands").ends_with("(1/3)"), "a three-part stage tracks 1/3")
+
+	# DialogueRunner: the mayor gives one quest, then the weapon choice
 	var mayor_tree := StoryData.load_json("res://data/dialogue/mayor.json")
 	var fresh_state := GameState.new(story)
 	var runner := DialogueRunner.new()
@@ -512,12 +527,55 @@ func test_logic_and_data() -> void:
 	eq(runner.choices().size(), 3, "first node offers 3 choices")
 	runner.advance(0) # "I can work." -> "accept"
 	eq(runner.node_id, "accept", "choice 0 advances to accept")
-	check(fresh_state.quests.is_active("work_to_belong"), "accept node starts work_to_belong")
-	eq(fresh_state.count("mayor_letter"), 1, "accept node gives mayor_letter")
+	check(fresh_state.quests.is_active("giant_rat"), "accept node starts giant_rat")
+	eq(fresh_state.quests.stage_id("giant_rat"), "hunt", "the quest starts at the hunt stage")
 	runner.advance()
-	eq(runner.node_id, "accept_end", "advances to accept_end")
+	eq(runner.node_id, "weapons", "accepting leads straight to the weapon choice")
+	eq(runner.choices().size(), 4, "the mayor offers four weapons")
+	runner.advance(2) # the two-handed sword
+	eq(fresh_state.count("two_handed_sword"), 1, "the chosen weapon is given")
+	check(fresh_state.has_flag("weapon_chosen"), "choosing a weapon sets weapon_chosen")
+	eq(runner.node_id, "armed", "the mayor sends the player off")
 	runner.advance()
-	check(runner.finished, "dialogue finishes after accept_end")
+	check(runner.finished, "dialogue finishes after armed")
+	# Only one weapon: talking again just reminds the player of the hunt
+	runner.begin(mayor_tree, fresh_state)
+	eq(runner.node_id, "hunt_reminder", "after choosing, the mayor only repeats the task")
+	eq(fresh_state.count("iron_daggers") + fresh_state.count("staff") + fresh_state.count("iron_sword_shield"), 0, "no second weapon is given")
+	# Walking away from the choice offers it again
+	var undecided := GameState.new(story)
+	undecided.apply(["start:giant_rat"])
+	runner.begin(mayor_tree, undecided)
+	eq(runner.node_id, "weapons", "leaving without choosing re-offers the weapons")
+	# Each weapon is a real item
+	for weapon: String in ["iron_daggers", "iron_sword_shield", "two_handed_sword", "staff"]:
+		check(story["items"].has(weapon) and InventoryPanel.ITEM_DESCRIPTIONS.has(weapon), "%s is a named, described item" % weapon)
+	# Reporting the kill pays and finishes the quest
+	fresh_state.apply(["flag:giant_rat_slain"])
+	eq(fresh_state.quests.stage_id("giant_rat"), "report", "killing the rat moves the quest to the report stage")
+	runner.begin(mayor_tree, fresh_state)
+	eq(runner.node_id, "report", "the mayor takes the report")
+	eq(fresh_state.count("coin"), 25, "the report pays 25 coin")
+	check(fresh_state.quests.is_done("giant_rat"), "The Rat Below is complete")
+	runner.begin(mayor_tree, fresh_state)
+	eq(runner.node_id, "after", "afterwards the mayor has only thanks")
+
+	# Tam: the whistle can be handed over without ever taking his quest
+	var early := GameState.new(story)
+	early.apply(["give:bone_whistle"])
+	var tam_tree := StoryData.load_json("res://data/dialogue/tam.json")
+	runner.begin(tam_tree, early)
+	eq(runner.node_id, "early", "Tam notices a whistle the player already holds")
+	runner.advance(0) # "Oh, you mean this whistle?"
+	eq(runner.node_id, "early_return", "the player can hand it over right away")
+	eq(early.count("bone_whistle"), 0, "the whistle goes back to Tam")
+	eq(early.count("coin"), 10, "Tam pays 10 coin")
+	check(early.quests.is_done("tams_whistle"), "Tam's Whistle completes without a separate step")
+	var declined := GameState.new(story)
+	declined.apply(["give:bone_whistle"])
+	runner.begin(tam_tree, declined)
+	runner.advance(1) # "It's just a shell."
+	check(runner.finished and declined.count("bone_whistle") == 1, "the player can keep the whistle")
 
 	# Cross-reference validation across data/story.json and data/dialogue/*.json
 	var items_dict: Dictionary = story.get("items", {})
@@ -857,9 +915,8 @@ func test_day_night_and_interiors() -> void:
 	check(dlg != null, "Mayor's Hall has DialogueBox")
 	mayor.interact(p)
 	check(dlg.is_open(), "interacting with Mayor Tolle opens DialogueBox")
-	dlg._choose(0) # "I can work." -> accept node: starts work_to_belong, gives mayor_letter
-	check(Game.state.quests.is_active("work_to_belong"), "Mayor Tolle dialogue starts work_to_belong quest")
-	check(Game.state.count("mayor_letter") >= 1, "Mayor Tolle gives mayor_letter task item")
+	dlg._choose(0) # "I can work." -> accept node: starts giant_rat
+	check(Game.state.quests.is_active("giant_rat"), "Mayor Tolle dialogue starts the giant_rat quest")
 	dlg._close()
 	check(not dlg.is_open(), "DialogueBox closes cleanly")
 

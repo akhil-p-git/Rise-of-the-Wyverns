@@ -324,7 +324,7 @@ monitoring = false
 script = ExtResource("24_script")
 container_id = "mayor_hall_cupboard"
 container_name = "Records Cupboard"
-loot = {"coin": 8, "mayor_letter": 1}
+loot = {"coin": 8}
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/MayorDesk"]
 shape = SubResource("circleshape2d_3")

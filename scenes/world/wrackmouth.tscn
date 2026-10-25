@@ -33,13 +33,12 @@
 [ext_resource type="Script" path="res://scripts/world/building_door.gd" id="31_script"]
 [ext_resource type="Script" path="res://scripts/rest_spot.gd" id="32_script"]
 [ext_resource type="Script" path="res://scripts/pickup.gd" id="33_script"]
-[ext_resource type="Texture2D" path="res://assets/props/rathole.png" id="34_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/props/moonherb.png" id="35_texture2d"]
-[ext_resource type="Texture2D" path="res://assets/props/open_grave.png" id="36_texture2d"]
-[ext_resource type="Script" path="res://scripts/scene_exit.gd" id="37_script"]
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="38_packedscene"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="39_packedscene"]
-[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="40_packedscene"]
+[ext_resource type="Texture2D" path="res://assets/props/moonherb.png" id="34_texture2d"]
+[ext_resource type="Texture2D" path="res://assets/props/open_grave.png" id="35_texture2d"]
+[ext_resource type="Script" path="res://scripts/scene_exit.gd" id="36_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="37_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="38_packedscene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_box.tscn" id="39_packedscene"]
 
 [sub_resource type="RectangleShape2D" id="rectangleshape2d_0"]
 size = Vector2(312, 16)
@@ -634,57 +633,6 @@ prompt = "Rent a bed (5 coin)"
 [node name="Reach" type="CollisionShape2D" parent="Interactables/InnBed"]
 shape = SubResource("circleshape2d_18")
 
-[node name="RatHole1" type="Area2D" parent="Interactables"]
-position = Vector2(86, 116)
-collision_layer = 2
-collision_mask = 0
-monitoring = false
-script = ExtResource("33_script")
-prompt = "Block the hole"
-message = "You wedge a flat stone into the hole. Something scrabbles away behind it."
-sets_flag = "rathole_1"
-
-[node name="Reach" type="CollisionShape2D" parent="Interactables/RatHole1"]
-shape = SubResource("circleshape2d_19")
-
-[node name="Sprite2D" type="Sprite2D" parent="Interactables/RatHole1"]
-scale = Vector2(0.25, 0.25)
-texture = ExtResource("34_texture2d")
-
-[node name="RatHole2" type="Area2D" parent="Interactables"]
-position = Vector2(86, 144)
-collision_layer = 2
-collision_mask = 0
-monitoring = false
-script = ExtResource("33_script")
-prompt = "Block the hole"
-message = "You wedge a flat stone into the hole. Something scrabbles away behind it."
-sets_flag = "rathole_2"
-
-[node name="Reach" type="CollisionShape2D" parent="Interactables/RatHole2"]
-shape = SubResource("circleshape2d_19")
-
-[node name="Sprite2D" type="Sprite2D" parent="Interactables/RatHole2"]
-scale = Vector2(0.25, 0.25)
-texture = ExtResource("34_texture2d")
-
-[node name="RatHole3" type="Area2D" parent="Interactables"]
-position = Vector2(212, 138)
-collision_layer = 2
-collision_mask = 0
-monitoring = false
-script = ExtResource("33_script")
-prompt = "Block the hole"
-message = "You wedge a flat stone into the hole. Something scrabbles away behind it."
-sets_flag = "rathole_3"
-
-[node name="Reach" type="CollisionShape2D" parent="Interactables/RatHole3"]
-shape = SubResource("circleshape2d_19")
-
-[node name="Sprite2D" type="Sprite2D" parent="Interactables/RatHole3"]
-scale = Vector2(0.25, 0.25)
-texture = ExtResource("34_texture2d")
-
 [node name="Moonherb1" type="Area2D" parent="Interactables"]
 position = Vector2(48, 368)
 collision_layer = 2
@@ -700,7 +648,7 @@ shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb1"]
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("35_texture2d")
+texture = ExtResource("34_texture2d")
 
 [node name="Moonherb2" type="Area2D" parent="Interactables"]
 position = Vector2(96, 392)
@@ -717,7 +665,7 @@ shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb2"]
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("35_texture2d")
+texture = ExtResource("34_texture2d")
 
 [node name="Moonherb3" type="Area2D" parent="Interactables"]
 position = Vector2(114, 358)
@@ -734,7 +682,7 @@ shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/Moonherb3"]
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("35_texture2d")
+texture = ExtResource("34_texture2d")
 
 [node name="OpenGrave" type="Area2D" parent="Interactables"]
 position = Vector2(70, 376)
@@ -746,21 +694,19 @@ prompt = "Examine"
 message = "The grave has been dug open from below, not above. A hex-mark is burned into the cracked lid, fresh enough to smell. Among the spilled earth lies a scorched bone, and when you lift it, the mark is on it too."
 item = "hex_bone"
 sets_flag = "saw_grave"
-requires = PackedStringArray("stage:work_to_belong=cairns")
-locked_message = "Old cairns, wind-scoured. Gull bones and salt. The mayor sent you for herbs; the herbs grow close by."
 
 [node name="Reach" type="CollisionShape2D" parent="Interactables/OpenGrave"]
 shape = SubResource("circleshape2d_19")
 
 [node name="Sprite2D" type="Sprite2D" parent="Interactables/OpenGrave"]
 scale = Vector2(0.25, 0.25)
-texture = ExtResource("36_texture2d")
+texture = ExtResource("35_texture2d")
 
 [node name="ToBeach" type="Area2D" parent="Zones"]
 position = Vector2(320, 0)
 collision_layer = 0
 collision_mask = 1
-script = ExtResource("37_script")
+script = ExtResource("36_script")
 target_scene = "res://scenes/world/beach.tscn"
 target_spawn = "from_town"
 
@@ -771,7 +717,7 @@ shape = SubResource("rectangleshape2d_20")
 position = Vector2(640, 212)
 collision_layer = 0
 collision_mask = 1
-script = ExtResource("37_script")
+script = ExtResource("36_script")
 target_scene = "res://scenes/world/crossholm_road.tscn"
 target_spawn = "from_wrackmouth"
 
@@ -807,9 +753,9 @@ position = Vector2(205, 326)
 [node name="from_cottage_weaver" type="Marker2D" parent="Spawns"]
 position = Vector2(408, 152)
 
-[node name="Player" parent="Entities" instance=ExtResource("38_packedscene")]
+[node name="Player" parent="Entities" instance=ExtResource("37_packedscene")]
 position = Vector2(320, 28)
 
-[node name="Hud" parent="." instance=ExtResource("39_packedscene")]
+[node name="Hud" parent="." instance=ExtResource("38_packedscene")]
 
-[node name="DialogueBox" parent="." instance=ExtResource("40_packedscene")]
+[node name="DialogueBox" parent="." instance=ExtResource("39_packedscene")]

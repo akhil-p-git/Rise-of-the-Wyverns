@@ -10,7 +10,11 @@ const ITEM_DESCRIPTIONS := {
 	"iron_scrap": "Bent hull-strapping, rivets, and chain links that still ring true on an anvil.",
 	"moonherb": "Pale dusk-holding leaves gathered among the old cairns south-west of Wrackmouth.",
 	"hex_bone": "A scorched bone dug from the cracked cairn. A fresh arcane hex-mark burns in its marrow.",
-	"mayor_letter": "Mayor Tolle's sealed dispatch for Teague Marrow at Lantern Watch.",
+	"bone_whistle": "A small carved gull-bone whistle. It belongs to a child in Wrackmouth.",
+	"iron_daggers": "A matched pair of short iron daggers from the Hall's arms cupboard. Quick work, close in.",
+	"iron_sword_shield": "A plain iron sword and a dented round shield. Old guard issue, well kept.",
+	"two_handed_sword": "A long two-handed iron sword. Slow to swing, hard to stop.",
+	"staff": "A staff of dark ash, iron-shod at the foot. A two-handed weapon, and a focus for those who can use one.",
 	"carters_tally": "Dov Carrow's notched tally stick from the burned farmstead on the Crossholm road.",
 }
 

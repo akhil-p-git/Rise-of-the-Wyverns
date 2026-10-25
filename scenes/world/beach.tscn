@@ -205,12 +205,9 @@ position = Vector2(138, 108)
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-script = ExtResource("11_pickup")
-prompt = "Open"
-message = "You bundle the salt-cured ship fittings and rope from the split crate for Orsa."
-item = "salvage_crate"
-requires = PackedStringArray("started:work_to_belong")
-locked_message = "Split open by the surf. Heavy ship-stamped fittings inside, too much to carry without a reason."
+script = ExtResource("8_interactable")
+prompt = "Search"
+message = "Split open by the surf. Heavy ship-stamped fittings inside, too much to carry without a reason."
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/CrateSign"]
 shape = SubResource("reach_crate")
@@ -256,10 +253,8 @@ collision_mask = 0
 monitoring = false
 script = ExtResource("11_pickup")
 prompt = "Take whistle"
-message = "A small bone whistle, half buried in wet sand. Tam's, surely."
+message = "A small bone whistle, half buried in wet sand. Somebody small must have dropped it."
 item = "bone_whistle"
-requires = PackedStringArray("active:tams_whistle")
-locked_message = "Something small and pale glints in the wet sand, but it is only a shell."
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Interactables/TamsWhistle"]
 shape = SubResource("reach_scrap")

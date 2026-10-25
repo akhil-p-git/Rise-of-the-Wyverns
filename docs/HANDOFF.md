@@ -29,10 +29,10 @@ Original 2D top-down fantasy RPG in Godot 4.7.2 (GDScript, GL Compatibility), me
 2. **Beach not connected to town (`FIXED`)**:
    - South exit to `res://scenes/world/wrackmouth.tscn` (`target_spawn = "from_beach"`): `scenes/world/beach.tscn:243-250`.
    - `Spawns/from_town` marker: `scenes/world/beach.tscn:256-257` and `scripts/world/beach.gd:26-30`.
-   - Crate pickup (`salvage_crate`, requires `started:work_to_belong`): `scenes/world/beach.tscn:178-189`.
+   - Crate on the shore (`CrateSign`) is an examine point now; the mayor's chores are gone (see `docs/lore.md`).
    - Three `iron_scrap` pickups: `scenes/world/beach.tscn:193-240`.
    - Wyvern skeleton hidden when `saw_grave` is set: `scripts/world/beach.gd:31-35`.
-3. **Chore 2 (clear rats) and Chore 4 spell lesson (`STILL OPEN`)**: Chore 2 uses three rat holes (`tools/gen_town_scenes.py:582-593`, `data/story.json:12`) because combat is not yet implemented; Chore 4's spell lesson (`docs/lore.md:70`) awaits the magic system.
+3. **Chores replaced (`DONE`)**: the mayor's single quest is "The Rat Below" (`data/story.json`, `data/dialogue/mayor.json`). It cannot finish yet: there is no dungeon, no giant rat and no combat, so nothing sets `giant_rat_slain`. The spell lesson (`docs/lore.md`) awaits the magic system.
 4. **Unit tests for `GameState`, `QuestLog`, `DialogueRunner` and JSON cross-references (`FIXED`)**: Implemented in `tests/run_tests.gd:336-475` (`test_logic_and_data()`).
 5. **Town gray-box art & 4-legged wyvern skeleton (`FIXED`)**:
    - Wyvern skeleton regenerated with two hind legs and bat-like wing-arms (`assets/beach/wyvern_skeleton.png`, `tools/build_all_art.py:92-99`).

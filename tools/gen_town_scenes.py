@@ -841,18 +841,6 @@ def wrackmouth() -> str:
         prompt='"Rent a bed (5 coin)"',
     )
 
-    for i, (rx, ry) in enumerate(((86, 116), (86, 144), (212, 138)), start=1):
-        pickup(
-            s,
-            f"RatHole{i}",
-            rx,
-            ry,
-            "Block the hole",
-            "You wedge a flat stone into the hole. Something scrabbles away behind it.",
-            col(0.15, 0.1, 0.08),
-            sets_flag=f"rathole_{i}",
-            texture="res://assets/props/rathole.png",
-        )
     for i, (x, y) in enumerate(((48, 368), (96, 392), (114, 358)), start=1):
         pickup(
             s,
@@ -875,8 +863,6 @@ def wrackmouth() -> str:
         col(0.9, 0.35, 0.2),
         item="hex_bone",
         sets_flag="saw_grave",
-        requires=["stage:work_to_belong=cairns"],
-        locked="Old cairns, wind-scoured. Gull bones and salt. The mayor sent you for herbs; the herbs grow close by.",
         texture="res://assets/props/open_grave.png",
     )
 

@@ -62,6 +62,8 @@ All enemies, the wyverns included, scale to the player's level, like Skyrim. Sug
 
 ### Tutorial chores (Wrackmouth)
 
+> Superseded 2026-10-24: Mayor Tolle now gives a single quest, "The Rat Below" (kill the giant rat in the dungeon past the last houses), with a choice of one starting weapon (two iron daggers, iron sword and shield, two-handed sword, or a staff). The chores below are no longer in the game. The cairn grave, the hex-bone and the missing wyvern bones remain as an optional discovery (`saw_grave`) and are free to reuse when the main thread needs the reveal. The dungeon and its location are not yet designed.
+
 | Chore | Teaches | Lore it plants |
 | --- | --- | --- |
 | 1. Fetch a crate of salvage from your own wreck for the Bone-wrights | Interaction, inventory | Salvage rights and the bone trade. You pass the wyvern bones on the beach. |

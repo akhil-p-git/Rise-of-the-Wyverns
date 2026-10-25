@@ -361,7 +361,7 @@ def gen_mayor_hall() -> None:
     prop(s, "RecordsDesk", "desk_scrolls", 98.0, 108.0, cw=50.0, ch=10.0)
     prop(s, "RecordsStool", "stool", 98.0, 94.0, cw=10.0, ch=6.0)
     prop(s, "Cupboard", "cupboard", 48.0, 92.0, cw=32.0, ch=10.0)
-    loot_container(s, "MayorDesk", 48.0, 88.0, "mayor_hall_cupboard", "Records Cupboard", {"coin": 8, "mayor_letter": 1})
+    loot_container(s, "MayorDesk", 48.0, 88.0, "mayor_hall_cupboard", "Records Cupboard", {"coin": 8})
     chest(s, "MayorChest", 300.0, 98.0, "mayor_hall_chest", "Council Strongbox", {"coin": 18})
     prop(s, "WeaponRack", "weapon_rack", 296.0, 140.0, cw=30.0, ch=8.0)
     prop(s, "TableWest", "table_food", 95.0, 176.0, cw=44.0, ch=10.0)
